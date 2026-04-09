@@ -1029,8 +1029,11 @@ app.delete('/api/admin/invite-codes/:id', authenticateToken, isAdmin, async (req
     console.error('DB init error:', err.message);
   }
 
-  app.listen(PORT, () => {
-    console.log(`Windsor Grove API running on http://localhost:${PORT}`);
-  });
+  if (process.env.VERCEL !== '1') {
+    app.listen(PORT, () => {
+      console.log(`Windsor Grove API running on http://localhost:${PORT}`);
+    });
+  }
 })();
 
+module.exports = app;

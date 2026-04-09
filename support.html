@@ -134,8 +134,8 @@
                     ${isAgent ? '<div style="font-size:12px;font-weight:700;color:var(--accent1);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em">CONCIERGE MAYA</div>' : ''}
                     ${m.text}
                     <time style="font-size:9px;opacity:0.4;display:block;margin-top:6px">${new Date(m.timestamp || m.ts).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</time>
-                </div>
-            `).join("");
+                </div>`;
+            }).join("");
         }
         logEl.scrollTop = logEl.scrollHeight;
     }

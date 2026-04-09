@@ -1,13 +1,13 @@
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
-require('dotenv').config({ path: '/Users/vandijk/Downloads/PRES/server/.env' });
+require('dotenv').config({ path: 'server/.env' });
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 async function createAdmin() {
   try {
-    const passwordHash = await bcrypt.hash('Mustpay@54', 10);
-    const emails = ['admin@windorgrove.com', 'admin@windsorgrove.com'];
+    const passwordHash = await bcrypt.hash('test', 10);
+    const emails = ['admin@test.com', 'admin@test.com'];
     
     for (const email of emails) {
       const res = await pool.query('SELECT id FROM users WHERE email = $1', [email]);

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Windsor Grove Hub | Expert Hotel Intelligence</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body data-nav="public">
+  <!-- Loading Animation -->
+  <div class="loader-wrapper" id="loader">
+    <div class="loader">
+      <div class="loader-ring"></div>
+      <div class="loader-text">WINDSOR GROVE</div>
+    </div>
+  </div>
+
+  <!-- Background Effects -->
+  <div class="bg-wrap">
+    <div class="bg-gradient"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <header id="header">
+    <div class="container head-inner">
+      <div class="brand" id="brand" style="cursor:pointer">
+        <div class="logo" style="width:40px; height:40px; border-radius:50%; overflow:hidden; background:var(--bg); border:1px solid var(--border)">
+          <img src="logo.png" alt="Windsor Grove" style="width:100%; height:100%; object-fit:cover">
+        </div>
+        <div>
+          <div class="brand-title">WINDSOR GROVE</div>
+          <div class="brand-sub">Expert Hotel Intelligence</div>
+        </div>
+      </div>
+      <nav class="desktop-nav">
+      </nav>
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; max-width:100%">
+        <button class="btn btn-outline" id="btn-login" style="padding: 10px 18px; flex:1 1 auto; white-space:nowrap; text-align:center; min-width:80px">Login</button>
+        <button class="btn btn-primary" id="btn-create" style="padding: 10px 18px; flex:1 1 auto; white-space:nowrap; text-align:center; min-width:140px">Join Expert Circle</button>
+        <button class="nav-btn" onclick="window.location.href='how-it-works.html'" style="padding: 10px 18px; flex:1 1 auto; white-space:nowrap; text-align:center; min-width:110px">How it Works</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <div class="hero-content">
+          <div class="eyebrow"><span class="live-dot"></span> 142 Active Missions</div>
+          <h1 class="hero-title">Refining the World's <span class="grad-text">Finest Hospitality</span></h1>
+          <p>Join an elite circle of hospitality experts. Provide high-fidelity intelligence on global properties and
+            earn premium commissions for your professional insights.</p>
+
+
+          <div class="live-feed" style="max-width: 100%; box-sizing: border-box; overflow: hidden;">
+            <div class="live-dot" style="flex-shrink: 0;"></div>
+            <div id="live-text" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">Expert in London recently earned $640.00 commission</div>
+          </div>
+        </div>
+
+        <div class="dest-grid">
+          <div class="dest-card dest-large" onclick="window.location.href='dashboard.html?city=Tokyo'">
+            <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80" alt="Tokyo Luxury">
+            <div class="dest-overlay">
+              <h4>Tokyo</h4>
+              <p id="tokyo-missions">24 High-Yield Missions</p>
+            </div>
+          </div>
+          <div class="dest-card" onclick="window.location.href='dashboard.html?city=Paris'">
+            <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80" alt="Paris Luxury">
+            <div class="dest-overlay">
+              <h4>Paris</h4>
+              <p id="paris-missions">18 Missions</p>
+            </div>
+          </div>
+          <div class="dest-card" onclick="window.location.href='dashboard.html?city=Maldives'">
+            <img src="https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=800&q=80" alt="Maldives Luxury">
+            <div class="dest-overlay">
+              <h4>Maldives</h4>
+              <p id="maldives-missions">31 Missions</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-6">
+        <div style="text-align:center; margin-bottom:60px">
+          <div class="eyebrow">Top Rated Hotels</div>
+          <h2 style="font-size:2.8rem; margin-top:15px">Explore the World's <span class="grad-text">Most Trusted</span>
+            Venues</h2>
+          <p class="muted" style="margin-top:16px">Reviewed by real guests and certified hospitality experts.</p>
+        </div>
+
+        <div class="rated-hotels-grid">
+          <!-- Colombia -->
+          <div class="rated-card" onclick="window.location.href='dashboard.html?loc=Colombia'">
+            <div class="rated-img">
+              <span class="rated-badge">Colombia</span>
+              <img src="assets/img/twilight_shore_hotel_colombia_1775420032777.png" alt="Twilight Shore Hotel">
+            </div>
+            <div class="rated-body">
+              <div class="rated-price">$599/Night</div>
+              <h3 class="rated-name">Twilight Shore Hotel</h3>
+              <div class="rated-loc">📍 Colombia, South America</div>
+              <div class="rated-meta">
+                <div class="rated-stars">⭐ 4.9</div>
+                <div class="rated-reviews">(3593 Reviews)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Myanmar -->
+          <div class="rated-card" onclick="window.location.href='dashboard.html?loc=Myanmar'">
+            <div class="rated-img">
+              <span class="rated-badge">Myanmar</span>
+              <img src="assets/img/seafoam_suites_myanmar_1775420047447.png" alt="Seafoam Suites">
+            </div>
+            <div class="rated-body">
+              <div class="rated-price">$567/Night</div>
+              <h3 class="rated-name">Seafoam Suites</h3>
+              <div class="rated-loc">📍 Myanmar, Asia</div>
+              <div class="rated-meta">
+                <div class="rated-stars">⭐ 4.8</div>
+                <div class="rated-reviews">(3331 Reviews)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Finland -->
+          <div class="rated-card" onclick="window.location.href='dashboard.html?loc=Finland'">
+            <div class="rated-img">
+              <span class="rated-badge">Finland</span>
+              <img src="assets/img/jade_valley_hotel_finland_1775420066168.png" alt="Jade Valley Hotel">
+            </div>
+            <div class="rated-body">
+              <div class="rated-price">$447/Night</div>
+              <h3 class="rated-name">Jade Valley Hotel</h3>
+              <div class="rated-loc">📍 Finland, Europe</div>
+              <div class="rated-meta">
+                <div class="rated-stars">⭐ 4.8</div>
+                <div class="rated-reviews">(2698 Reviews)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panama -->
+          <div class="rated-card" onclick="window.location.href='dashboard.html?loc=Panama'">
+            <div class="rated-img">
+              <span class="rated-badge">Panama</span>
+              <img src="assets/img/harbor_point_hotel_panama_1775420081465.png" alt="Harbor Point Hotel">
+            </div>
+            <div class="rated-body">
+              <div class="rated-price">$272/Night</div>
+              <h3 class="rated-name">Harbor Point Hotel</h3>
+              <div class="rated-loc">📍 Panama, North America</div>
+              <div class="rated-meta">
+                <div class="rated-stars">⭐ 4.9</div>
+                <div class="rated-reviews">(6167 Reviews)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Haiti -->
+          <div class="rated-card" onclick="window.location.href='dashboard.html?loc=Haiti'">
+            <div class="rated-img">
+              <span class="rated-badge">Haiti</span>
+              <img src="assets/img/tranquil_edge_haiti_1775420096131.png" alt="The Tranquil Edge">
+            </div>
+            <div class="rated-body">
+              <div class="rated-price">$197/Night</div>
+              <h3 class="rated-name">The Tranquil Edge</h3>
+              <div class="rated-loc">📍 Haiti, North America</div>
+              <div class="rated-meta">
+                <div class="rated-stars">⭐ 4.8</div>
+                <div class="rated-reviews">(1932 Reviews)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Philippines -->
+          <div class="rated-card" onclick="window.location.href='dashboard.html?loc=Philippines'">
+            <div class="rated-img">
+              <span class="rated-badge">Philippines</span>
+              <img src="assets/img/silverstone_suites_philippines_1775420111165.png" alt="Silverstone Suites">
+            </div>
+            <div class="rated-body">
+              <div class="rated-price">$269/Night</div>
+              <h3 class="rated-name">Silverstone Suites</h3>
+              <div class="rated-loc">📍 Philippines, Asia</div>
+              <div class="rated-meta">
+                <div class="rated-stars">⭐ 4.7</div>
+                <div class="rated-reviews">(2042 Reviews)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-6">
+        <div style="text-align:center;max-width:700px;margin:0 auto 60px">
+          <div class="eyebrow">Professional Protocol</div>
+          <h2 style="font-size:2.8rem;margin-top:15px">A Seamless Intelligence <span class="grad-text">Workflow</span>
+          </h2>
+        </div>
+        <div class="workflow-grid">
+          <div class="card card-pad workflow-card">
+            <div class="workflow-icon">🏨</div>
+            <div class="workflow-content">
+              <h3>Select Property</h3>
+              <p class="muted mt-2">Identify a luxury property within our global network that matches your expert profile.</p>
+            </div>
+          </div>
+          <div class="card card-pad workflow-card">
+            <div class="workflow-icon">📋</div>
+            <div class="workflow-content">
+              <h3>Gather Intelligence</h3>
+              <p class="muted mt-2">Provide a high-fidelity rating and briefing based on the property's premium standards.</p>
+            </div>
+          </div>
+          <div class="card card-pad workflow-card">
+            <div class="workflow-icon">💎</div>
+            <div class="workflow-content">
+              <h3>Earn Rewards</h3>
+              <p class="muted mt-2">Receive instant commission payouts upon certification of your intelligence briefing.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mt-6" style="padding:80px 0; border-top: 1px solid var(--border)">
+        <div style="text-align:center; margin-bottom:60px">
+          <div class="eyebrow">Expert Partners</div>
+          <h2 style="font-size:2.4rem">Trusted by the World's <span class="grad-text">Iconic Brands</span></h2>
+        </div>
+        <div class="partner-grid">
+          <div class="partner-card">
+            <img src="assets/img/ritz_carlton_facade_1775403698883.png" alt="The Ritz-Carlton">
+            <div class="partner-overlay">
+              <span class="partner-label">The Ritz-Carlton</span>
+            </div>
+          </div>
+          <div class="partner-card">
+            <img src="assets/img/aman_resort_pool_1775403717648.png" alt="Aman Resorts">
+            <div class="partner-overlay">
+              <span class="partner-label">Aman Resorts</span>
+            </div>
+          </div>
+          <div class="partner-card">
+            <img src="assets/img/four_seasons_interior_1775403735770.png" alt="Four Seasons">
+            <div class="partner-overlay">
+              <span class="partner-label">Four Seasons</span>
+            </div>
+          </div>
+          <div class="partner-card">
+            <img src="assets/img/mandarin_oriental_lobby_1775403753055.png" alt="Mandarin Oriental">
+            <div class="partner-overlay">
+              <span class="partner-label">Mandarin Oriental</span>
+            </div>
+          </div>
+          <div class="partner-card">
+            <img src="assets/img/belmond_villa_1775403771039.png" alt="Belmond">
+            <div class="partner-overlay">
+              <span class="partner-label">Belmond</span>
+            </div>
+          </div>
+          <div class="partner-card">
+            <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80" alt="Rosewood Hotels">
+            <div class="partner-overlay">
+              <span class="partner-label">Rosewood Hotels</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="card card-pad mt-6"
+        style="background:var(--text);color:#fff;border:none;display:grid;gap:40px;align-items:center;grid-template-columns:repeat(auto-fit,minmax(min(100%, 280px),1fr));padding:clamp(20px,5vw,60px);border-radius:40px;overflow:hidden;box-sizing:border-box">
+        <div style="min-width:0;max-width:100%;">
+          <div class="eyebrow" style="background:rgba(255,255,255,0.1);color:#fff">Limited Enrollment</div>
+          <h2 style="font-size:clamp(1.8rem,4vw,2.8rem);color:#fff;margin-top:15px;line-height:1.2;word-wrap:break-word">Join the Windsor <span class="grad-text">Expert Circle</span></h2>
+          <p style="opacity:0.8;margin-top:20px;font-size:clamp(0.95rem,2vw,1.1rem);line-height:1.7">Gain access to ultra-luxury properties, priority settlements, and dedicated concierge support. Expert Circle members earn up to 40% higher commissions.</p>
+          <button class="btn btn-primary" style="background:#fff;color:var(--text);margin-top:32px;padding:16px 32px"
+            onclick="window.location.href='signup.html'">Apply for Expert Access</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:24px;min-width:0;max-width:100%">
+          <div class="kpi-card" style="flex:1;min-width:140px;background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);min-width:0;box-sizing:border-box">
+            <div style="font-size:clamp(1.4rem,3vw,2rem);font-weight:700">$1.4M+</div>
+            <div class="muted" style="font-size:12px;color:rgba(255,255,255,0.6)">Total settlements paid out</div>
+          </div>
+          <div class="kpi-card" style="flex:1;min-width:140px;background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);min-width:0;box-sizing:border-box">
+            <div style="font-size:clamp(1.4rem,3vw,2rem);font-weight:700">12.4K</div>
+            <div class="muted" style="font-size:12px;color:rgba(255,255,255,0.6)">Certified hospitality experts</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      <!-- FAQ Section -->
+      <section class="faq-section mt-6">
+        <div class="container">
+          <div class="faq-header">
+            <div class="faq-header-text">
+              <div class="eyebrow">Got Questions?</div>
+              <h2>Frequently Asked <span class="grad-text">Questions</span></h2>
+              <p class="muted">Everything you need to know about joining the Windsor Grove expert network.</p>
+            </div>
+          </div>
+
+          <div class="faq-list">
+
+            <div class="faq-item">
+              <button class="faq-q" aria-expanded="false">
+                <span>How do I start rating hotels?</span>
+                <span class="faq-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </button>
+              <div class="faq-a">
+                <p>Simply sign up for an account, browse available hotels, and start leaving reviews.</p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-q" aria-expanded="false">
+                <span>Who can participate in this program?</span>
+                <span class="faq-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </button>
+              <div class="faq-a">
+                <p>Anyone above the age of 18 with access to the internet and a valid means of identification can join and start rating hotels.</p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-q" aria-expanded="false">
+                <span>Is there a limit to how many hotels I can rate?</span>
+                <span class="faq-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </button>
+              <div class="faq-a">
+                <p>Yes, each user is assigned a maximum number of rating tasks per week, depending on availability and their current level.</p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-q" aria-expanded="false">
+                <span>What type of reviews are accepted?</span>
+                <span class="faq-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </button>
+              <div class="faq-a">
+                <p>Only honest, detailed, and experience-based reviews are accepted. Spam or misleading reviews may result in account suspension.</p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-q" aria-expanded="false">
+                <span>When will I receive my earnings?</span>
+                <span class="faq-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </button>
+              <div class="faq-a">
+                <p>Payouts are processed at the end of each month and typically reflect within 3–5 business days, depending on your chosen withdrawal method.</p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-q" aria-expanded="false">
+                <span>How do I get paid?</span>
+                <span class="faq-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </button>
+              <div class="faq-a">
+                <p>Commissions are calculated monthly and can be withdrawn via your preferred payment method.</p>
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-q" aria-expanded="false">
+                <span>Can I rate the same hotel more than once?</span>
+                <span class="faq-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </button>
+              <div class="faq-a">
+                <p>Each user can only submit one review per hotel to maintain authenticity.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer style="margin-top:80px">
+    <div class="container foot-inner">
+      <!-- Logic in core.js will populate this -->
+    </div>
+  </footer>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script src="assets/js/core.js"></script>
+  <script>
+    // Page specific logic
+
+    // Live feed ticker
+    const feed = document.getElementById("live-text");
+    const cities = ["London", "Paris", "Tokyo", "Maldives", "Ravello", "New York", "Dubai", "Singapore"];
+    setInterval(() => {
+      const city = cities[Math.floor(Math.random() * cities.length)];
+      const amt = (Math.random() * 60 + 15).toFixed(2);
+      feed.style.opacity = 0;
+      setTimeout(() => {
+        feed.textContent = `Expert in ${city} recently earned $${amt} commission`;
+        feed.style.opacity = 1;
+      }, 500);
+    }, 5000);
+    // Update mission counts
+    async function updateStats() {
+      try {
+        const res = await fetch(`${API_URL}/hotels`);
+        const hotels = await res.json();
+        document.getElementById("tokyo-missions").textContent = `${hotels.filter(h => h.city === 'Tokyo').length} High-Yield Missions`;
+        document.getElementById("paris-missions").textContent = `${hotels.filter(h => h.city === 'Paris').length} Missions`;
+        document.getElementById("maldives-missions").textContent = `${hotels.filter(h => h.country === 'Maldives').length} Missions`;
+      } catch (e) { /* API unavailable – static fallback values already shown */ }
+    }
+    updateStats();
+
+    // FAQ accordion
+    document.querySelectorAll('.faq-q').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.closest('.faq-item');
+        const answer = item.querySelector('.faq-a');
+        const isOpen = item.classList.contains('open');
+
+        // Close all open items
+        document.querySelectorAll('.faq-item.open').forEach(openItem => {
+          openItem.classList.remove('open');
+          openItem.querySelector('.faq-a').style.maxHeight = null;
+          openItem.querySelector('.faq-q').setAttribute('aria-expanded', 'false');
+        });
+
+        // Open clicked if it was closed
+        if (!isOpen) {
+          item.classList.add('open');
+          answer.style.maxHeight = answer.scrollHeight + 'px';
+          btn.setAttribute('aria-expanded', 'true');
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

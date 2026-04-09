@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account | Windsor Grove Hub</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    /* ── Account page: strict mobile containment ── */
+    html, body { max-width: 100vw; overflow-x: hidden; }
+    .container { box-sizing: border-box; width: 100%; padding-left: 16px; padding-right: 16px; }
+    h2 { word-break: break-word; }
+    .kpi-val { font-size: clamp(1.6rem, 6vw, 2.8rem) !important; }
+    /* Liquidity buttons always stack on small screens */
+    @media (max-width: 480px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
+      .card-pad { padding: 20px 16px !important; }
+      h3 { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="loader-wrapper" id="loader">
+    <div class="loader">
+      <div class="loader-ring"></div>
+      <div class="loader-text">WINDSOR GROVE</div>
+    </div>
+  </div>
+  <div class="bg-wrap"><div class="bg-gradient"></div><div class="grid-overlay"></div></div>
+
+  <header id="header">
+    <div class="container head-inner">
+      <div class="brand" id="brand" style="cursor:pointer">
+        <div class="logo" style="width:40px; height:40px; border-radius:50%; overflow:hidden; background:var(--bg); border:1px solid var(--border)">
+          <img src="logo.png" alt="Windsor Grove" style="width:100%; height:100%; object-fit:cover">
+        </div>
+        <div>
+          <div class="brand-title">WINDSOR GROVE</div>
+          <div class="brand-sub">Expert Hotel Intelligence</div>
+        </div>
+      </div>
+      <nav class="desktop-nav"></nav>
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; max-width:100%">
+        <button class="btn btn-outline" id="btn-login" style="padding: 10px 18px; flex:1 1 auto; white-space:nowrap; text-align:center; min-width:80px">Login</button>
+        <button class="btn btn-primary" id="btn-create" style="padding: 10px 18px; flex:1 1 auto; white-space:nowrap; text-align:center; min-width:140px">Join Expert Circle</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container" style="padding:40px 0">
+      <div style="margin-bottom:32px">
+        <div class="eyebrow">Expert Profile</div>
+        <h2 style="font-size:clamp(1.8rem,6vw,2.8rem);margin-top:10px;word-break:break-word">Account <span class="grad-text">Overview</span></h2>
+      </div>
+      
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Available Funds</div>
+          <div class="kpi-val" style="color:var(--success)" id="balance-val">$0.00</div>
+        </div>
+        <div class="kpi-card">
+          <div class="muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Total Settlements</div>
+          <div class="kpi-val" id="total-val">$0.00</div>
+        </div>
+      </div>
+
+      <div class="card card-pad mt-6" style="background:#fff;border-radius:32px">
+        <h3>Expert Liquidity</h3>
+        <p class="muted">Manage your settlements and funding methods. Instant withdrawals and priority bank links.</p>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:24px">
+          <button class="btn btn-primary" onclick="window.location.href='withdrawal.html'" style="justify-content:center;padding:16px;width:100%">Withdraw Commission</button>
+          <button class="btn btn-outline" onclick="window.location.href='deposit.html'" style="justify-content:center;padding:16px;width:100%">Add Funding Source</button>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <h3 style="margin-bottom:24px">Completed <span class="grad-text">Tasks</span></h3>
+        <div style="display:flex;flex-direction:column;gap:12px" id="ledger-body">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Settle Modal (Simulation) -->
+  <div class="modal-backdrop" id="modal">
+    <div class="modal card-pad" id="modalBox">
+       <div style="text-align:center">
+          <h2 id="modal-title">Settle Commission</h2>
+          <p class="muted" id="modal-sub">Transfer your expert earnings to a linked account.</p>
+       </div>
+       <div class="mt-6">
+          <div class="field">
+             <label>Settlement Amount</label>
+             <input type="number" class="input" id="settle-amt" placeholder="Enter amount...">
+          </div>
+          <div class="field">
+             <label>Destination</label>
+             <select class="select">
+                <option>International Bank Transfer</option>
+                <option>USDC Crypto Wallet</option>
+                <option>PayPal Priority</option>
+             </select>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:16px" onclick="confirmSettle()">Dispatch Funds</button>
+          <button class="btn btn-outline mt-4" style="width:100%;justify-content:center" onclick="closeModal()">Cancel</button>
+       </div>
+    </div>
+  </div>
+
+  <div class="mobile-tab-bar">
+    <a href="dashboard.html" class="tab-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      <span>Home</span>
+    </a>
+    <a href="tasks.html" class="tab-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      <span>Missions</span>
+    </a>
+    <a href="account.html" class="tab-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+      <span>Ledger</span>
+    </a>
+    <a href="support.html" class="tab-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <span>Support</span>
+    </a>
+  </div>
+
+  <footer>
+    <div class="container foot-inner"></div>
+  </footer>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script src="assets/js/core.js"></script>
+  <script>
+    function renderAccount() {
+        if (!state.user) return;
+        
+        // Sum ALL transactions for available balance (bonuses + commissions - withdrawals)
+        const computedBalance = (state.transactions || []).reduce((acc, tx) => acc + Number(tx.amount), 0);
+        // Total Settlements = sum of withdrawals only  
+        const computedSettlements = (state.transactions || []).reduce((acc, tx) => acc + (Number(tx.amount) < 0 ? Math.abs(Number(tx.amount)) : 0), 0);
+        
+        // Override local state so Withdrawal modal uses correct figure
+        state.user.balance = computedBalance;
+        
+        document.getElementById("balance-val").textContent = fmt(computedBalance);
+        document.getElementById("total-val").textContent = fmt(computedSettlements);
+        
+        const ledger = document.getElementById("ledger-body");
+        
+        // Show only commission-type transactions in Completed Tasks
+        const taskTransactions = (state.transactions || []).filter(tx => tx.type === 'commission');
+
+        ledger.innerHTML = taskTransactions.map(tx => `
+          <div class="card" style="background:#fff;border-radius:20px;border:1px solid var(--border);padding:18px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;border-radius:10px;background:var(--accent3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">💎</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${tx.note}</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">
+                <span style="font-size:12px;color:var(--muted)">${new Date(tx.created_at || tx.ts).toLocaleDateString()}</span>
+                <span style="display:inline-block;padding:2px 8px;background:var(--success);color:#fff;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase">${tx.status || 'Verified'}</span>
+              </div>
+            </div>
+            <div style="font-weight:800;font-size:15px;color:var(--text);flex-shrink:0">${fmt(tx.amount)}</div>
+          </div>
+        `).join("");
+        
+        if(taskTransactions.length === 0) {
+            ledger.innerHTML = `
+            <div class="card card-pad" style="padding:60px 20px; text-align:center; border: 1px dashed var(--border); border-radius:20px">
+               <div style="font-size:30px;margin-bottom:10px;opacity:0.5">📋</div>
+               <div style="font-weight:600;font-size:15px">No Completed Tasks</div>
+               <div class="mt-1" style="font-size:13px" class="muted">Your completed intelligence missions will appear here.</div>
+            </div>`;
+        }
+    }
+
+    function openSettleModal() {
+        document.getElementById("modal").classList.add("show");
+        document.getElementById("settle-amt").value = state.user.balance.toFixed(2);
+    }
+    
+    function closeModal() {
+        document.getElementById("modal").classList.remove("show");
+    }
+
+    function confirmSettle() {
+        const amt = parseFloat(document.getElementById("settle-amt").value);
+        if(amt > state.user.balance || amt <= 0) {
+            toast("Invalid settlement amount.");
+            return;
+        }
+        
+        state.user.balance -= amt;
+        state.txs.unshift({
+            id: Math.random().toString(36).slice(2),
+            type: "withdrawal",
+            amount: -amt,
+            status: "completed",
+            ts: Date.now(),
+            note: "Settlement Payment"
+        });
+        
+        saveState();
+        renderAccount();
+        closeModal();
+        toast("Settlement dispatch initiated.");
+    }
+
+    let _initRetries = 0;
+    function initAccount() {
+        _initRetries++;
+        if (!state.user) {
+            // Check localStorage directly — state.token may not be set yet since loadState() is async
+            if (localStorage.getItem('wgh-token') && _initRetries < 100) {
+                setTimeout(initAccount, 50);
+            }
+            return;
+        }
+        renderAccount();
+    }
+    
+    initAccount();
+  </script>
+</body>
+</html>

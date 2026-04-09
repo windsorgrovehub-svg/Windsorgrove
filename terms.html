@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms & Conditions | Windsor Grove Hub</title>
+  <meta name="description" content="Windsor Grove Hub Terms and Conditions — the rules and guidelines governing use of our platform.">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .pp-wrap {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 60px;
+      padding: 60px 0 100px;
+      align-items: start;
+    }
+    @media (max-width: 1023px) { .pp-wrap { grid-template-columns: 1fr; } }
+
+    /* Sticky TOC */
+    .pp-toc {
+      position: sticky;
+      top: 100px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 28px 24px;
+    }
+    @media (max-width: 1023px) { .pp-toc { display: none; } }
+
+    .pp-toc h4 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+    .pp-toc a {
+      display: block;
+      padding: 7px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-dim);
+      transition: background 0.2s, color 0.2s;
+      line-height: 1.4;
+    }
+    .pp-toc a:hover,
+    .pp-toc a.active {
+      background: var(--accent3);
+      color: var(--accent2);
+    }
+
+    /* Content */
+    .pp-content { min-width: 0; }
+
+    .pp-hero {
+      margin-bottom: 56px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid var(--border);
+    }
+    .pp-hero h1 { font-size: clamp(2rem, 5vw, 3rem); margin-top: 12px; }
+    .pp-hero p  { color: var(--text-dim); margin-top: 16px; font-size: 1rem; line-height: 1.7; max-width: 640px; }
+    .pp-meta    { font-size: 12px; color: var(--text-dim); margin-top: 12px; }
+
+    .pp-section { margin-bottom: 52px; scroll-margin-top: 100px; }
+    .pp-section h2 {
+      font-size: 1.4rem;
+      font-family: Fraunces, serif;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pp-section h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 22px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, var(--accent2), var(--accent1));
+      flex-shrink: 0;
+    }
+    .pp-section p {
+      color: var(--text-dim);
+      font-size: 0.94rem;
+      line-height: 1.8;
+      margin: 0 0 14px;
+    }
+    .pp-section ul {
+      padding-left: 0;
+      list-style: none;
+      margin: 0 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .pp-section ul li {
+      font-size: 0.94rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+      padding-left: 22px;
+      position: relative;
+    }
+    .pp-section ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent1);
+    }
+
+    /* Numbered clause badge */
+    .clause-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: var(--accent3);
+      color: var(--accent2);
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: Outfit, sans-serif;
+      flex-shrink: 0;
+    }
+
+    .highlight-box {
+      background: var(--accent3);
+      border: 1px solid rgba(197,160,89,0.25);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin: 16px 0;
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+    .highlight-box strong { color: var(--accent2); }
+
+    .pp-contact-card {
+      background: var(--text);
+      border-radius: 24px;
+      padding: 36px 40px;
+      color: #fff;
+      margin-top: 20px;
+    }
+    .pp-contact-card h3 { color: #fff; font-size: 1.3rem; margin-bottom: 16px; }
+    .pp-contact-card a  { color: var(--accent1); font-weight: 600; }
+    .pp-contact-card p  { color: rgba(255,255,255,0.75); font-size: 0.9rem; line-height: 1.7; margin: 6px 0; }
+  </style>
+</head>
+
+<body data-nav="public">
+  <div class="loader-wrapper" id="loader">
+    <div class="loader">
+      <div class="loader-ring"></div>
+      <div class="loader-text">WINDSOR GROVE</div>
+    </div>
+  </div>
+
+  <div class="bg-wrap">
+    <div class="bg-gradient"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <header id="header">
+    <div class="container head-inner">
+      <div class="brand" id="brand" style="cursor:pointer" onclick="window.location.href='index.html'">
+        <div class="logo" style="width:40px; height:40px; border-radius:50%; overflow:hidden; background:var(--bg); border:1px solid var(--border)">
+          <img src="logo.png" alt="Windsor Grove" style="width:100%; height:100%; object-fit:cover">
+        </div>
+        <div>
+          <div class="brand-title">WINDSOR GROVE</div>
+          <div class="brand-sub">Expert Hotel Intelligence</div>
+        </div>
+      </div>
+      <nav class="desktop-nav"></nav>
+      <div style="display:flex; align-items:center; gap:12px">
+        <button class="btn btn-outline" id="btn-login" style="padding: 10px 18px">Login</button>
+        <button class="btn btn-primary" id="btn-create" style="padding: 10px 18px">Join Expert Circle</button>
+        <button class="nav-btn" onclick="window.location.href='how-it-works.html'" style="padding: 10px 18px">How it Works</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="pp-wrap">
+
+        <!-- Sidebar TOC -->
+        <aside class="pp-toc">
+          <h4>Sections</h4>
+          <a href="#acceptance">1. Acceptance of Terms</a>
+          <a href="#account">2. Account Creation</a>
+          <a href="#content">3. User-Generated Content</a>
+          <a href="#subscription">4. Subscription Plans</a>
+          <a href="#prohibited">5. Prohibited Uses</a>
+          <a href="#contact">6. Contact Information</a>
+        </aside>
+
+        <!-- Main content -->
+        <div class="pp-content">
+
+          <div class="pp-hero">
+            <div class="eyebrow">Legal</div>
+            <h1>Terms &amp; <span class="grad-text">Conditions</span></h1>
+            <p>Welcome to <strong>Windsor Grove Hub</strong> (the "Website"), owned and operated by Windsor Grove Hub. By accessing or using the Website, you agree to comply with and be bound by the following Terms and Conditions ("Terms"). If you do not agree to these Terms, please do not use the Website.</p>
+            <div class="pp-meta">Last updated: April 2026</div>
+          </div>
+
+          <!-- 1. Acceptance -->
+          <section class="pp-section" id="acceptance">
+            <h2><span class="clause-num">1</span>Acceptance of Terms</h2>
+            <p>By accessing or using Windsor Grove Hub, you agree to these Terms, including any future modifications. We may update these Terms from time to time, and your continued use of the Website will signify your acceptance of those changes.</p>
+            <div class="highlight-box">
+              <strong>Important:</strong> Please review these Terms regularly. Your continued use of the Website after any changes constitutes your acceptance of the revised Terms.
+            </div>
+          </section>
+
+          <!-- 2. Account -->
+          <section class="pp-section" id="account">
+            <h2><span class="clause-num">2</span>Account Creation</h2>
+            <p>To access certain features of the Website, users may be required to create an account. By creating an account, you agree to:</p>
+            <ul>
+              <li>Provide accurate and up-to-date information at registration.</li>
+              <li>Maintain the confidentiality of your account credentials.</li>
+              <li>Accept responsibility for all activities that occur under your account.</li>
+            </ul>
+            <div class="highlight-box">
+              <strong>Age Requirement:</strong> You must be at least <strong>18 years old</strong> to create an account on Windsor Grove Hub. If you are under 18, you may not use this Website.
+            </div>
+          </section>
+
+          <!-- 3. Content -->
+          <section class="pp-section" id="content">
+            <h2><span class="clause-num">3</span>User-Generated Content</h2>
+            <p>You may have the ability to create and/or upload content to the Website, including but not limited to text, images, videos, or any other material ("User Content"). By uploading content, you represent and warrant that:</p>
+            <ul>
+              <li>You own or have the necessary rights and permissions to upload the content.</li>
+              <li>Your content does not violate any intellectual property rights, privacy rights, or any other rights of any third party.</li>
+              <li>Your content complies with applicable laws and does not contain any offensive, defamatory, or illegal material.</li>
+            </ul>
+            <p>Windsor Grove Hub reserves the right to remove any content that violates these Terms or is deemed inappropriate, at our sole discretion and without prior notice.</p>
+          </section>
+
+          <!-- 4. Subscription -->
+          <section class="pp-section" id="subscription">
+            <h2><span class="clause-num">4</span>Subscription Plans</h2>
+            <p>Windsor Grove Hub offers various subscription plans that provide users with access to additional features and services. Subscription fees, billing cycles, and other relevant terms for each plan are detailed on the Website.</p>
+            <p>By subscribing to any plan, you agree to the payment terms as stated, and you authorize Windsor Grove Hub to charge the applicable subscription fees.</p>
+            <div class="highlight-box">
+              <strong>Refund Policy:</strong> All payments for subscription plans are <strong>non-refundable</strong>, except where required by applicable law.
+            </div>
+          </section>
+
+          <!-- 5. Prohibited -->
+          <section class="pp-section" id="prohibited">
+            <h2><span class="clause-num">5</span>Prohibited Uses</h2>
+            <p>You agree not to use the Website for any unlawful or prohibited activities, including but not limited to:</p>
+            <ul>
+              <li>Violating any applicable local, state, national, or international law or regulation.</li>
+              <li>Interfering with or disrupting the Website or servers and networks connected to the Website.</li>
+              <li>Uploading harmful or malicious content, such as viruses, malware, or spyware.</li>
+              <li>Impersonating any person or entity or falsely representing your affiliation with any person or entity.</li>
+            </ul>
+            <p>Violations of these prohibitions may result in immediate termination of your account and access to the Website, as well as potential legal action.</p>
+          </section>
+
+          <!-- 6. Contact -->
+          <section class="pp-section" id="contact">
+            <h2><span class="clause-num">6</span>Contact Information</h2>
+            <p>If you have any questions or concerns regarding these Terms and Conditions, please feel free to reach out to our team:</p>
+            <div class="pp-contact-card">
+              <h3>Get in touch</h3>
+              <p>📧 By email: <a href="mailto:support@windsorgrove.com">support@windsorgrove.com</a></p>
+              <p>🌐 By visiting: <a href="https://windsorgrove.com" target="_blank">https://windsorgrove.com</a></p>
+            </div>
+          </section>
+
+        </div><!-- /pp-content -->
+      </div><!-- /pp-wrap -->
+    </div>
+  </main>
+
+  <footer style="margin-top:0">
+    <div class="container foot-inner"></div>
+  </footer>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script src="assets/js/core.js"></script>
+  <script>
+    document.getElementById('btn-login').onclick  = () => window.location.href = 'login.html';
+    document.getElementById('btn-create').onclick = () => window.location.href = 'signup.html';
+
+    // Highlight active TOC link on scroll
+    const sections = document.querySelectorAll('.pp-section');
+    const tocLinks = document.querySelectorAll('.pp-toc a');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          tocLinks.forEach(a => a.classList.remove('active'));
+          const active = document.querySelector(`.pp-toc a[href="#${entry.target.id}"]`);
+          if (active) active.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+
+    sections.forEach(s => observer.observe(s));
+  </script>
+</body>
+
+</html>

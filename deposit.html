@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Funding Source | Windsor Grove Hub</title>
+  <meta name="description" content="Add or manage your funding sources and payment methods on Windsor Grove Hub.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=3">
+  <style>
+    *,*::before,*::after{box-sizing:border-box}
+    body{background:#f8f9fb;overflow-x:hidden}
+
+    /* ── Layout ── */
+    .dp-page{max-width:720px;margin:0 auto;padding:32px 20px 120px}
+
+    /* ── Back link ── */
+    .back-link{
+      display:inline-flex;align-items:center;gap:8px;
+      font-size:14px;font-weight:600;color:var(--muted);
+      text-decoration:none;transition:color .2s;margin-bottom:28px;
+    }
+    .back-link:hover{color:var(--text)}
+    .back-link svg{transition:transform .2s}
+    .back-link:hover svg{transform:translateX(-3px)}
+
+    /* ── Hero card ── */
+    .hero-card{
+      background:linear-gradient(160deg,#0f1728 0%,#1a2744 60%,#1e293b 100%);
+      border-radius:28px;padding:clamp(28px,6vw,48px);
+      color:#fff;position:relative;overflow:hidden;
+      margin-bottom:28px;
+    }
+    .hero-card::before{
+      content:'';position:absolute;
+      top:-80px;right:-40px;width:260px;height:260px;
+      background:radial-gradient(circle,rgba(197,160,89,.25) 0%,transparent 70%);
+      border-radius:50%;pointer-events:none;
+    }
+    .hero-card::after{
+      content:'';position:absolute;
+      bottom:-50px;left:20%;width:200px;height:200px;
+      background:radial-gradient(circle,rgba(197,160,89,.12) 0%,transparent 70%);
+      border-radius:50%;pointer-events:none;
+    }
+    .hero-inner{position:relative;z-index:1}
+    .hero-eyebrow{
+      font-size:11px;font-weight:700;letter-spacing:.14em;
+      text-transform:uppercase;color:var(--accent1);margin-bottom:10px;
+    }
+    .hero-title{
+      font-family:'Fraunces',serif;font-weight:700;
+      font-size:clamp(1.8rem,6vw,2.8rem);line-height:1.15;
+      margin:0 0 14px;letter-spacing:-.02em;
+    }
+    .hero-desc{font-size:14px;opacity:.65;max-width:400px;line-height:1.6;margin:0 0 22px}
+    .hero-badges{display:flex;gap:10px;flex-wrap:wrap}
+    .hero-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
+      padding:5px 14px;border-radius:100px;font-size:12px;font-weight:600;color:#cbd5e1;
+    }
+
+    /* ── Feature pills ── */
+    .features{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+    .feat-pill{
+      display:inline-flex;align-items:center;gap:6px;
+      background:#fff;border:1px solid #e8ecf1;
+      padding:7px 14px;border-radius:10px;
+      font-size:13px;font-weight:600;color:var(--text);
+    }
+
+    /* ── Section cards ── */
+    .dp-card{
+      background:#fff;border:1px solid #e8ecf1;border-radius:24px;
+      padding:clamp(20px,5vw,32px);margin-bottom:20px;
+      transition:box-shadow .25s;
+    }
+    .dp-card:hover{box-shadow:0 8px 32px rgba(0,0,0,.05)}
+    .dp-card-head{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+    .step-num{
+      width:30px;height:30px;border-radius:9px;
+      background:var(--accent1);color:#fff;font-size:13px;font-weight:800;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    }
+    .step-title{font-weight:700;font-size:16px;color:var(--text)}
+    .step-sub{font-size:13px;color:var(--muted);margin-top:2px}
+
+    /* ── Source selector ── */
+    .sources{display:flex;flex-direction:column;gap:12px}
+    .s-card{
+      display:flex;align-items:center;gap:14px;
+      padding:16px;border-radius:16px;cursor:pointer;
+      border:2px solid #eef0f4;background:#fafbfc;
+      transition:all .2s ease;
+    }
+    .s-card:hover{border-color:#d4d9e1;background:#fff}
+    .s-card.active{border-color:var(--accent1);background:#fffbf5}
+    .s-icon{
+      width:44px;height:44px;border-radius:12px;
+      background:#f1f3f6;display:flex;align-items:center;justify-content:center;
+      font-size:20px;flex-shrink:0;transition:all .2s;
+    }
+    .s-card.active .s-icon{background:rgba(197,160,89,.12)}
+    .s-name{font-weight:700;font-size:14px;color:var(--text)}
+    .s-desc{font-size:12px;color:var(--muted);margin-top:2px}
+    .s-check{
+      margin-left:auto;width:22px;height:22px;border-radius:50%;
+      border:2px solid #d4d9e1;display:flex;align-items:center;justify-content:center;
+      transition:all .2s;flex-shrink:0;
+    }
+    .s-card.active .s-check{border-color:var(--accent1);background:var(--accent1)}
+    .s-card.active .s-check::after{
+      content:'';width:8px;height:5px;
+      border-left:2px solid #fff;border-bottom:2px solid #fff;
+      transform:rotate(-45deg) translateY(-1px);
+    }
+
+    /* ── Form fields ── */
+    .form-fields{display:flex;flex-direction:column;gap:14px}
+    .form-fields label{
+      display:block;font-size:13px;font-weight:600;
+      color:var(--text);margin-bottom:6px;
+    }
+    .form-fields .input,
+    .form-fields select{
+      width:100%;padding:14px 16px;font-size:14px;
+      border:2px solid #eef0f4;border-radius:14px;
+      background:#fafbfc;transition:all .2s;outline:none;
+      color:var(--text);font-family:inherit;
+      appearance:auto;
+    }
+    .form-fields .input:focus,
+    .form-fields select:focus{
+      border-color:var(--accent1);background:#fff;
+      box-shadow:0 0 0 4px rgba(197,160,89,.08);
+    }
+
+    /* ── Agreement box ── */
+    .agree-box{
+      display:flex;align-items:flex-start;gap:14px;
+      padding:18px;background:#fafbfc;border-radius:14px;
+      border:1px solid #e8ecf1;margin-top:8px;
+    }
+    .agree-box input[type=checkbox]{
+      margin-top:3px;width:18px;height:18px;flex-shrink:0;
+      accent-color:var(--accent1);cursor:pointer;
+    }
+    .agree-box label{
+      font-size:13px;color:var(--muted);cursor:pointer;line-height:1.6;margin:0;
+    }
+    .agree-box a{color:var(--accent1);text-decoration:none}
+
+    /* ── Submit ── */
+    .submit-btn{
+      width:100%;padding:20px;font-size:16px;font-weight:800;
+      border:none;border-radius:18px;cursor:pointer;
+      background:linear-gradient(135deg,var(--accent1),#a68442);
+      color:#fff;transition:all .25s;
+      display:flex;align-items:center;justify-content:center;gap:10px;
+      box-shadow:0 8px 28px rgba(197,160,89,.25);
+    }
+    .submit-btn:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(197,160,89,.3)}
+    .submit-btn:active{transform:translateY(0)}
+    .submit-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+    .secure-note{
+      display:flex;align-items:center;justify-content:center;
+      gap:6px;font-size:12px;color:var(--muted);margin-top:20px;
+    }
+
+    /* ── Responsive ── */
+    @media(max-width:480px){
+      .dp-page{padding:16px 14px 110px}
+      .hero-card{border-radius:22px}
+      .dp-card{border-radius:20px}
+      .s-card{padding:14px 12px}
+      .s-icon{width:38px;height:38px;font-size:18px;border-radius:10px}
+      .s-name{font-size:13px}
+      .s-desc{font-size:11px}
+      .submit-btn{padding:18px;font-size:15px;border-radius:16px}
+    }
+  </style>
+</head>
+<body>
+  <div class="loader-wrapper" id="loader">
+    <div class="loader">
+      <div class="loader-ring"></div>
+      <div class="loader-text">WINDSOR GROVE</div>
+    </div>
+  </div>
+  <div class="bg-wrap"><div class="bg-gradient"></div><div class="grid-overlay"></div></div>
+
+  <header id="header">
+    <div class="container head-inner">
+      <div class="brand" id="brand" style="cursor:pointer">
+        <div class="logo">WG</div>
+        <div>
+          <div class="brand-title">WINDSOR GROVE</div>
+          <div class="brand-sub">Expert Hotel Intelligence</div>
+        </div>
+      </div>
+      <nav class="desktop-nav"></nav>
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; max-width:100%">
+        <button class="btn btn-outline" id="btn-login" style="padding: 10px 18px; flex:1 1 auto; white-space:nowrap; text-align:center; min-width:80px">Login</button>
+        <button class="btn btn-primary" id="btn-create" style="padding: 10px 18px; flex:1 1 auto; white-space:nowrap; text-align:center; min-width:140px">Join Expert Circle</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="dp-page">
+
+      <!-- Back -->
+      <a href="account.html" class="back-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Back to Account
+      </a>
+
+      <!-- Hero -->
+      <div class="hero-card">
+        <div class="hero-inner">
+          <div class="hero-eyebrow">Funding Management</div>
+          <h1 class="hero-title">Link a Funding<br>Source</h1>
+          <p class="hero-desc">Connect your preferred bank or payment method to receive commission payouts securely.</p>
+          <div class="hero-badges">
+            <span class="hero-badge">🔒 256-bit Encrypted</span>
+            <span class="hero-badge">✓ PCI Compliant</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div class="features">
+        <span class="feat-pill">⚡ Instant Payouts</span>
+        <span class="feat-pill">🌍 190+ Countries</span>
+        <span class="feat-pill">💰 Zero Fees</span>
+        <span class="feat-pill">🔄 Auto Settlement</span>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="dp-card">
+        <div class="dp-card-head">
+          <div class="step-num">1</div>
+          <div>
+            <div class="step-title">Choose Funding Type</div>
+            <div class="step-sub">Select the type of account you want to link</div>
+          </div>
+        </div>
+        <div class="sources">
+          <div class="s-card active" data-source="bank" onclick="selectSource(this,'bank')">
+            <div class="s-icon">🏦</div>
+            <div style="flex:1">
+              <div class="s-name">Bank Account (SWIFT / IBAN)</div>
+              <div class="s-desc">Recommended · Best for large payouts</div>
+            </div>
+            <div class="s-check" id="check-bank"></div>
+          </div>
+          <div class="s-card" data-source="crypto" onclick="selectSource(this,'crypto')">
+            <div class="s-icon">₿</div>
+            <div style="flex:1">
+              <div class="s-name">Crypto Wallet (USDC)</div>
+              <div class="s-desc">Stablecoin · ETH, Polygon, or Solana</div>
+            </div>
+            <div class="s-check" id="check-crypto"></div>
+          </div>
+          <div class="s-card" data-source="paypal" onclick="selectSource(this,'paypal')">
+            <div class="s-icon">💳</div>
+            <div style="flex:1">
+              <div class="s-name">PayPal</div>
+              <div class="s-desc">Instant delivery to PayPal balance</div>
+            </div>
+            <div class="s-check" id="check-paypal"></div>
+          </div>
+          <div class="s-card" data-source="wise" onclick="selectSource(this,'wise')">
+            <div class="s-icon">🌐</div>
+            <div style="flex:1">
+              <div class="s-name">Wise (TransferWise)</div>
+              <div class="s-desc">Multi-currency · Low exchange fees</div>
+            </div>
+            <div class="s-check" id="check-wise"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="dp-card">
+        <div class="dp-card-head">
+          <div class="step-num">2</div>
+          <div>
+            <div class="step-title">Account Details</div>
+            <div class="step-sub">Enter your account information securely</div>
+          </div>
+        </div>
+        <div class="form-fields" id="source-fields">
+          <div><label>Account Holder Full Name</label><input type="text" class="input" id="holder-name" placeholder="As it appears on your bank account"></div>
+          <div><label>IBAN or Account Number</label><input type="text" class="input" id="iban" placeholder="e.g. GB29 NWBK 6016 1331 9268 19"></div>
+          <div><label>SWIFT / BIC Code</label><input type="text" class="input" id="swift" placeholder="e.g. BARCGB22XXX"></div>
+          <div><label>Bank Name</label><input type="text" class="input" id="bank-name" placeholder="e.g. Barclays, Chase, HSBC"></div>
+          <div><label>Country</label><input type="text" class="input" id="country" placeholder="Country of your bank"></div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="dp-card">
+        <div class="dp-card-head">
+          <div class="step-num">3</div>
+          <div>
+            <div class="step-title">Deposit Amount</div>
+            <div class="step-sub">How much are you depositing?</div>
+          </div>
+        </div>
+        <div class="form-fields">
+          <div>
+            <label>Amount (USD)</label>
+            <input type="number" class="input" id="deposit-amount" placeholder="e.g. 250.00" min="1" step="0.01">
+          </div>
+        </div>
+        <div class="agree-box">
+          <input type="checkbox" id="agree-terms">
+          <label for="agree-terms">
+            I confirm that I am the authorized holder of this account and I agree to the
+            <a href="privacy.html">Payment Terms</a> and Windsor Grove's settlement policies.
+          </label>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button class="submit-btn" id="submit-btn" onclick="submitFundingSource()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Submit Deposit Request
+      </button>
+
+      <div class="secure-note">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Bank-grade 256-bit AES encryption. Never shared with third parties.
+      </div>
+
+    </div>
+  </main>
+
+  <div class="mobile-tab-bar">
+    <a href="dashboard.html" class="tab-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      <span>Home</span>
+    </a>
+    <a href="tasks.html" class="tab-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      <span>Missions</span>
+    </a>
+    <a href="account.html" class="tab-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+      <span>Ledger</span>
+    </a>
+    <a href="support.html" class="tab-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <span>Support</span>
+    </a>
+  </div>
+
+  <footer>
+    <div class="container foot-inner"></div>
+  </footer>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script src="assets/js/core.js?v=3"></script>
+  <script>
+    // Auth guard
+    if (!localStorage.getItem('wgh-token')) {
+      window.location.href = 'login.html';
+    }
+
+    const sourceFieldTemplates = {
+      bank: `
+        <div><label>Account Holder Full Name</label><input type="text" class="input" id="holder-name" placeholder="As it appears on your bank account"></div>
+        <div><label>IBAN or Account Number</label><input type="text" class="input" id="iban" placeholder="e.g. GB29 NWBK 6016 1331 9268 19"></div>
+        <div><label>SWIFT / BIC Code</label><input type="text" class="input" id="swift" placeholder="e.g. BARCGB22XXX"></div>
+        <div><label>Bank Name</label><input type="text" class="input" id="bank-name" placeholder="e.g. Barclays, Chase, HSBC"></div>
+        <div><label>Country</label><input type="text" class="input" id="country" placeholder="Country of your bank"></div>
+      `,
+      crypto: `
+        <div><label>Wallet Address</label><input type="text" class="input" placeholder="0x... or wallet address"></div>
+        <div><label>Network</label>
+          <select class="input" style="appearance:auto;cursor:pointer">
+            <option>Ethereum (ERC-20)</option>
+            <option>Polygon</option>
+            <option>Solana</option>
+            <option>BSC (BEP-20)</option>
+          </select>
+        </div>
+        <div><label>Wallet Label (optional)</label><input type="text" class="input" placeholder="e.g. My MetaMask Wallet"></div>
+      `,
+      paypal: `
+        <div><label>PayPal Email Address</label><input type="email" class="input" placeholder="your@paypal.email"></div>
+        <div><label>Confirm PayPal Email</label><input type="email" class="input" placeholder="Re-enter email"></div>
+        <div><label>PayPal Account Name</label><input type="text" class="input" placeholder="Full name on PayPal account"></div>
+      `,
+      wise: `
+        <div><label>Wise Email Address</label><input type="email" class="input" placeholder="your@wise.com"></div>
+        <div><label>Account Holder Name</label><input type="text" class="input" placeholder="Full legal name"></div>
+        <div><label>Wise Account ID (optional)</label><input type="text" class="input" placeholder="e.g. P12345678"></div>
+      `
+    };
+
+    function selectSource(el, type) {
+      document.querySelectorAll('.s-card').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('source-fields').innerHTML = sourceFieldTemplates[type];
+    }
+
+    async function submitFundingSource() {
+      if (!document.getElementById('agree-terms').checked) {
+        return toast('Please agree to the payment terms to continue.');
+      }
+
+      const selectedType = document.querySelector('.s-card.active')?.dataset.source || 'bank';
+      const amountEl = document.getElementById('deposit-amount');
+      const amount = parseFloat(amountEl?.value) || 0;
+
+      if (amount <= 0) return toast('Please enter a deposit amount.');
+
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting Request…';
+
+      // Collect all source field labels + values
+      const sourceFields = document.querySelectorAll('#source-fields > div');
+      const source_details = {};
+      sourceFields.forEach(div => {
+        const label = div.querySelector('label')?.textContent?.trim();
+        const input = div.querySelector('input, select');
+        if (label && input) source_details[label] = input.value;
+      });
+
+      try {
+        const res = await fetch(`${API_URL}/user/request-deposit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('wgh-token')}`
+          },
+          body: JSON.stringify({
+            amount,
+            source_type: selectedType,
+            source_details
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          toast(data.error || 'Failed to submit deposit request.');
+          btn.disabled = false;
+          btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Submit Deposit Request';
+          return;
+        }
+        toast('✓ Deposit request submitted — pending admin approval.');
+        btn.innerHTML = '✓ Request Submitted';
+        setTimeout(() => window.location.href = 'account.html', 2000);
+      } catch (e) {
+        toast('Network error. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Submit Deposit Request';
+      }
+    }
+
+  </script>
+</body>
+</html>

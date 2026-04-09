@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rate Property | Windsor Grove Hub</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .mission-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 40px; }
+    @media (max-width: 900px) { .mission-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="loader-wrapper" id="loader">
+    <div class="loader">
+      <div class="loader-ring"></div>
+      <div class="loader-text">WINDSOR GROVE</div>
+    </div>
+  </div>
+  <div class="bg-wrap"><div class="bg-gradient"></div><div class="grid-overlay"></div></div>
+
+  <header id="header">
+    <div class="container head-inner">
+      <div class="brand" id="brand" style="cursor:pointer">
+        <div class="logo" style="width:40px; height:40px; border-radius:50%; overflow:hidden; background:var(--bg); border:1px solid var(--border)">
+          <img src="logo.png" alt="Windsor Grove" style="width:100%; height:100%; object-fit:cover">
+        </div>
+        <div>
+          <div class="brand-title">WINDSOR GROVE</div>
+          <div class="brand-sub">Expert Hotel Intelligence</div>
+        </div>
+      </div>
+      <nav class="desktop-nav"></nav>
+      <div style="display:flex; align-items:center; gap:12px">
+        <button class="btn btn-outline" id="btn-login" style="padding: 10px 18px">Login</button>
+        <button class="btn btn-primary" id="btn-create" style="padding: 10px 18px">Join Expert Circle</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container two-col" style="padding:40px 0">
+      <div>
+        <div class="eyebrow">Pending Missions</div>
+        <h2 style="margin:10px 0 30px">Available <span class="grad-text">Assignments</span></h2>
+        <div style="display:grid;gap:16px" id="task-list">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+      <div id="rate-panel"></div>
+    </div>
+  </main>
+
+  <div class="mobile-tab-bar">
+    <a href="dashboard.html" class="tab-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      <span>Home</span>
+    </a>
+    <a href="tasks.html" class="tab-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      <span>Missions</span>
+    </a>
+    <a href="account.html" class="tab-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+      <span>Ledger</span>
+    </a>
+    <a href="support.html" class="tab-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+      <span>Support</span>
+    </a>
+  </div>
+
+  <footer>
+    <div class="container foot-inner"></div>
+  </footer>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script src="assets/js/core.js"></script>
+  <script>
+    const listEl = document.getElementById("task-list");
+    const panelEl = document.getElementById("rate-panel");
+    const params = new URLSearchParams(window.location.search);
+    let selectedId = params.get('id');
+    let hotels = [];
+
+    function renderTaskList() {
+      listEl.innerHTML = hotels.map(h => `
+        <div class="task-item ${selectedId === h.id ? 'active' : ''}" onclick="selectHotel('${h.id}')" 
+          style="${selectedId === h.id ? 'border-color:var(--accent1);background:#fef9ed' : ''}">
+          <div class="task-thumb"><img src="${h.image.startsWith('http') ? h.image : 'assets/img/' + h.image}" style="width:100%;height:100%;object-fit:cover"></div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:15px">${h.name}</div>
+            <div class="muted" style="font-size:12px">${h.city} • Up to ${fmt(h.commission_rate)} earned</div>
+          </div>
+          <div style="font-size:18px;color:var(--accent1)">→</div>
+        </div>
+      `).join("");
+    }
+
+    function selectHotel(id) {
+        selectedId = id;
+        const h = hotels.find(x => x.id === id);
+        
+        // Immersive Switch: Hide the list if a specific hotel is selected for a mission
+        if (selectedId) {
+            const listContainer = listEl.parentElement;
+            listContainer.style.display = 'none';
+            panelEl.parentElement.style.gridTemplateColumns = '1fr';
+            panelEl.style.position = 'relative';
+            panelEl.style.top = '0';
+        }
+        
+        renderTaskList();
+        renderRatingPanel(h);
+    }
+    window.selectHotel = selectHotel;
+
+    function renderRatingPanel(h) {
+        // Use the flat reward set by the admin
+        const estVal = h.commission_rate;
+        panelEl.innerHTML = `
+          <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:30px;margin-bottom:30px">
+            <div style="width:100%;max-width:200px;height:140px;border-radius:24px;overflow:hidden;border:1px solid var(--border);box-shadow:0 10px 30px rgba(0,0,0,0.05)">
+                <img src="${h.image.startsWith('http') ? h.image : 'assets/img/' + h.image}" style="width:100%;height:100%;object-fit:cover">
+            </div>
+            <div style="flex:1;min-width:180px;max-width:100%">
+              <div class="muted" style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">${h.city}, ${h.country}</div>
+              <h2 style="margin:0 0 10px;font-size:2rem;word-break:break-word">${h.name}</h2>
+              <div class="muted" style="font-size:14px">Maximum Mission Reward: <span style="font-weight:700;color:var(--text)">${fmt(estVal)}</span></div>
+            </div>
+            <div class="card card-pad" style="background:var(--accent3);border:1px solid rgba(197,160,89,0.2);text-align:right;flex:1;min-width:150px;max-width:100%;box-sizing:border-box">
+              <div class="muted" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em">Est. Reward</div>
+              <div style="font-size:32px;font-weight:700;color:var(--accent1)" id="estVal">${fmt(estVal)}</div>
+            </div>
+          </div>
+
+          <div class="mission-grid">
+            <!-- STEP 1: RATING MATRIX -->
+            <div class="card card-pad" style="background:#fff; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.03); border:1px solid var(--border)">
+                <h4 style="margin-bottom:20px;display:flex;align-items:center;gap:8px">1. Rating Matrix <span class="badge" style="background:#f8fafc;border:1px solid var(--border);color:var(--text-dim);font-size:10px;padding:4px 10px;border-radius:20px">Mandatory</span></h4>
+                <p class="muted" style="font-size:13px;margin-bottom:20px">Provide a strict evaluation across the following pillars.</p>
+                ${['Service Precision', 'Property Condition', 'Elite Amenities', 'Market Value'].map(cat => `
+                    <div class="field mt-4">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                            <label style="font-size:13px;font-weight:600;color:var(--text-dim)">${cat}</label>
+                            <span class="rating-val" style="font-size:11px;font-weight:700;color:var(--accent1)">0.0</span>
+                        </div>
+                        <div class="rating-container category-stars" data-category="${cat.toLowerCase().split(' ')[0]}" style="display:flex; flex-wrap:wrap; gap:8px">
+                            ${[1,2,3,4,5].map(i => `<button class="star-btn" data-v="${i}" style="flex:1; min-width:40px">★</button>`).join("")}
+                        </div>
+                    </div>
+                `).join("")}
+            </div>
+            
+            <!-- STEP 2 & 3: REVIEWS & COMMENTS -->
+            <div style="display:flex; flex-direction:column; gap:30px">
+                
+                <!-- Public Review Card : Dashboard Aesthetic -->
+                <div class="card card-pad" style="background:#fff; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,0.03); position:relative; overflow:hidden">
+                    <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:var(--accent1)"></div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px">
+                       <div>
+                          <h4 style="margin:0; font-size:18px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:10px">
+                            <span style="display:flex; justify-content:center; align-items:center; width:32px; height:32px; background:#f8fafc; border:1px solid var(--border); border-radius:50%; font-size:14px">📢</span> 
+                            Public Endorsement
+                          </h4>
+                          <div class="muted" style="font-size:13px; margin-top:6px; max-width:80%">Craft a compelling narrative for prospective high-net-worth guests.</div>
+                       </div>
+                       <div style="padding:6px 12px; background:#f8fafc; color:var(--text-dim); border-radius:30px; font-size:10px; font-weight:800; letter-spacing:0.1em; border:1px solid var(--border)">PUBLIC LOG</div>
+                    </div>
+                    
+                    <div style="position:relative">
+                        <textarea id="review-text" class="input" style="background:#fcfbf8; border:1px solid var(--border); border-radius:12px; padding:20px; min-height:160px; font-size:15px; line-height:1.8; resize:vertical; width:100%" placeholder="Detail the architectural magnificence, service quality..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- Internal Comments Card : Dashboard Aesthetic -->
+                <div class="card card-pad" style="background:#fff; border-radius:20px; box-shadow:0 10px 30px rgba(197,160,89,0.08); border:1px solid rgba(197,160,89,0.2); position:relative; overflow:hidden">
+                    <div style="position:absolute; top:-50%; right:-10%; width:200px; height:200px; background:var(--accent1); filter:blur(100px); opacity:0.08; border-radius:50%; pointer-events:none"></div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; position:relative; z-index:2">
+                       <div>
+                          <h4 style="margin:0; font-size:18px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:10px">
+                            <span style="display:flex; justify-content:center; align-items:center; width:32px; height:32px; background:#fef9ed; border:1px solid rgba(197,160,89,0.2); border-radius:50%; font-size:14px">🛡️</span> 
+                            Classified Briefing
+                          </h4>
+                          <div class="muted" style="font-size:13px; margin-top:6px">Internal anomalies, VIP directives, or security concerns.</div>
+                       </div>
+                       <div style="padding:6px 12px; background:#fff2f2; color:#ef4444; border-radius:30px; font-size:10px; font-weight:800; letter-spacing:0.1em; border:1px solid #fee2e2">SECURE CHK_</div>
+                    </div>
+                    
+                    <div style="position:relative; z-index:2">
+                        <textarea id="comments-text" class="input" style="background:#fff; border:1px solid rgba(197,160,89,0.3); border-radius:12px; padding:20px; min-height:120px; font-size:15px; line-height:1.8; resize:vertical; width:100%" placeholder="Report operational red-flags and insider protocols here..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- Certification -->
+                <label style="display:flex; align-items:center; gap:20px; padding:24px; cursor:pointer; background:#fff; border-radius:20px; border:1px solid var(--border); box-shadow:0 4px 15px rgba(0,0,0,0.02); margin-top:10px; transition:transform 0.2s, box-shadow 0.2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.05)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 15px rgba(0,0,0,0.02)'">
+                    <div style="display:flex; justify-content:center; align-items:center; width:36px; height:36px; background:#fcfbf8; border:1px solid var(--border); border-radius:10px; flex-shrink:0">
+                       <input type="checkbox" id="certify" style="width:18px; height:18px; accent-color:var(--accent1); cursor:pointer">
+                    </div>
+                    <div>
+                       <div style="font-size:15px; font-weight:800; color:var(--text)">Verify Intelligence Data</div>
+                       <div class="muted" style="font-size:13px; margin-top:2px">I swear this operational review is compliant with Windsor Grove elite standards.</div>
+                    </div>
+                </label>
+
+                <!-- Dispatch Button -->
+                <button class="btn btn-primary" onclick="submitBriefing('${h.id}')" style="width:100%; display:flex; justify-content:center; align-items:center; gap:12px; padding:20px; font-size:16px; font-weight:700; border-radius:20px; box-shadow:0 10px 25px rgba(197,160,89,0.25); border:none; margin-top:10px; cursor:pointer; transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                    <span>Launch Intelligence Packet</span>
+                    <span style="font-size:18px">🚀</span>
+                </button>
+            </div>
+          </div>
+        `;
+        bindCategoryStars(h);
+    }
+
+    function bindCategoryStars(h) {
+      const catContainers = document.querySelectorAll(".category-stars");
+      const ratings = { service: 0, property: 0, elite: 0, market: 0 };
+      
+      const updateAll = () => {
+        const avg = Object.values(ratings).reduce((a,b)=>a+b, 0) / 4;
+        const est = (h.commission_rate * (avg / 5)); // Flat Reward Calculation
+        document.getElementById("estVal").textContent = fmt(est);
+      };
+
+      catContainers.forEach(container => {
+        const cat = container.dataset.category;
+        const stars = Array.from(container.querySelectorAll(".star-btn"));
+        const valText = container.parentElement.querySelector(".rating-val");
+        
+        const updateRow = () => {
+            stars.forEach(s => s.classList.toggle("active", +s.dataset.v <= ratings[cat]));
+            valText.textContent = ratings[cat].toFixed(1);
+            updateAll();
+        };
+
+        stars.forEach(s => s.onclick = () => { 
+            ratings[cat] = +s.dataset.v; 
+            updateRow(); 
+        });
+        
+        updateRow();
+      });
+      
+      window.__currentRatings = () => ratings;
+    }
+
+    async function submitBriefing(id) {
+        // Check daily rating limit
+        const today = new Date().toISOString().split('T')[0];
+        const storageKey = `rated_${id}_${today}`;
+        if (localStorage.getItem(storageKey)) {
+            return toast('You can only rate this hotel once per day.');
+        }
+
+        if (!document.getElementById("certify").checked) {
+            return toast("Please certify your intelligence report.");
+        }
+
+        const ratings = window.__currentRatings();
+        if (Object.values(ratings).includes(0)) {
+            return toast("Please rate all pillars in the Rating Matrix.");
+        }
+
+        const review = document.getElementById("review-text").value.trim();
+        const comments = document.getElementById("comments-text").value.trim();
+        
+        if (review.length < 15) {
+            return toast("Public review must be at least 15 characters long.");
+        }
+
+        try {
+            const res = await api.submitRating(id, ratings, review, comments);
+            if (res.success) {
+                localStorage.setItem(storageKey, 'true');
+                toast("Intelligence Certified. Reward Processed!");
+                setTimeout(() => window.location.href = 'account.html', 1000);
+            } else {
+                toast(res.error || "Submission failed.");
+            }
+        } catch (e) {
+            toast("Submission failed.");
+        }
+    }
+    window.submitBriefing = submitBriefing;
+
+    async function initTasks() {
+        try {
+            const res = await fetch(`${API_URL}/hotels`);
+            hotels = await res.json();
+            renderTaskList();
+            if (selectedId) {
+                selectHotel(selectedId);
+            }
+        } catch (e) {
+            console.error("Failed to fetch hotels:", e);
+        }
+    }
+    
+    // Wait slightly to ensure core.js has loaded the state/API_URL
+    window.addEventListener('DOMContentLoaded', () => { setTimeout(initTasks, 100); });
+  </script>
+</body>
+</html>

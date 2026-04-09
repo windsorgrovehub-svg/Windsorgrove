@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How Earning Works | Windsor Grove Hub</title>
+  <meta name="description" content="Learn how to earn commissions by rating hotels on Windsor Grove. Follow our simple steps and start getting paid today.">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    /* ===== PAGE SPECIFIC ===== */
+    .hiw-hero {
+      padding: 80px 0 60px;
+      text-align: center;
+    }
+    .hiw-hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      margin: 16px 0 20px;
+    }
+    .hiw-hero p {
+      font-size: 1.1rem;
+      color: var(--text-dim);
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* ===== ELEGANT 3-STEP FLOW ===== */
+    .steps-wrap {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: 1fr;
+      position: relative;
+      max-width: 1100px;
+      margin: 0 auto 80px;
+    }
+    @media (min-width: 900px) {
+      .steps-wrap { grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    }
+
+    .step-card {
+      position: relative;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 32px;
+      text-align: center;
+      transition: all 0.3s cubic-bezier(0.2, 1, 0.3, 1);
+    }
+    .step-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px -10px rgba(0,0,0,0.08);
+      border: 1px solid rgba(197, 160, 89, 0.3);
+    }
+
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, rgba(197,160,89,0.08), rgba(139,106,47,0.08));
+      color: #c5a059;
+      font-family: Fraunces, serif;
+      font-size: 28px;
+      font-weight: 700;
+      border-radius: 50%;
+      margin-bottom: 24px;
+      border: 1px solid rgba(197, 160, 89, 0.2);
+      transition: all 0.3s ease;
+    }
+    .step-card:hover .step-num {
+      background: rgba(197, 160, 89, 0.15);
+      transform: scale(1.1);
+    }
+
+    .step-badge {
+      display: block;
+      color: #c5a059;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 12px;
+    }
+
+    .step-card h3 {
+      font-size: 1.15rem;
+      font-weight: 500;
+      line-height: 1.6;
+      color: var(--text);
+      margin: 0;
+    }
+
+    @media (max-width: 899px) {
+      .steps-wrap { gap: 16px; margin-bottom: 60px; }
+      .step-card {
+        text-align: left;
+        padding: 24px;
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+      }
+      .step-num {
+        flex-shrink: 0;
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+        margin-bottom: 0;
+      }
+      .step-content { flex: 1; }
+      .step-badge { margin-bottom: 6px; }
+    }
+
+    /* ===== RULES SECTION ===== */
+    .rules-section {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      padding: 56px;
+      margin-bottom: 80px;
+    }
+    @media (max-width: 640px) { .rules-section { padding: 32px 24px; } }
+
+    .rules-intro {
+      margin-bottom: 40px;
+    }
+    .rules-intro h2 {
+      font-size: 1.8rem;
+      margin-top: 12px;
+    }
+    .rules-intro p {
+      color: var(--text-dim);
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+
+    .rules-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 768px) { .rules-grid { grid-template-columns: 1fr 1fr; } }
+
+    .rule-card {
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px 28px;
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    .rule-card:hover {
+      border-color: var(--accent1);
+      box-shadow: 0 8px 24px -8px rgba(197,160,89,0.1);
+    }
+    .rule-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .rule-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: var(--accent3);
+      color: var(--accent2);
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .rule-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .rule-body {
+      padding-left: 50px;
+    }
+    .rule-body ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .rule-body li {
+      font-size: 0.875rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+      padding-left: 16px;
+      position: relative;
+    }
+    .rule-body li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 9px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent1);
+    }
+
+    /* ===== CTA STRIP ===== */
+    .cta-strip {
+      background: var(--text);
+      border-radius: 28px;
+      padding: 56px 48px;
+      text-align: center;
+      margin-bottom: 80px;
+      color: #fff;
+    }
+    .cta-strip h2 { font-size: 2rem; color: #fff; margin-bottom: 12px; }
+    .cta-strip p  { color: rgba(255,255,255,0.7); margin-bottom: 28px; }
+  </style>
+</head>
+
+<body data-nav="public">
+  <!-- Loading Animation -->
+  <div class="loader-wrapper" id="loader">
+    <div class="loader">
+      <div class="loader-ring"></div>
+      <div class="loader-text">WINDSOR GROVE</div>
+    </div>
+  </div>
+
+  <!-- Background -->
+  <div class="bg-wrap">
+    <div class="bg-gradient"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <header id="header">
+    <div class="container head-inner">
+      <div class="brand" id="brand" style="cursor:pointer" onclick="window.location.href='index.html'">
+        <div class="logo" style="width:40px; height:40px; border-radius:50%; overflow:hidden; background:var(--bg); border:1px solid var(--border)">
+          <img src="logo.png" alt="Windsor Grove" style="width:100%; height:100%; object-fit:cover">
+        </div>
+        <div>
+          <div class="brand-title">WINDSOR GROVE</div>
+          <div class="brand-sub">Expert Hotel Intelligence</div>
+        </div>
+      </div>
+      <nav class="desktop-nav">
+      </nav>
+      <div style="display:flex; align-items:center; gap:12px">
+        <button class="btn btn-outline" id="btn-login" style="padding: 10px 18px">Login</button>
+        <button class="btn btn-primary" id="btn-create" style="padding: 10px 18px">Join Expert Circle</button>
+        <button class="nav-btn active" onclick="window.location.href='how-it-works.html'" style="padding: 10px 18px">How it Works</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+
+      <!-- Hero -->
+      <section class="hiw-hero">
+        <div class="eyebrow"><span class="live-dot"></span> Simple & Transparent</div>
+        <h1>How <span class="grad-text">Earning</span> Works</h1>
+        <p>Follow these simple steps to start earning commissions for rating hotels. It's easy, free, and rewarding.</p>
+      </section>
+
+      <!-- 3 Steps -->
+      <div class="steps-wrap">
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <div class="step-badge">Step 1</div>
+            <h3>Sign up for free and get access to our rating platform.</h3>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <div class="step-badge">Step 2</div>
+            <h3>Browse listed hotels, leave honest ratings after reviews.</h3>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <div class="step-badge">Step 3</div>
+            <h3>Get paid for each review. The more you rate, the more you earn.</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rules -->
+      <div class="rules-section">
+        <div class="rules-intro">
+          <div class="eyebrow">Platform Guidelines</div>
+          <h2>Follow these simple steps to keep <span class="grad-text">earning</span> on Windsor Grove</h2>
+          <p>Please read all guidelines carefully to ensure a smooth and rewarding experience on our platform.</p>
+        </div>
+
+        <div class="rules-grid">
+
+          <div class="rule-card">
+            <div class="rule-header">
+              <div class="rule-num">1</div>
+              <div class="rule-title">Account Reset</div>
+            </div>
+            <div class="rule-body">
+              <ul>
+                <li>To reset your account, you must first complete all improvement tasks using the bonus received after registration.</li>
+                <li>The minimum amount required for reset is $50 USD (excluding your account balance).</li>
+                <li>You must contact customer service to request an account reset after completing the first set of tasks.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-header">
+              <div class="rule-num">2</div>
+              <div class="rule-title">Withdrawals &amp; Security of Funds</div>
+            </div>
+            <div class="rule-body">
+              <ul>
+                <li>Users must complete all optimization tasks before meeting system withdrawal requirements.</li>
+                <li>Withdrawals are processed automatically by the system to prevent loss of funds.</li>
+                <li>Users' funds are secure, and the platform will be liable for any accidental loss.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-header">
+              <div class="rule-num">3</div>
+              <div class="rule-title">Account Security</div>
+            </div>
+            <div class="rule-body">
+              <ul>
+                <li>Do not share your account password or security code with anyone. The platform is not responsible for losses due to disclosure.</li>
+                <li>Set strong passwords that do not include personal details like birthdays or phone numbers.</li>
+                <li>If you forget your password, you can reset it by contacting online customer service.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-header">
+              <div class="rule-num">4</div>
+              <div class="rule-title">Optimization Tasks</div>
+            </div>
+            <div class="rule-body">
+              <ul>
+                <li>Tasks are assigned randomly by the system and cannot be changed, canceled, or skipped.</li>
+                <li>Due to the large number of users, product assignments are handled by the system automatically.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-header">
+              <div class="rule-num">5</div>
+              <div class="rule-title">Legal Compliance</div>
+            </div>
+            <div class="rule-body">
+              <ul>
+                <li>Legal action will be taken in cases of account misuse.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-header">
+              <div class="rule-num">6</div>
+              <div class="rule-title">Deposits</div>
+            </div>
+            <div class="rule-body">
+              <ul>
+                <li>Each item comes from a different merchant, and deposits should not be held for more than 30 minutes.</li>
+                <li>Before making a deposit, confirm the merchant's USD address with customer service.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-header">
+              <div class="rule-num">7</div>
+              <div class="rule-title">Deposit Responsibility</div>
+            </div>
+            <div class="rule-body">
+              <ul>
+                <li>The platform is not responsible for deposits made to the wrong account.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-header">
+              <div class="rule-num">8</div>
+              <div class="rule-title">Task Completion Time</div>
+            </div>
+            <div class="rule-body">
+              <ul>
+                <li>Users must complete improvement tasks within 8 hours.</li>
+                <li>If a task is not completed and no extension is requested, the user may receive complaints from merchants, resulting in a lower credit score.</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="cta-strip">
+        <h2>Ready to Start <span class="grad-text">Earning?</span></h2>
+        <p>Join thousands of certified experts already earning commissions on Windsor Grove.</p>
+        <button class="btn btn-primary" style="background:#fff;color:var(--text);padding:16px 36px;font-size:1rem" onclick="window.location.href='signup.html'">Create Free Account</button>
+      </div>
+
+    </div>
+  </main>
+
+  <footer style="margin-top:0">
+    <div class="container foot-inner">
+      <!-- Logic in core.js will populate this -->
+    </div>
+  </footer>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script src="assets/js/core.js"></script>
+  <script>
+    document.getElementById('btn-login').onclick  = () => window.location.href = 'login.html';
+    document.getElementById('btn-create').onclick = () => window.location.href = 'signup.html';
+  </script>
+</body>
+
+</html>

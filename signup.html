@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join Expert Circle | Windsor Grove Hub</title>
+  <meta name="description" content="Apply to join the Windsor Grove Expert Circle — earn commissions rating ultra-luxury hotels worldwide.">
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: Outfit, sans-serif; overflow-x: hidden; }
+
+    /* ─────────────────────────────────
+       DESKTOP: 2-column layout
+    ───────────────────────────────── */
+    .sg-page {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── Left cinematic panel ── */
+    .sg-left {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 44px 52px 48px;
+    }
+    .sg-bg {
+      position: absolute; inset: 0;
+      background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&q=85');
+      background-size: cover; background-position: center;
+      filter: brightness(0.32) saturate(1.1);
+      z-index: 0; transition: transform 10s ease;
+    }
+    .sg-left:hover .sg-bg { transform: scale(1.05); }
+    .sg-overlay {
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(7,9,15,0.55) 0%, transparent 35%, rgba(7,9,15,0.9) 100%),
+        linear-gradient(to right, rgba(7,9,15,0.2) 0%, transparent 70%);
+      z-index: 1;
+    }
+    .sg-left-inner {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column;
+      height: 100%; justify-content: space-between;
+    }
+
+    .sg-brand { display: flex; align-items: center; gap: 12px; }
+    .sg-brand-mark {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, #c5a059, #8b6a2f);
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-weight: 800; font-size: 15px; color: #fff;
+    }
+    .sg-brand-name {
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: #c5a059;
+    }
+
+    .sg-hero { margin: auto 0; }
+    .sg-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(197,160,89,0.15);
+      border: 1px solid rgba(197,160,89,0.3);
+      border-radius: 24px; padding: 6px 14px;
+      font-size: 11px; font-weight: 700;
+      color: var(--accent1); letter-spacing: 0.1em;
+      text-transform: uppercase; margin-bottom: 24px;
+    }
+    .sg-pill::before {
+      content: ''; width: 7px; height: 7px;
+      background: #c5a059; border-radius: 50%;
+      animation: blink 2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .sg-hero h2 {
+      font-family: Fraunces, serif;
+      font-size: clamp(2.4rem, 3.2vw, 3.6rem);
+      font-weight: 500; line-height: 1.1; color: #fff; margin-bottom: 18px;
+    }
+    .sg-hero h2 em {
+      font-style: normal;
+      background: linear-gradient(135deg, #c5a059, #fef3d0, #a38144);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .sg-hero p { color: rgba(255,255,255,0.5); font-size: 0.95rem; line-height: 1.75; max-width: 360px; }
+
+    .sg-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+    .sg-stat {
+      flex: 1; min-width: 100px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 16px; padding: 16px 20px;
+      backdrop-filter: blur(12px);
+    }
+    .sg-stat-val { font-size: 1.5rem; font-weight: 800; font-family: Fraunces, serif; color: #fff; line-height: 1; }
+    .sg-stat-lbl { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* ── Right white panel ── */
+    .sg-right {
+      background: #fff;
+      display: flex; flex-direction: column;
+    }
+    .mobile-header { display: none; }
+    .sg-right-top {
+
+      padding: 24px 40px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex; align-items: center; justify-content: flex-end;
+    }
+    .sg-right-top a { font-size: 13px; font-weight: 600; color: #64748b; text-decoration: none; }
+    .sg-right-top a span { color: #c5a059; }
+
+    .sg-right-body {
+      flex: 1; display: flex;
+      align-items: center; justify-content: center;
+      padding: 48px 40px;
+    }
+
+    /* ─────────────────────────────────
+       MOBILE / TABLET (≤ 900px)
+       Same light #fff background as login
+    ───────────────────────────────── */
+    @media (max-width: 900px) {
+      .sg-page { grid-template-columns: 1fr; min-height: 100vh; }
+      .sg-left  { display: none !important; }
+      .sg-right { background: #fff; min-height: 100vh; }
+      .mobile-header { display: block; padding: 16px 20px; background: #fff; border-bottom: 1px solid #f1f5f9; z-index: 100; position: sticky; top: 0; }
+      .sg-right-top { display: none; }
+      .sg-right-body { padding: 32px 20px 60px; align-items: flex-start; justify-content: center; }
+      .sg-form-card { max-width: 100%; }
+    }
+
+    /* ─────────────────────────────────
+       FORM CARD
+    ───────────────────────────────── */
+    .sg-form-card { width: 100%; max-width: 420px; }
+
+    .form-eyebrow {
+      font-size: 11px; font-weight: 700;
+      color: #c5a059; letter-spacing: 0.1em;
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    .form-title {
+      font-family: Fraunces, serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 500; color: #0f172a; margin-bottom: 6px;
+    }
+    .form-sub { font-size: 0.88rem; color: #64748b; margin-bottom: 28px; line-height: 1.5; }
+
+    /* Progress bar */
+    .sg-steps { display: flex; gap: 6px; align-items: center; margin-bottom: 24px; }
+    .sg-step { height: 3px; flex: 1; border-radius: 2px; background: #e2e8f0; transition: background 0.4s; }
+    .sg-step.done   { background: #c5a059; }
+    .sg-step.active { background: linear-gradient(90deg, #c5a059, #a38144); }
+
+    /* Field group */
+    .sg-field { margin-bottom: 14px; }
+    .sg-field label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 600; color: #374151;
+      margin-bottom: 6px;
+    }
+    .req-pill {
+      background: #fef9ed; border: 1px solid rgba(197,160,89,0.35);
+      color: #a38144; font-size: 9px; font-weight: 700;
+      padding: 2px 7px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+
+    /* Input with leading icon slot */
+    .sg-input-wrap { position: relative; }
+    .sg-input-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: #9ca3af; pointer-events: none;
+      display: flex; align-items: center;
+    }
+    .sg-input-icon svg { width: 16px; height: 16px; }
+
+    .sg-input {
+      width: 100%; height: 48px;
+      padding: 0 14px 0 42px;
+      border: 1.5px solid #e5e7eb; border-radius: 12px;
+      font-size: 14px; font-family: Outfit, sans-serif;
+      color: #0f172a; background: #f9fafb; outline: none;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .sg-input::placeholder { color: #9ca3af; }
+    .sg-input:focus {
+      border-color: #c5a059; background: #fff;
+      box-shadow: 0 0 0 3px rgba(197,160,89,0.1);
+    }
+    .sg-input.err { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.07); }
+    .sg-input.ok  { border-color: #10b981; }
+    .sg-input.invite {
+      letter-spacing: 0.14em; text-transform: uppercase;
+      font-weight: 700; font-size: 13px; color: #0f172a;
+    }
+
+    .sg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 420px) { .sg-row { grid-template-columns: 1fr; } }
+
+    .sg-hint { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+    .sg-hint.err { color: #ef4444; }
+
+    /* Password strength */
+    .pw-strength { margin: 8px 0 4px; }
+    .pw-bars { display: flex; gap: 4px; margin-bottom: 4px; }
+    .pw-bar {
+      height: 3px; flex: 1; border-radius: 2px;
+      background: #e5e7eb; transition: background 0.3s;
+    }
+    .pw-label { font-size: 11px; color: #9ca3af; }
+
+    /* strength colours */
+    .pw-weak    .pw-bar:nth-child(1)                          { background: #ef4444; }
+    .pw-fair    .pw-bar:nth-child(1),
+    .pw-fair    .pw-bar:nth-child(2)                          { background: #f59e0b; }
+    .pw-good    .pw-bar:nth-child(1),
+    .pw-good    .pw-bar:nth-child(2),
+    .pw-good    .pw-bar:nth-child(3)                          { background: #3b82f6; }
+    .pw-strong  .pw-bar                                       { background: #10b981; }
+
+    /* Divider */
+    .sg-divider { height: 1px; background: #f1f5f9; margin: 4px 0 16px; }
+
+    /* Submit button */
+    .sg-btn {
+      width: 100%; height: 52px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, #c5a059 0%, #8b6a2f 100%);
+      color: #fff; font-size: 15px; font-weight: 700;
+      font-family: Outfit, sans-serif; cursor: pointer;
+      margin-top: 10px;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(197,160,89,0.3);
+      position: relative; overflow: hidden;
+    }
+    .sg-btn::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.13) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .sg-btn:hover:not(:disabled) { opacity: 0.91; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(197,160,89,0.38); }
+    .sg-btn:active:not(:disabled) { transform: translateY(0); }
+    .sg-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .sg-btn .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.7s linear infinite; display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .sg-btn.loading .spinner { display: block; }
+    .sg-btn.loading .btn-label { display: none; }
+
+    .sg-foot { text-align: center; font-size: 12px; color: #6b7280; margin-top: 16px; line-height: 1.6; }
+    .sg-foot a { color: #c5a059; font-weight: 600; text-decoration: none; }
+
+    /* Show/hide password toggle */
+    .pw-toggle {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: #9ca3af; padding: 0; display: flex; align-items: center;
+    }
+    .pw-toggle:hover { color: #6b7280; }
+    .pw-toggle svg { width: 16px; height: 16px; }
+  </style>
+</head>
+<body data-nav="public">
+
+  <div class="loader-wrapper" id="loader">
+    <div class="loader"><div class="loader-ring"></div><div class="loader-text">WINDSOR GROVE</div></div>
+  </div>
+  <div class="toasts" id="toasts"></div>
+
+  <div class="sg-page">
+
+    <!-- ══════════ LEFT — cinematic (desktop only) ══════════ -->
+    <div class="sg-left">
+      <div class="sg-bg"></div>
+      <div class="sg-overlay"></div>
+      <div class="sg-left-inner">
+        <div class="sg-brand">
+          <div class="sg-brand-mark" style="width:60px; height:60px; border-radius:50%; overflow:hidden; background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.2)">
+            <img src="logo.png" alt="Windsor Grove" style="width:100%; height:100%; object-fit:cover">
+          </div>
+          <div class="sg-brand-name">Windsor Grove</div>
+        </div>
+        <div class="sg-hero">
+          <div class="sg-pill">Invite-Only Programme</div>
+          <h2>Rate hotels.<br><em>Earn real</em><br>commissions.</h2>
+          <p>Join our elite network of hospitality experts. Access luxury properties across 40+ countries and earn up to 16.5% commission per mission.</p>
+        </div>
+        <div class="sg-stats">
+          <div class="sg-stat"><div class="sg-stat-val">$1.4M+</div><div class="sg-stat-lbl">Paid Out</div></div>
+          <div class="sg-stat"><div class="sg-stat-val">12.4K</div><div class="sg-stat-lbl">Experts</div></div>
+          <div class="sg-stat"><div class="sg-stat-val">100+</div><div class="sg-stat-lbl">Properties</div></div>
+          <div class="sg-stat"><div class="sg-stat-val">$25</div><div class="sg-stat-lbl">Bonus</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ RIGHT — form ══════════ -->
+    <div class="sg-right">
+      <header id="header" class="mobile-header">
+        <div class="head-inner" style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+          <div class="brand" onclick="window.location.href='index.html'" style="cursor:pointer;">
+            <div class="logo" style="width:34px; height:34px; border-radius:50%; overflow:hidden; background:linear-gradient(135deg, #c5a059, #8b6a2f); border:1px solid rgba(197,160,89,0.3)">
+              <img src="logo.png" alt="Windsor Grove" style="width:100%; height:100%; object-fit:cover">
+            </div>
+            <div>
+              <div class="brand-title" style="font-family:Outfit,sans-serif; font-weight:700; font-size:14px; letter-spacing:0.12em; color:#c5a059">WINDSOR GROVE</div>
+              <div class="brand-sub" style="font-family:Outfit,sans-serif; color:#64748b; font-size:9px; text-transform:uppercase; letter-spacing:0.05em">Expert Hotel Intelligence</div>
+            </div>
+          </div>
+          <!-- core.js injects hamburger here, we use order:-1 to push it to the far left -->
+        </div>
+      </header>
+
+      <div class="sg-right-top" style="display:none"></div>
+
+      <div class="sg-right-body">
+        <div class="sg-form-card">
+
+          <p class="form-eyebrow">Get Started</p>
+          <h2 class="form-title">Create your account</h2>
+          <p class="form-sub">Sign up today and start exploring our features!</p>
+
+          <!-- 3-step progress -->
+          <div class="sg-steps">
+            <div class="sg-step active" id="s1"></div>
+            <div class="sg-step" id="s2"></div>
+            <div class="sg-step" id="s3"></div>
+          </div>
+
+          <!-- Full Name -->
+          <div class="sg-field">
+            <label>Full Name</label>
+            <div class="sg-input-wrap">
+              <div class="sg-input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <input type="text" class="sg-input" id="name" placeholder="Alex Morgan" autocomplete="name" oninput="updateStep()">
+            </div>
+          </div>
+
+          <!-- Email Address -->
+          <div class="sg-field">
+            <label>Email Address</label>
+            <div class="sg-input-wrap">
+              <div class="sg-input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </div>
+              <input type="email" class="sg-input" id="email" placeholder="alex@example.com" autocomplete="email" oninput="updateStep()">
+            </div>
+          </div>
+
+          <!-- Phone Number -->
+          <div class="sg-field">
+            <label>Phone Number</label>
+            <div style="display: flex; gap: 8px;">
+              <select class="sg-input" id="country_code" style="width: auto; max-width: 140px; padding: 0 12px; font-weight: 500; text-overflow: ellipsis;">
+                <option value="+93">🇦🇫 Afghanistan (+93)</option>
+                <option value="+355">🇦🇱 Albania (+355)</option>
+                <option value="+213">🇩🇿 Algeria (+213)</option>
+                <option value="+1-684">🇦🇸 American Samoa (+1-684)</option>
+                <option value="+376">🇦🇩 Andorra (+376)</option>
+                <option value="+244">🇦🇴 Angola (+244)</option>
+                <option value="+54">🇦🇷 Argentina (+54)</option>
+                <option value="+374">🇦🇲 Armenia (+374)</option>
+                <option value="+61">🇦🇺 Australia (+61)</option>
+                <option value="+43">🇦🇹 Austria (+43)</option>
+                <option value="+994">🇦🇿 Azerbaijan (+994)</option>
+                <option value="+1-242">🇧🇸 Bahamas (+1-242)</option>
+                <option value="+973">🇧🇭 Bahrain (+973)</option>
+                <option value="+880">🇧🇩 Bangladesh (+880)</option>
+                <option value="+1-246">🇧🇧 Barbados (+1-246)</option>
+                <option value="+375">🇧🇾 Belarus (+375)</option>
+                <option value="+32">🇧🇪 Belgium (+32)</option>
+                <option value="+501">🇧🇿 Belize (+501)</option>
+                <option value="+229">🇧🇯 Benin (+229)</option>
+                <option value="+1-441">🇧🇲 Bermuda (+1-441)</option>
+                <option value="+975">🇧🇹 Bhutan (+975)</option>
+                <option value="+591">🇧🇴 Bolivia (+591)</option>
+                <option value="+387">🇧🇦 Bosnia (+387)</option>
+                <option value="+267">🇧🇼 Botswana (+267)</option>
+                <option value="+55">🇧🇷 Brazil (+55)</option>
+                <option value="+673">🇧🇳 Brunei (+673)</option>
+                <option value="+359">🇧🇬 Bulgaria (+359)</option>
+                <option value="+226">🇧🇫 Burkina Faso (+226)</option>
+                <option value="+257">🇧🇮 Burundi (+257)</option>
+                <option value="+855">🇰🇭 Cambodia (+855)</option>
+                <option value="+237">🇨🇲 Cameroon (+237)</option>
+                <option value="+1">🇨🇦 Canada (+1)</option>
+                <option value="+238">🇨🇻 Cape Verde (+238)</option>
+                <option value="+1-345">🇰🇾 Cayman Islands (+1-345)</option>
+                <option value="+236">🇨🇫 Central African Republic (+236)</option>
+                <option value="+235">🇹🇩 Chad (+235)</option>
+                <option value="+56">🇨🇱 Chile (+56)</option>
+                <option value="+86">🇨🇳 China (+86)</option>
+                <option value="+57">🇨🇴 Colombia (+57)</option>
+                <option value="+269">🇰🇲 Comoros (+269)</option>
+                <option value="+242">🇨🇬 Congo (+242)</option>
+                <option value="+243">🇨🇩 Congo (DRC) (+243)</option>
+                <option value="+506">🇨🇷 Costa Rica (+506)</option>
+                <option value="+385">🇭🇷 Croatia (+385)</option>
+                <option value="+53">🇨🇺 Cuba (+53)</option>
+                <option value="+357">🇨🇾 Cyprus (+357)</option>
+                <option value="+420">🇨🇿 Czech Republic (+420)</option>
+                <option value="+225">🇨🇮 Côte d'Ivoire (+225)</option>
+                <option value="+45">🇩🇰 Denmark (+45)</option>
+                <option value="+253">🇩🇯 Djibouti (+253)</option>
+                <option value="+1-809">🇩🇴 Dominican Republic (+1-809)</option>
+                <option value="+593">🇪🇨 Ecuador (+593)</option>
+                <option value="+20">🇪🇬 Egypt (+20)</option>
+                <option value="+503">🇸🇻 El Salvador (+503)</option>
+                <option value="+240">🇬🇶 Equatorial Guinea (+240)</option>
+                <option value="+291">🇪🇷 Eritrea (+291)</option>
+                <option value="+372">🇪🇪 Estonia (+372)</option>
+                <option value="+251">🇪🇹 Ethiopia (+251)</option>
+                <option value="+679">🇫🇯 Fiji (+679)</option>
+                <option value="+358">🇫🇮 Finland (+358)</option>
+                <option value="+33">🇫🇷 France (+33)</option>
+                <option value="+241">🇬🇦 Gabon (+241)</option>
+                <option value="+220">🇬🇲 Gambia (+220)</option>
+                <option value="+995">🇬🇪 Georgia (+995)</option>
+                <option value="+49">🇩🇪 Germany (+49)</option>
+                <option value="+233">🇬🇭 Ghana (+233)</option>
+                <option value="+30">🇬🇷 Greece (+30)</option>
+                <option value="+1-473">🇬🇩 Grenada (+1-473)</option>
+                <option value="+1-671">🇬🇺 Guam (+1-671)</option>
+                <option value="+502">🇬🇹 Guatemala (+502)</option>
+                <option value="+224">🇬🇳 Guinea (+224)</option>
+                <option value="+245">🇬🇼 Guinea-Bissau (+245)</option>
+                <option value="+592">🇬🇾 Guyana (+592)</option>
+                <option value="+509">🇭🇹 Haiti (+509)</option>
+                <option value="+504">🇭🇳 Honduras (+504)</option>
+                <option value="+852">🇭🇰 Hong Kong (+852)</option>
+                <option value="+36">🇭🇺 Hungary (+36)</option>
+                <option value="+354">🇮🇸 Iceland (+354)</option>
+                <option value="+91">🇮🇳 India (+91)</option>
+                <option value="+62">🇮🇩 Indonesia (+62)</option>
+                <option value="+98">🇮🇷 Iran (+98)</option>
+                <option value="+964">🇮🇶 Iraq (+964)</option>
+                <option value="+353">🇮🇪 Ireland (+353)</option>
+                <option value="+972">🇮🇱 Israel (+972)</option>
+                <option value="+39">🇮🇹 Italy (+39)</option>
+                <option value="+1-876">🇯🇲 Jamaica (+1-876)</option>
+                <option value="+81">🇯🇵 Japan (+81)</option>
+                <option value="+962">🇯🇴 Jordan (+962)</option>
+                <option value="+7">🇰🇿 Kazakhstan (+7)</option>
+                <option value="+254">🇰🇪 Kenya (+254)</option>
+                <option value="+965">🇰🇼 Kuwait (+965)</option>
+                <option value="+996">🇰🇬 Kyrgyzstan (+996)</option>
+                <option value="+856">🇱🇦 Laos (+856)</option>
+                <option value="+371">🇱🇻 Latvia (+371)</option>
+                <option value="+961">🇱🇧 Lebanon (+961)</option>
+                <option value="+266">🇱🇸 Lesotho (+266)</option>
+                <option value="+231">🇱🇷 Liberia (+231)</option>
+                <option value="+218">🇱🇾 Libya (+218)</option>
+                <option value="+423">🇱🇮 Liechtenstein (+423)</option>
+                <option value="+370">🇱🇹 Lithuania (+370)</option>
+                <option value="+352">🇱🇺 Luxembourg (+352)</option>
+                <option value="+853">🇲🇴 Macao (+853)</option>
+                <option value="+261">🇲🇬 Madagascar (+261)</option>
+                <option value="+265">🇲🇼 Malawi (+265)</option>
+                <option value="+60">🇲🇾 Malaysia (+60)</option>
+                <option value="+960">🇲🇻 Maldives (+960)</option>
+                <option value="+223">🇲🇱 Mali (+223)</option>
+                <option value="+356">🇲🇹 Malta (+356)</option>
+                <option value="+222">🇲🇷 Mauritania (+222)</option>
+                <option value="+230">🇲🇺 Mauritius (+230)</option>
+                <option value="+52">🇲🇽 Mexico (+52)</option>
+                <option value="+373">🇲🇩 Moldova (+373)</option>
+                <option value="+377">🇲🇨 Monaco (+377)</option>
+                <option value="+976">🇲🇳 Mongolia (+976)</option>
+                <option value="+382">🇲🇪 Montenegro (+382)</option>
+                <option value="+212">🇲🇦 Morocco (+212)</option>
+                <option value="+258">🇲🇿 Mozambique (+258)</option>
+                <option value="+95">🇲🇲 Myanmar (+95)</option>
+                <option value="+264">🇳🇦 Namibia (+264)</option>
+                <option value="+977">🇳🇵 Nepal (+977)</option>
+                <option value="+31">🇳🇱 Netherlands (+31)</option>
+                <option value="+64">🇳🇿 New Zealand (+64)</option>
+                <option value="+505">🇳🇮 Nicaragua (+505)</option>
+                <option value="+227">🇳🇪 Niger (+227)</option>
+                <option value="+234">🇳🇬 Nigeria (+234)</option>
+                <option value="+850">🇰🇵 North Korea (+850)</option>
+                <option value="+47">🇳🇴 Norway (+47)</option>
+                <option value="+968">🇴🇲 Oman (+968)</option>
+                <option value="+92">🇵🇰 Pakistan (+92)</option>
+                <option value="+970">🇵🇸 Palestine (+970)</option>
+                <option value="+507">🇵🇦 Panama (+507)</option>
+                <option value="+675">🇵🇬 Papua New Guinea (+675)</option>
+                <option value="+595">🇵🇾 Paraguay (+595)</option>
+                <option value="+51">🇵🇪 Peru (+51)</option>
+                <option value="+63">🇵🇭 Philippines (+63)</option>
+                <option value="+48">🇵🇱 Poland (+48)</option>
+                <option value="+351">🇵🇹 Portugal (+351)</option>
+                <option value="+1-787">🇵🇷 Puerto Rico (+1-787)</option>
+                <option value="+974">🇶🇦 Qatar (+974)</option>
+                <option value="+40">🇷🇴 Romania (+40)</option>
+                <option value="+7">🇷🇺 Russia (+7)</option>
+                <option value="+250">🇷🇼 Rwanda (+250)</option>
+                <option value="+685">🇼🇸 Samoa (+685)</option>
+                <option value="+378">🇸🇲 San Marino (+378)</option>
+                <option value="+966">🇸🇦 Saudi Arabia (+966)</option>
+                <option value="+221">🇸🇳 Senegal (+221)</option>
+                <option value="+381">🇷🇸 Serbia (+381)</option>
+                <option value="+248">🇸🇨 Seychelles (+248)</option>
+                <option value="+232">🇸🇱 Sierra Leone (+232)</option>
+                <option value="+65">🇸🇬 Singapore (+65)</option>
+                <option value="+421">🇸🇰 Slovakia (+421)</option>
+                <option value="+386">🇸🇮 Slovenia (+386)</option>
+                <option value="+252">🇸🇴 Somalia (+252)</option>
+                <option value="+27">🇿🇦 South Africa (+27)</option>
+                <option value="+82">🇰🇷 South Korea (+82)</option>
+                <option value="+34">🇪🇸 Spain (+34)</option>
+                <option value="+94">🇱🇰 Sri Lanka (+94)</option>
+                <option value="+249">🇸🇩 Sudan (+249)</option>
+                <option value="+597">🇸🇷 Suriname (+597)</option>
+                <option value="+46">🇸🇪 Sweden (+46)</option>
+                <option value="+41">🇨🇭 Switzerland (+41)</option>
+                <option value="+963">🇸🇾 Syria (+963)</option>
+                <option value="+886">🇹🇼 Taiwan (+886)</option>
+                <option value="+992">🇹🇯 Tajikistan (+992)</option>
+                <option value="+255">🇹🇿 Tanzania (+255)</option>
+                <option value="+66">🇹🇭 Thailand (+66)</option>
+                <option value="+228">🇹🇬 Togo (+228)</option>
+                <option value="+676">🇹🇴 Tonga (+676)</option>
+                <option value="+1-868">🇹🇹 Trinidad and Tobago (+1-868)</option>
+                <option value="+216">🇹🇳 Tunisia (+216)</option>
+                <option value="+90">🇹🇷 Turkey (+90)</option>
+                <option value="+993">🇹🇲 Turkmenistan (+993)</option>
+                <option value="+256">🇺🇬 Uganda (+256)</option>
+                <option value="+380">🇺🇦 Ukraine (+380)</option>
+                <option value="+971">🇦🇪 United Arab Emirates (+971)</option>
+                <option value="+44" selected>🇬🇧 United Kingdom (+44)</option>
+                <option value="+1">🇺🇸 United States (+1)</option>
+                <option value="+598">🇺🇾 Uruguay (+598)</option>
+                <option value="+998">🇺🇿 Uzbekistan (+998)</option>
+                <option value="+678">🇻🇺 Vanuatu (+678)</option>
+                <option value="+58">🇻🇪 Venezuela (+58)</option>
+                <option value="+84">🇻🇳 Vietnam (+84)</option>
+                <option value="+967">🇾🇪 Yemen (+967)</option>
+                <option value="+260">🇿🇲 Zambia (+260)</option>
+                <option value="+263">🇿🇼 Zimbabwe (+263)</option>
+              </select>
+              <div class="sg-input-wrap" style="flex: 1;">
+                <div class="sg-input-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                </div>
+                <input type="tel" class="sg-input" id="phone" placeholder="7700 900000" autocomplete="tel" oninput="updateStep()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Password + Confirm -->
+          <div class="sg-row">
+            <div class="sg-field">
+              <label>Password</label>
+              <div class="sg-input-wrap">
+                <div class="sg-input-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <input type="password" class="sg-input" id="password" placeholder="Min 6 characters" autocomplete="new-password" oninput="checkStrength(); checkPassMatch(); updateStep()">
+                <button type="button" class="pw-toggle" id="pw-toggle1" onclick="togglePw('password','pw-toggle1')">
+                  <svg id="eye1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+              <!-- Password strength -->
+              <div class="pw-strength" id="pw-strength" style="display:none">
+                <div class="pw-bars" id="pw-bars">
+                  <div class="pw-bar"></div><div class="pw-bar"></div>
+                  <div class="pw-bar"></div><div class="pw-bar"></div>
+                </div>
+                <div class="pw-label" id="pw-label">Weak</div>
+              </div>
+            </div>
+            <div class="sg-field">
+              <label>Confirm</label>
+              <div class="sg-input-wrap">
+                <div class="sg-input-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <input type="password" class="sg-input" id="confirm-password" placeholder="Repeat" autocomplete="new-password" oninput="checkPassMatch(); updateStep()">
+                <button type="button" class="pw-toggle" id="pw-toggle2" onclick="togglePw('confirm-password','pw-toggle2')">
+                  <svg id="eye2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="sg-hint err" id="pass-hint" style="display:none;margin-top:-8px;margin-bottom:8px">Passwords do not match</div>
+
+          <div class="sg-divider"></div>
+
+          <!-- Invite Code -->
+          <div class="sg-field">
+            <label>
+              Invitation Code
+              <span class="req-pill">Required</span>
+            </label>
+            <div class="sg-input-wrap">
+              <div class="sg-input-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m15 5 4 4-9.5 9.5-5 .5.5-5Z"/><path d="m19 9 2-2-4-4-2 2"/></svg>
+              </div>
+              <input type="text" class="sg-input invite" id="invite-code" placeholder="XXXXXXXX" autocomplete="off" oninput="updateStep()" onkeypress="if(event.key==='Enter')doSignup()">
+            </div>
+            <p class="sg-hint">You need a valid code from a Windsor Grove partner.</p>
+          </div>
+
+          <!-- Submit -->
+          <button class="sg-btn" id="signup-btn" onclick="doSignup()">
+            <div class="spinner"></div>
+            <span class="btn-label">Create Account</span>
+          </button>
+
+          <div class="sg-foot" style="margin-top:24px; font-size:14px;">
+            Already a member? <a href="login.html">Login →</a>
+          </div>
+
+          <div class="sg-foot" style="margin-top:16px">
+            By registering you agree to our
+            <a href="terms.html">Terms & Conditions</a> and
+            <a href="privacy.html">Privacy Policy</a>.
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="assets/js/core.js"></script>
+  <script>
+    // ── show/hide password ──
+    function togglePw(inputId, btnId) {
+      const inp = document.getElementById(inputId);
+      const isText = inp.type === 'text';
+      inp.type = isText ? 'password' : 'text';
+      document.getElementById(btnId).innerHTML = isText
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+    }
+
+    // ── password strength ──
+    function checkStrength() {
+      const pass = document.getElementById('password').value;
+      const bars = document.getElementById('pw-bars');
+      const lbl  = document.getElementById('pw-label');
+      const wrap = document.getElementById('pw-strength');
+
+      if (!pass) { wrap.style.display = 'none'; return; }
+      wrap.style.display = 'block';
+
+      let score = 0;
+      if (pass.length >= 6)  score++;
+      if (pass.length >= 10) score++;
+      if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score++;
+      if (/\d/.test(pass) && /[^A-Za-z0-9]/.test(pass)) score++;
+
+      const levels = ['pw-weak','pw-fair','pw-good','pw-strong'];
+      const labels = ['Weak','Fair','Good','Strong'];
+      bars.className = 'pw-bars ' + levels[score - 1];
+      lbl.textContent = labels[score - 1];
+      lbl.style.color = ['#ef4444','#f59e0b','#3b82f6','#10b981'][score - 1];
+    }
+
+    // ── password match ──
+    function checkPassMatch() {
+      const pass    = document.getElementById('password').value;
+      const confirm = document.getElementById('confirm-password').value;
+      const hint    = document.getElementById('pass-hint');
+      const confIn  = document.getElementById('confirm-password');
+      if (confirm && pass !== confirm) {
+        hint.style.display = 'block';
+        confIn.classList.add('err'); confIn.classList.remove('ok');
+      } else {
+        hint.style.display = 'none';
+        confIn.classList.remove('err');
+        if (confirm && pass === confirm) confIn.classList.add('ok');
+      }
+    }
+
+    // ── progress bar ──
+    function updateStep() {
+      const name    = document.getElementById('name').value.trim();
+      const email   = document.getElementById('email').value.trim();
+      const phone   = document.getElementById('phone').value.trim();
+      const pass    = document.getElementById('password').value;
+      const confirm = document.getElementById('confirm-password').value;
+      const code    = document.getElementById('invite-code').value.trim();
+      const step1ok = name && email && phone;
+      const step2ok = step1ok && pass.length >= 6 && pass === confirm;
+      const step3ok = step2ok && code;
+      document.getElementById('s1').className = step1ok ? 'sg-step done' : 'sg-step active';
+      document.getElementById('s2').className = step2ok ? 'sg-step done' : step1ok ? 'sg-step active' : 'sg-step';
+      document.getElementById('s3').className = step3ok ? 'sg-step done' : step2ok ? 'sg-step active' : 'sg-step';
+    }
+
+    // ── submit ──
+    async function doSignup() {
+      const name    = document.getElementById('name').value.trim();
+      const email   = document.getElementById('email').value.trim();
+      const rawPhone = document.getElementById('phone').value.trim();
+      const cCode   = document.getElementById('country_code').value;
+      const phone   = rawPhone ? (cCode + ' ' + rawPhone) : '';
+      const pass    = document.getElementById('password').value;
+      const confirm = document.getElementById('confirm-password').value;
+      const code    = document.getElementById('invite-code').value.trim().toUpperCase();
+      const btn     = document.getElementById('signup-btn');
+
+      if (!name || !email || !phone || !pass || !confirm || !code) {
+        toast('Please complete all fields, including the invitation code.'); return;
+      }
+      if (pass !== confirm) { toast('Passwords do not match.'); return; }
+      if (pass.length < 6)  { toast('Password must be at least 6 characters.'); return; }
+
+      btn.classList.add('loading'); btn.disabled = true;
+
+      try {
+        const check = await fetch(`${API_URL}/auth/validate-invite`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code })
+        });
+        const checkData = await check.json();
+        if (!check.ok || !checkData.valid) {
+          toast(checkData.error || 'Invalid or already used invitation code.');
+          document.getElementById('invite-code').classList.add('err');
+          btn.classList.remove('loading'); btn.disabled = false; return;
+        }
+        await api.signup(name, email, phone, pass, code);
+        toast('Application Processed • $25 Bonus Added 🎉');
+        setTimeout(() => window.location.href = 'dashboard.html', 1200);
+      } catch (e) {
+        toast(e.message || 'Signup failed. Please try again.');
+        btn.classList.remove('loading'); btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Windsor Grove Hub — Earn by Rating Hotels | Premium Experience</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #05070c;
+      --bg-elev: #0a0f1c;
+      --card: rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.1);
+      --text: #e8ecf5;
+      --text-dim: #9aa3b2;
+      --accent1: #60a5fa;
+      --accent2: #a855f7;
+      --accent3: #22d3ee;
+      --success: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Outfit, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; }
+    
+    /* ===== LOADING ANIMATION ===== */
+    .loader-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      transition: opacity 0.7s ease, visibility 0.7s;
+    }
+    .loader {
+      text-align: center;
+    }
+    .loader-ring {
+      width: 80px;
+      height: 80px;
+      border: 3px solid rgba(96,165,250,0.2);
+      border-top: 3px solid var(--accent1);
+      border-right: 3px solid var(--accent2);
+      border-radius: 50%;
+      animation: spin3d 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+      margin: 0 auto 24px;
+      box-shadow: 0 0 20px rgba(96,165,250,0.3);
+    }
+    @keyframes spin3d {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.2); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+    .loader-text {
+      font-family: Fraunces, Outfit, serif;
+      font-size: 1.5rem;
+      letter-spacing: 4px;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2), var(--accent3));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: pulseGlow 1.4s ease-in-out infinite;
+    }
+    @keyframes pulseGlow {
+      0%,100% { opacity: 0.8; }
+      50% { opacity: 1; }
+    }
+    
+    /* ===== ENHANCED BACKGROUND ANIMATION ===== */
+    .bg-wrap { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: -1; }
+    .bg-gradient {
+      position: absolute; inset: -20%;
+      background:
+        radial-gradient(1200px 800px at 70% -10%, rgba(96,165,250,0.28), transparent 60%),
+        radial-gradient(900px 600px at -10% 20%, rgba(168,85,247,0.25), transparent 60%),
+        radial-gradient(800px 600px at 110% 80%, rgba(34,211,238,0.22), transparent 60%);
+      filter: saturate(1.1);
+      animation: bgShift 20s ease infinite alternate;
+    }
+    @keyframes bgShift {
+      0% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+      100% { transform: scale(1.05) rotate(2deg); opacity: 1; }
+    }
+    .grid-overlay {
+      position: absolute; inset: 0; opacity: .07;
+      background-image:
+        linear-gradient(transparent 95%, rgba(255,255,255,.6) 96%),
+        linear-gradient(90deg, transparent 95%, rgba(255,255,255,.6) 96%);
+      background-size: 32px 32px;
+      animation: gridMove 30s linear infinite;
+    }
+    @keyframes gridMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 32px 32px; }
+    }
+    .orb {
+      position: absolute; border-radius: 50%; mix-blend-mode: screen;
+      filter: blur(60px); opacity: .9;
+      animation: float 22s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translate(0,0) scale(1); }
+      25% { transform: translate(40px,-30px) scale(1.08); }
+      50% { transform: translate(-20px,20px) scale(.96); }
+      75% { transform: translate(30px,-10px) scale(1.04); }
+    }
+    
+    /* ===== 3D HOVER EFFECTS ===== */
+    .card, .hotel, .task-item, .panel, .stat {
+      transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.3s ease;
+    }
+    .card:hover, .hotel:hover, .task-item:hover, .panel:hover, .stat:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px -20px rgba(0,0,0,0.8);
+    }
+    
+    /* 3D Tilt for showcase */
+    .showcase {
+      position: relative; border-radius: 28px; overflow: hidden; border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.1), rgba(255,255,255,.03));
+      transform-style: preserve-3d;
+      transition: transform 0.2s linear;
+    }
+    
+    /* Enhanced tile hover */
+    .tile {
+      position: relative; aspect-ratio: 4/3; overflow: hidden; border-radius: 16px; cursor: pointer;
+      transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    }
+    .tile:hover {
+      transform: scale(1.02);
+      box-shadow: 0 15px 35px -15px rgba(0,0,0,0.5);
+    }
+    .tile img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.7s cubic-bezier(0.2, 0.9, 0.4, 1.1); }
+    .tile:hover img { transform: scale(1.08); }
+    
+    /* Button hover effects */
+    .btn {
+      transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    .btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      box-shadow: 0 10px 30px -10px rgba(96,165,250,.5);
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px -12px rgba(96,165,250,.7);
+      filter: brightness(1.05);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover {
+      background: rgba(255,255,255,.1);
+      transform: translateY(-2px);
+    }
+    
+    /* Layout */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+    header {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(16px);
+      background: rgba(0,0,0,.25);
+      border-bottom: 1px solid var(--border);
+    }
+    .head-inner { height: 72px; display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .logo {
+      width: 40px; height: 40px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      display: grid; place-items: center; font-weight: 900; letter-spacing: .08em;
+      box-shadow: inset 0 0 20px rgba(255,255,255,.15), 0 10px 30px -12px rgba(96,165,250,.5);
+      position: relative;
+      transition: transform 0.3s;
+    }
+    .brand:hover .logo { transform: scale(1.05); }
+    .logo::after {
+      content: ""; position: absolute; inset: -8px; border-radius: 18px;
+      background: linear-gradient(135deg, rgba(96,165,250,.4), rgba(168,85,247,.4));
+      filter: blur(14px); z-index: -1; transition: .3s;
+    }
+    .brand:hover .logo::after { filter: blur(20px); }
+    .brand-title { font-weight: 600; letter-spacing: .02em; }
+    .brand-sub { font-size: 11px; text-transform: uppercase; letter-spacing: .22em; color: var(--text-dim); margin-top: -2px; }
+    
+    nav.desktop { display: none; gap: 6px; }
+    @media (min-width: 900px) { nav.desktop { display: flex; } }
+    .nav-btn {
+      padding: 8px 14px; border-radius: 12px; font-size: 14px; color: #cbd5e1;
+      background: transparent; border: 1px solid transparent; cursor: pointer; transition: .2s;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,.08); color: white; transform: translateY(-2px); }
+    .nav-btn.active { background: rgba(255,255,255,.1); color: white; border-color: rgba(255,255,255,.08); }
+    
+    .head-actions { display: flex; align-items: center; gap: 8px; }
+    .pill {
+      display: none; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 12px;
+      background: rgba(255,255,255,.05); border: 1px solid var(--border); font-size: 12px; color: #cbd5e1;
+    }
+    @media (min-width: 640px) { .pill { display: flex; } }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; box-shadow: 0 0 12px #34d399; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+    
+    .btn {
+      padding: 8px 14px; border-radius: 12px; font-size: 14px; cursor: pointer;
+      border: 1px solid var(--border); background: rgba(255,255,255,.08); color: white;
+    }
+    
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px; backdrop-filter: blur(12px);
+    }
+    .card-pad { padding: 20px; }
+    
+    /* Hero */
+    .hero { display: grid; gap: 28px; align-items: center; }
+    @media (min-width: 1024px) { .hero { grid-template-columns: 1.1fr .9fr; } }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+      background: rgba(255,255,255,.05); border: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: .18em;
+    }
+    h1.hero-title {
+      margin: 14px 0 0; font-family: Fraunces, Outfit, serif; font-weight: 600; line-height: 1.05;
+      font-size: clamp(34px, 5vw, 58px); letter-spacing: -.02em;
+    }
+    .grad-text {
+      background: linear-gradient(90deg, #9ad1ff, #c4b5fd, #67e8f9);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: gradientShift 3s ease infinite;
+      background-size: 200% auto;
+    }
+    @keyframes gradientShift {
+      0%,100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .hero p { color: #cbd5e1; max-width: 56ch; margin-top: 12px; }
+    .hero-cta { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+    .stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 28px; }
+    .stat { padding: 14px; border-radius: 16px; border: 1px solid var(--border); background: rgba(255,255,255,.05); }
+    .stat .k { font-size: 12px; color: var(--text-dim); }
+    .stat .v { font-size: 22px; font-weight: 600; margin-top: 4px; }
+    
+    /* Showcase */
+    .showcase-wrap { perspective: 1200px; }
+    .showcase-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; padding: 8px; }
+    .tile-meta { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 2; }
+    .tile-city { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #cbd5e1; }
+    .tile-name { font-size: 14px; font-weight: 500; }
+    .steps { border-top: 1px solid var(--border); padding: 14px; display: grid; gap: 10px; }
+    @media (min-width: 700px) { .steps { grid-template-columns: repeat(3,1fr); } }
+    .step { display: flex; gap: 10px; align-items: flex-start; }
+    .step-num {
+      width: 26px; height: 26px; border-radius: 10px; display: grid; place-items: center;
+      background: rgba(255,255,255,.08); border: 1px solid var(--border); font-size: 12px; font-weight: 600;
+    }
+    .step h4 { margin: 0 0 2px; font-size: 14px; }
+    .step p { margin: 0; font-size: 12px; color: #b6c0cf; }
+    
+    /* Dashboard */
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+    .input, .select {
+      padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.05);
+      border: 1px solid var(--border); color: white; outline: none; font-size: 14px;
+    }
+    .input:focus, .select:focus { box-shadow: 0 0 0 3px rgba(96,165,250,.25); }
+    .hotel-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); }
+    .hotel {
+      overflow: hidden; border-radius: 18px; border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      transition: transform .25s, box-shadow .25s;
+    }
+    .hotel:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -20px rgba(0,0,0,.6); }
+    .hotel-img { position: relative; aspect-ratio: 16/10; overflow: hidden; }
+    .hotel-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s; }
+    .hotel:hover .hotel-img img { transform: scale(1.06); }
+    .hotel-badge {
+      position: absolute; top: 10px; left: 10px; padding: 4px 8px; font-size: 11px; border-radius: 999px;
+      background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.15); backdrop-filter: blur(6px);
+    }
+    .hotel-body { padding: 12px; }
+    .hotel-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .hotel-name { font-weight: 600; }
+    .rating { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #fde68a; }
+    .hotel-meta { margin-top: 4px; font-size: 12px; color: #b6c0cf; }
+    .hotel-foot { margin-top: 10px; display: flex; align-items: center; justify-content: space-between; }
+    .price { font-weight: 600; }
+    .commission { font-size: 12px; color: #86efac; }
+    
+    /* Tasks */
+    .tasks { display: grid; gap: 14px; }
+    @media (min-width: 900px) { .tasks { grid-template-columns: 1.1fr .9fr; } }
+    .task-list { display: grid; gap: 10px; }
+    .task-item {
+      display: flex; gap: 12px; padding: 12px; border-radius: 16px; border: 1px solid var(--border);
+      background: rgba(255,255,255,.04); cursor: pointer; transition: .2s;
+    }
+    .task-item:hover { background: rgba(255,255,255,.07); transform: translateY(-2px); }
+    .task-thumb { width: 84px; height: 64px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); flex: 0 0 auto; }
+    .task-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .task-main { flex: 1; min-width: 0; }
+    .task-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .task-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+    
+    .panel { border-radius: 18px; border: 1px solid var(--border); background: rgba(255,255,255,.04); padding: 16px; }
+    .stars { display: flex; gap: 6px; }
+    .star {
+      width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; cursor: pointer;
+      border: 1px solid var(--border); background: rgba(255,255,255,.05); color: #a1a1aa; transition: .15s; font-size: 18px;
+    }
+    .star.active { background: rgba(245,158,11,.18); border-color: rgba(245,158,11,.35); color: #fbbf24; }
+    textarea.review {
+      width: 100%; min-height: 110px; margin-top: 10px; padding: 10px 12px; border-radius: 12px;
+      background: rgba(255,255,255,.05); border: 1px solid var(--border); color: white; resize: vertical; font-family: inherit;
+    }
+    
+    /* Account */
+    .kpis { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); }
+    .kpi { padding: 16px; border-radius: 18px; border: 1px solid var(--border); background: rgba(255,255,255,.05); }
+    .kpi .label { font-size: 12px; color: var(--text-dim); }
+    .kpi .value { font-size: 24px; font-weight: 700; margin-top: 6px; }
+    .bank-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+    
+    /* Deposit */
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    input[type="range"] { flex: 1; accent-color: #60a5fa; }
+    .amount-pills { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .pill-btn { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,.05); cursor: pointer; font-size: 12px; transition: .2s; }
+    .pill-btn:hover { background: rgba(255,255,255,.15); transform: translateY(-2px); }
+    
+    /* Records */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,.08); text-align: left; }
+    th { color: #a3adbd; font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    .status { padding: 4px 8px; border-radius: 999px; font-size: 12px; border: 1px solid var(--border); }
+    .status.completed { background: rgba(16,185,129,.15); color: #86efac; border-color: rgba(16,185,129,.3); }
+    .status.pending { background: rgba(245,158,11,.15); color: #fcd34d; border-color: rgba(245,158,11,.3); }
+    
+    /* Support */
+    .support-grid { display: grid; gap: 14px; }
+    @media (min-width: 900px) { .support-grid { grid-template-columns: 1fr 1fr; } }
+    .chat { height: 420px; display: flex; flex-direction: column; border-radius: 18px; border: 1px solid var(--border); background: rgba(255,255,255,.04); overflow: hidden; }
+    .chat-log { flex: 1; overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { max-width: 78%; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--border); font-size: 14px; }
+    .msg.you { align-self: flex-end; background: rgba(96,165,250,.18); border-color: rgba(96,165,250,.3); }
+    .msg.agent { align-self: flex-start; background: rgba(255,255,255,.06); }
+    .msg time { display: block; margin-top: 4px; font-size: 10px; color: var(--text-dim); }
+    .chat-input { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--border); background: rgba(0,0,0,.2); }
+    .chat-input input { flex: 1; }
+    
+    /* Auth */
+    .auth-wrap { display: grid; gap: 16px; }
+    @media (min-width: 900px) { .auth-wrap { grid-template-columns: 1.1fr .9fr; } }
+    .auth-card { border-radius: 20px; border: 1px solid var(--border); background: rgba(255,255,255,.04); padding: 20px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .tab { padding: 6px 12px; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,.05); color: #cbd5e1; cursor: pointer; font-size: 14px; transition: .2s; }
+    .tab:hover { background: rgba(255,255,255,.1); }
+    .tab.active { background: white; color: black; border-color: white; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 12px; color: #aab3c2; margin-bottom: 6px; }
+    
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+      display: none; place-items: center; z-index: 60; padding: 16px;
+    }
+    .modal-backdrop.show { display: grid; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .modal {
+      width: min(720px, 100%); border-radius: 24px; border: 1px solid var(--border);
+      background: #0b1222; box-shadow: 0 30px 80px rgba(0,0,0,.6); overflow: hidden;
+      transform: translateY(10px); opacity: 0; transition: .25s;
+    }
+    .modal-backdrop.show .modal { transform: translateY(0); opacity: 1; }
+    .modal-head { display: flex; gap: 12px; padding: 16px; border-bottom: 1px solid var(--border); align-items: flex-start; }
+    .modal-thumb { width: 80px; height: 80px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); flex: 0 0 auto; }
+    .modal-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .modal-body { padding: 16px; }
+    
+    /* Toast */
+    .toasts { position: fixed; right: 20px; bottom: 20px; z-index: 70; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border);
+      background: rgba(11,18,34,.92); backdrop-filter: blur(8px); box-shadow: 0 10px 30px rgba(0,0,0,.4);
+      transform: translateY(8px); opacity: 0; animation: toast-in .25s forwards;
+    }
+    @keyframes toast-in { to { transform: translateY(0); opacity: 1; } }
+    
+    /* Mobile nav */
+    .mobile-nav {
+      position: fixed; left: 0; right: 0; bottom: 14px; z-index: 40; display: block;
+    }
+    @media (min-width: 900px) { .mobile-nav { display: none; } }
+    .mobile-inner {
+      margin: 0 auto; max-width: 520px; padding: 6px; display: flex; gap: 6px;
+      background: rgba(0,0,0,.6); border: 1px solid var(--border); border-radius: 16px; backdrop-filter: blur(14px);
+    }
+    .mobile-btn { flex: 1; padding: 10px 8px; border-radius: 12px; font-size: 12px; color: #cbd5e1; background: transparent; border: none; cursor: pointer; transition: all 0.2s; }
+    .mobile-btn:hover { background: rgba(255,255,255,.1); transform: translateY(-2px); }
+    .mobile-btn.active { background: rgba(255,255,255,.14); color: white; }
+    
+    /* Footer */
+    footer { border-top: 1px solid var(--border); margin-top: 40px; }
+    .foot-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 0; color: #9aa3b2; font-size: 14px; flex-wrap: wrap; }
+    .foot-links { display: flex; gap: 16px; }
+    .foot-links a { transition: color 0.2s; }
+    .foot-links a:hover { color: white; transform: translateY(-1px); display: inline-block; }
+    
+    /* Utilities */
+    .hidden { display: none !important; }
+    /* New Home Sections */
+    .partners-strip { display: flex; justify-content: center; align-items: center; gap: 3rem; flex-wrap: wrap; padding: 2rem 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); opacity: 0.6; margin: 3rem 0; }
+    .partner-item { font-family: Fraunces, serif; font-size: 1.1rem; font-weight: 600; color: var(--text-dim); }
+    .faq-section { margin-top: 4rem; }
+    .faq-grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+    .faq-card { background: var(--card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 16px; }
+    .faq-card h4 { margin: 0 0 0.5rem 0; color: var(--accent1); }
+    .muted { color: var(--text-dim); }
+    .right { text-align: right; }
+    .mt-2 { margin-top: 8px; } .mt-3 { margin-top: 12px; } .mt-4 { margin-top: 16px; } .mt-6 { margin-top: 24px; }
+  </style>
+</head>
+<body>
+
+<!-- Loading Animation -->
+<div class="loader-wrapper" id="loader">
+  <div class="loader">
+    <div class="loader-ring"></div>
+    <div class="loader-text">WINDSOR GROVE</div>
+  </div>
+</div>
+
+<!-- Background Effects -->
+<div class="bg-wrap">
+  <div class="bg-gradient"></div>
+  <div class="grid-overlay"></div>
+  <div id="orbs"></div>
+</div>
+
+<header>
+  <div class="container head-inner">
+    <div class="brand" id="brand">
+      <div class="logo">WG</div>
+      <div>
+        <div class="brand-title">WINDSOR GROVE HUB</div>
+        <div class="brand-sub">Rate Hotels • Earn Commission</div>
+      </div>
+    </div>
+    <nav class="desktop" id="nav"></nav>
+    <div class="head-actions">
+      <div class="pill"><span class="dot"></span> Live</div>
+      <button class="btn" id="btn-login">Login</button>
+      <button class="btn btn-primary" id="btn-create">Create Account</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container" id="app"></div>
+</main>
+
+<div class="mobile-nav">
+  <div class="mobile-inner" id="mobileNav"></div>
+</div>
+
+<div class="modal-backdrop" id="modal">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<footer>
+  <div class="container foot-inner">
+    <div>© <span id="year"></span> Windsor Grove Hub • All rights reserved</div>
+    <div class="foot-links">
+      <a href="#" data-route="support">Support</a>
+      <a href="#" data-route="records">Records</a>
+      <a href="#" data-route="deposit">Payments</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ===== Data & State =====
+  const hotels = [
+    { id:"h1", name:"The Windsor Peninsula", city:"London", country:"United Kingdom", price:389, rating:4.8, image:"https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80", commissionRate:8.5, category:"Luxury" },
+    { id:"h2", name:"Grove Harbor Resort", city:"Miami", country:"USA", price:312, rating:4.6, image:"https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&q=80", commissionRate:7.2, category:"Resort" },
+    { id:"h3", name:"Kyoto Grove House", city:"Kyoto", country:"Japan", price:295, rating:4.9, image:"https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&q=80", commissionRate:9.0, category:"Boutique" },
+    { id:"h4", name:"Santorini Verge", city:"Oia", country:"Greece", price:420, rating:4.7, image:"https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=1200&q=80", commissionRate:8.0, category:"Luxury" },
+    { id:"h5", name:"Downtown Windsor Plaza", city:"Toronto", country:"Canada", price:210, rating:4.4, image:"https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1200&q=80", commissionRate:6.5, category:"Business" },
+    { id:"h6", name:"Alpine Grove Chalet", city:"Zermatt", country:"Switzerland", price:560, rating:4.9, image:"https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=1200&q=80", commissionRate:10.0, category:"Luxury" },
+  ];
+
+  const state = {
+    route: "home",
+    authTab: "login",
+    user: { name:"Alex Morgan", email:"alex@windsorgrove.test", balance:184.50, commissionTotal:1247.30, funded:true, bankLinked:true },
+    search: "",
+    country: "All",
+    selectedHotel: null,
+    tasks: JSON.parse(localStorage.getItem("wgh-tasks")||"[]"),
+    txs: JSON.parse(localStorage.getItem("wgh-txs")||"null") || [
+      { id:"t1", type:"bonus", amount:25, status:"completed", ts:Date.now()-86400000*3, note:"Welcome bonus" },
+      { id:"t2", type:"commission", amount:41.2, status:"completed", ts:Date.now()-86400000*2, note:"Kyoto Grove House" },
+      { id:"t3", type:"deposit", amount:150, method:"Card", status:"completed", ts:Date.now()-86400000, note:"Visa •••• 4242" },
+    ],
+    chat: [{ from:"agent", text:"Hi! I'm Maya from Windsor Grove support. How can I help?", ts:Date.now()-60000 }],
+  };
+
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+  const fmt = n => n.toLocaleString(undefined,{style:"currency",currency:"USD",maximumFractionDigits:2});
+  const save = () => {
+    localStorage.setItem("wgh-tasks", JSON.stringify(state.tasks));
+    localStorage.setItem("wgh-txs", JSON.stringify(state.txs));
+  };
+  const toast = msg => {
+    const t = document.createElement("div");
+    t.className = "toast"; t.textContent = msg;
+    $("#toasts").appendChild(t);
+    setTimeout(()=> t.remove(), 2600);
+  };
+
+  // ===== Orbs Animation =====
+  (function initOrbs(){
+    const wrap = $("#orbs");
+    const hues = [210,260,310,180];
+    for(let i=0;i<15;i++){
+      const d = document.createElement("div");
+      d.className = "orb";
+      const size = 100 + Math.random()*250;
+      d.style.width = size+"px"; d.style.height = size+"px";
+      d.style.left = (Math.random()*100)+"%"; d.style.top = (Math.random()*100)+"%";
+      d.style.background = `radial-gradient(circle at 30% 30%, hsl(${hues[i%4]} 90% 70% / .7), hsl(${(hues[i%4]+40)%360} 80% 60% / .45), transparent 60%)`;
+      d.style.filter = `blur(${40+Math.random()*60}px)`;
+      d.style.animationDuration = (15+i)+"s";
+      d.style.animationDelay = (i * 0.5)+"s";
+      wrap.appendChild(d);
+    }
+  })();
+
+  // ===== 3D Tilt Effect for Showcase =====
+  function initTilt(){
+    const el = $("#tilt"); if(!el) return;
+    let rect = el.getBoundingClientRect();
+    const onMove = (e)=>{
+      const x = (e.clientX - rect.left - rect.width/2) / (rect.width/2);
+      const y = (e.clientY - rect.top - rect.height/2) / (rect.height/2);
+      el.style.transform = `rotateX(${(-y*8).toFixed(2)}deg) rotateY(${(x*10).toFixed(2)}deg)`;
+    };
+    const onLeave = ()=>{ el.style.transform = "rotateX(0) rotateY(0)"; };
+    el.addEventListener("mousemove", onMove);
+    el.addEventListener("mouseleave", onLeave);
+    window.addEventListener("resize", ()=> rect = el.getBoundingClientRect());
+  }
+
+  // ===== Navigation =====
+  const routes = [
+    ["Home","home"],["Dashboard","dashboard"],["Tasks","tasks"],
+    ["Account","account"],["Deposit","deposit"],["Records","records"],["Support","support"]
+  ];
+  
+  function renderNav(){
+    const nav = $("#nav"); 
+    if(nav){
+      nav.innerHTML = "";
+      routes.forEach(([label,key])=>{
+        const b = document.createElement("button");
+        b.className = "nav-btn"+(state.route===key?" active":"");
+        b.textContent = label; b.onclick = ()=> go(key);
+        nav.appendChild(b);
+      });
+    }
+    const mob = $("#mobileNav"); 
+    if(mob){
+      mob.innerHTML = "";
+      ["home","dashboard","tasks","account","support"].forEach(key=>{
+        const label = routes.find(r=>r[1]===key)[0];
+        const b = document.createElement("button");
+        b.className = "mobile-btn"+(state.route===key?" active":"");
+        b.textContent = label; b.onclick = ()=> go(key);
+        mob.appendChild(b);
+      });
+    }
+  }
+
+  function go(route){ state.route = route; render(); window.scrollTo({top:0,behavior:"smooth"}); }
+  window.go = go;
+  
+  $("#brand") && ($("#brand").onclick = ()=> go("home"));
+  $("#btn-login") && ($("#btn-login").onclick = ()=> { state.authTab="login"; go("auth"); });
+  $("#btn-create") && ($("#btn-create").onclick = ()=> { state.authTab="create"; go("auth"); });
+  
+  document.addEventListener("click", e=>{
+    const a = e.target.closest("[data-route]");
+    if(a){ e.preventDefault(); go(a.dataset.route); }
+  });
+
+  // ===== Core Functions =====
+  function hotelCard(h){
+    return `
+    <div class="hotel">
+      <div class="hotel-img">
+        <img src="${h.image}" alt="">
+        <div class="hotel-badge">${h.category}</div>
+      </div>
+      <div class="hotel-body">
+        <div class="hotel-top">
+          <div class="hotel-name">${h.name}</div>
+          <div class="rating">★ ${h.rating.toFixed(1)}</div>
+        </div>
+        <div class="hotel-meta">${h.city}, ${h.country}</div>
+        <div class="hotel-foot">
+          <div>
+            <div class="price">${fmt(h.price)}/night</div>
+            <div class="commission">${h.commissionRate}% commission</div>
+          </div>
+          <button class="btn btn-primary" onclick="openRate('${h.id}')">Rate & Earn</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function ratePanelHTML(h){
+    const est = +(h.price * (h.commissionRate/100) * 0.9).toFixed(2);
+    return `
+      <div style="display:flex;gap:12px;align-items:center">
+        <div style="width:96px;height:72px;border-radius:12px;overflow:hidden;border:1px solid var(--border)"><img src="${h.image}" style="width:100%;height:100%;object-fit:cover"></div>
+        <div>
+          <div class="muted" style="font-size:12px">${h.city}, ${h.country}</div>
+          <div style="font-weight:600">${h.name}</div>
+          <div class="muted" style="font-size:12px;margin-top:2px">From ${fmt(h.price)}/night • ${h.commissionRate}% commission</div>
+        </div>
+        <div class="right" style="margin-left:auto">
+          <div class="muted" style="font-size:11px">Estimated</div>
+          <div style="font-size:22px;font-weight:700;color:#86efac" id="estVal">${fmt(est)}</div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <div class="muted" style="font-size:12px;margin-bottom:6px">Your rating</div>
+        <div class="stars" id="stars">
+          ${[1,2,3,4,5].map(i=>`<div class="star" data-v="${i}">★</div>`).join("")}
+        </div>
+      </div>
+      <textarea class="review" id="review" placeholder="What stood out? Service, cleanliness, location, value..."></textarea>
+      <div class="mt-3" style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-primary" onclick="submitRating('${h.id}')">Submit Rating & Earn</button>
+        <div class="muted" style="font-size:12px">Instant credit on approval • Avg ${h.commissionRate}%</div>
+      </div>
+    `;
+  }
+
+  function bindStars(){
+    const stars = $$("#stars .star"); 
+    let val = 5;
+    const update = () => {
+      stars.forEach(s=> s.classList.toggle("active", +s.dataset.v <= val));
+      const h = state.selectedHotel || hotels[0];
+      const est = +(h.price * (h.commissionRate/100) * (val/5)).toFixed(2);
+      const el = $("#estVal"); if(el) el.textContent = fmt(est);
+    };
+    stars.forEach(s=> s.onclick = ()=>{ val = +s.dataset.v; update(); });
+    update();
+    window.__currentStars = ()=> val;
+  }
+
+  function submitRating(hotelId){
+    const h = hotels.find(x=>x.id===hotelId);
+    const stars = window.__currentStars ? window.__currentStars() : 5;
+    const comment = ($("#review")?.value || "").trim();
+    const commission = +(h.price * (h.commissionRate/100) * (stars/5)).toFixed(2);
+    state.tasks.unshift({ hotelId, stars, comment, ts: Date.now(), commissionEarned: commission });
+    state.user.balance = +(state.user.balance + commission).toFixed(2);
+    state.user.commissionTotal = +(state.user.commissionTotal + commission).toFixed(2);
+    state.txs.unshift({ id: Math.random().toString(36).slice(2), type:"commission", amount:commission, status:"completed", ts:Date.now(), note:h.name });
+    save(); toast(`Rated ${h.name} • Earned ${fmt(commission)}`);
+    go("records");
+  }
+  window.submitRating = submitRating;
+
+  function selectHotel(id){
+    state.selectedHotel = hotels.find(h=>h.id===id);
+    const panel = $("#ratePanel"); if(panel) panel.innerHTML = ratePanelHTML(state.selectedHotel);
+    bindStars();
+  }
+  window.selectHotel = selectHotel;
+
+  function openRate(id){
+    const h = hotels.find(x=>x.id===id); if(!h) return;
+    const box = $("#modalBox");
+    box.innerHTML = `
+      <div class="modal-head">
+        <div class="modal-thumb"><img src="${h.image}" alt=""></div>
+        <div style="flex:1">
+          <div class="modal-title">${h.name}</div>
+          <div class="modal-sub">${h.city}, ${h.country} • From ${fmt(h.price)}/night • ${h.commissionRate}% commission</div>
+        </div>
+        <button class="btn" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        ${ratePanelHTML(h)}
+      </div>
+    `;
+    $("#modal").classList.add("show");
+    state.selectedHotel = h; 
+    setTimeout(bindStars, 50);
+    window.submitRating = (hid)=>{
+      const stars = window.__currentStars ? window.__currentStars() : 5;
+      const commission = +(h.price * (h.commissionRate/100) * (stars/5)).toFixed(2);
+      state.tasks.unshift({ hotelId: hid, stars, comment: "", ts: Date.now(), commissionEarned: commission });
+      state.user.balance = +(state.user.balance + commission).toFixed(2);
+      state.user.commissionTotal = +(state.user.commissionTotal + commission).toFixed(2);
+      state.txs.unshift({ id: Math.random().toString(36).slice(2), type:"commission", amount:commission, status:"completed", ts:Date.now(), note:h.name });
+      save(); toast(`Rated ${h.name} • Earned ${fmt(commission)}`); closeModal(); go("records");
+    };
+  }
+  window.openRate = openRate;
+  window.closeModal = () => { $("#modal").classList.remove("show"); };
+
+  function renderDashboardList(){
+    const grid = $("#hotelGrid"); if(!grid) return;
+    const list = hotels.filter(h=>{
+      const s = state.search.trim().toLowerCase();
+      const match = !s || h.name.toLowerCase().includes(s) || h.city.toLowerCase().includes(s);
+      const cm = state.country==="All" || h.country===state.country;
+      return match && cm;
+    });
+    grid.innerHTML = list.map(h=>hotelCard(h)).join("");
+  }
+  window.renderDashboardList = renderDashboardList;
+
+  function sendChat(){
+    const inp = $("#chatInput"); const text = (inp?.value||"").trim(); if(!text) return;
+    state.chat.push({ from:"you", text, ts:Date.now() }); if(inp) inp.value=""; 
+    renderChat();
+    setTimeout(()=>{ 
+      state.chat.push({ from:"agent", text:"Thanks for reaching out! Our support team will assist you shortly.", ts:Date.now() }); 
+      renderChat(); 
+    }, 800);
+  }
+  window.sendChat = sendChat;
+
+  function renderChat(){
+    const log = $("#chatLog"); if(!log) return;
+    log.innerHTML = state.chat.map(m=>`
+      <div class="msg ${m.from}">${m.text}<time>${new Date(m.ts).toLocaleTimeString()}</time></div>
+    `).join("");
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function doLogin(){
+    const email = $("#loginEmail")?.value.trim() || "user@example.com";
+    state.user.email = email; toast("Welcome back!"); go("dashboard");
+  }
+  window.doLogin = doLogin;
+
+  function doCreate(){
+    const name = $("#createName")?.value.trim() || "New User";
+    const email = $("#createEmail")?.value.trim() || "new@example.com";
+    state.user = { ...state.user, name, email, balance:25, commissionTotal:0, funded:false, bankLinked:false };
+    state.txs.unshift({ id:"welcome", type:"bonus", amount:25, status:"completed", ts:Date.now(), note:"Welcome bonus" });
+    save(); toast("Account created • $25 bonus added"); go("dashboard");
+  }
+  window.doCreate = doCreate;
+
+  // ===== View Functions =====
+  function viewHome(){
+    return `
+    <section class="hero">
+      <div>
+        <div class="eyebrow"><span class="dot"></span> Windsor Grove Hub Features</div>
+        <h1 class="hero-title">Earn real commission by <span class="grad-text">rating real hotels.</span></h1>
+        <p>Join thousands of reviewers turning opinions into income. Browse premium properties, submit thoughtful ratings, and get paid. Clean dashboards, transparent payouts, and lightning-fast withdrawals.</p>
+        <div class="hero-cta">
+          <button class="btn btn-primary" onclick="go('tasks')">Start Rating</button>
+          <button class="btn" onclick="go('dashboard')">Explore Dashboard</button>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><div class="k">Avg. Commission</div><div class="v">7–10%</div></div>
+          <div class="stat"><div class="k">Payout Speed</div><div class="v">&lt; 24h</div></div>
+          <div class="stat"><div class="k">Hotels</div><div class="v">1,200+</div></div>
+        </div>
+      </div>
+      <div class="showcase-wrap">
+        <div class="showcase" id="tilt">
+          <div class="showcase-grid">
+            ${hotels.slice(0,6).map(h=>`
+              <div class="tile" onclick="openRate('${h.id}')">
+                <img src="${h.image}" alt="${h.name}">
+                <div class="tile-meta">
+                  <div class="tile-city">${h.city}, ${h.country}</div>
+                  <div class="tile-name">${h.name}</div>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div><h4>Pick a hotel</h4><p>Filter by city, country, price, rating.</p></div></div>
+            <div class="step"><div class="step-num">2</div><div><h4>Submit rating</h4><p>Give stars + short review. Quality matters.</p></div></div>
+            <div class="step"><div class="step-num">3</div><div><h4>Get paid</h4><p>Commission auto-credited. Withdraw in USD.</p></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="partners-strip">
+      <div class="partner-item">Marriott International</div>
+      <div class="partner-item">Hilton Worldwide</div>
+      <div class="partner-item">Hyatt Hotels</div>
+      <div class="partner-item">InterContinental</div>
+      <div class="partner-item">Four Seasons</div>
+    </div>
+
+    <section class="mt-6">
+      <div class="card card-pad">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:12px;color:#aab3c2;text-transform:uppercase;letter-spacing:.14em">Why reviewers choose us</div>
+            <h3 style="margin:6px 0 0;font-size:22px">Professional tools. Real payouts.</h3>
+          </div>
+          <button class="btn" onclick="go('records')">View sample records</button>
+        </div>
+        <div style="display:grid;gap:12px;margin-top:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+          <div class="panel">
+            <div style="font-weight:600">Transparent commission</div>
+            <div class="muted" style="margin-top:6px;font-size:14px">See exact % per hotel and estimated payout before you submit.</div>
+          </div>
+          <div class="panel">
+            <div style="font-weight:600">Instant ledger</div>
+            <div class="muted" style="margin-top:6px;font-size:14px">Every rating and payout is logged with timestamps for clean accounting.</div>
+          </div>
+          <div class="panel">
+            <div style="font-weight:600">Bank &amp; USD ready</div>
+            <div class="muted" style="margin-top:6px;font-size:14px">Link bank for USD withdrawals. Crypto USDC supported.</div>
+          </div>
+          <div class="panel">
+            <div style="font-weight:600">Live support</div>
+            <div class="muted" style="margin-top:6px;font-size:14px">Chat with our team for approvals, disputes, and payouts.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-6">
+      <div style="text-align:center; margin-bottom: 2rem;">
+        <h2 style="font-family: Fraunces, serif; font-size: 2rem;">Member Success Stories</h2>
+        <p class="muted">Real people, real earnings from around the world.</p>
+      </div>
+      <div style="display:grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+        <div class="card card-pad">
+          <div style="display:flex; gap:12px; align-items:center; margin-bottom: 12px;">
+            <div style="width:40px; height:40px; border-radius:50%; background:var(--accent2); display:grid; place-items:center; font-weight:700;">JD</div>
+            <div>
+              <div style="font-weight:600;">James D.</div>
+              <div class="muted" style="font-size:12px;">Level 4 Reviewer • London</div>
+            </div>
+          </div>
+          <p style="font-style:italic; font-size:14px; line-height:1.6;">"The interface is so smooth. I usually rate hotels while commuting. I've already withdrawn $450 this month directly to my bank account."</p>
+        </div>
+        <div class="card card-pad">
+          <div style="display:flex; gap:12px; align-items:center; margin-bottom: 12px;">
+            <div style="width:40px; height:40px; border-radius:50%; background:var(--accent3); display:grid; place-items:center; font-weight:700;">SM</div>
+            <div>
+              <div style="font-weight:600;">Sofia M.</div>
+              <div class="muted" style="font-size:12px;">Premium Member • Madrid</div>
+            </div>
+          </div>
+          <p style="font-style:italic; font-size:14px; line-height:1.6;">"I love the transparency. You know exactly what the commission is before you start. The support team is also very responsive for approvals."</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="faq-section">
+      <h3 style="font-family: Fraunces, serif; font-size: 1.8rem;">Frequently Asked Questions</h3>
+      <div class="faq-grid">
+        <div class="faq-card">
+          <h4>How do I get paid?</h4>
+          <p class="muted">Once your rating is submitted and approved (usually instantly), the commission is added to your balance. You can withdraw via Bank Transfer, PayPal, or USDC once you reach the minimum threshold.</p>
+        </div>
+        <div class="faq-card">
+          <h4>Is there a limit to how many hotels I can rate?</h4>
+          <p class="muted">Standard accounts can rate up to 5 hotels per day. Premium members enjoy unlimited ratings and higher commission percentages for luxury tiers.</p>
+        </div>
+      </div>
+    </section>`;
+  }
+
+  function viewDashboard(){
+    const countries = ["All", ...Array.from(new Set(hotels.map(h=>h.country)))];
+    const list = hotels.filter(h=>{
+      const s = state.search.trim().toLowerCase();
+      const match = !s || h.name.toLowerCase().includes(s) || h.city.toLowerCase().includes(s) || h.country.toLowerCase().includes(s);
+      const cm = state.country==="All" || h.country===state.country;
+      return match && cm;
+    });
+    return `
+    <div class="card card-pad">
+      <div class="toolbar">
+        <input class="input" placeholder="Search hotel, city, country…" value="${state.search}" oninput="state.search=this.value;renderDashboardList()">
+        <select class="select" onchange="state.country=this.value;renderDashboardList()">
+          ${countries.map(c=>`<option ${state.country===c?"selected":""}>${c}</option>`).join("")}
+        </select>
+        <div class="muted" style="margin-left:auto;font-size:12px">${list.length} properties</div>
+      </div>
+      <div class="hotel-grid" id="hotelGrid">
+        ${list.map(h=>hotelCard(h)).join("")}
+      </div>
+    </div>`;
+  }
+
+  function viewTasks(){
+    const first = hotels[0];
+    const sel = state.selectedHotel || first;
+    return `
+    <div class="tasks">
+      <div class="card card-pad">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <h3 style="margin:0">Available Hotels</h3>
+          <div class="muted" style="font-size:12px">Pick one to rate</div>
+        </div>
+        <div class="task-list mt-3">
+          ${hotels.map(h=>`
+            <div class="task-item" onclick="selectHotel('${h.id}')">
+              <div class="task-thumb"><img src="${h.image}" alt=""></div>
+              <div class="task-main">
+                <div class="task-title">${h.name}</div>
+                <div class="task-sub">${h.city}, ${h.country} • ${fmt(h.price)}/night • ${h.commissionRate}%</div>
+              </div>
+              <div class="task-cta"><button class="btn">Select</button></div>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+      <div class="panel" id="ratePanel">
+        ${ratePanelHTML(sel)}
+      </div>
+    </div>`;
+  }
+
+  function viewAccount(){
+    const u = state.user;
+    return `
+    <div class="card card-pad">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <h3 style="margin:0">Account Overview</h3>
+          <div class="muted" style="font-size:13px">Manage profile, funding, and payouts</div>
+        </div>
+        <div class="muted" style="font-size:12px">${u.email}</div>
+      </div>
+      <div class="kpis mt-4">
+        <div class="kpi"><div class="label">Current Balance</div><div class="value" style="color:#86efac">${fmt(u.balance)}</div></div>
+        <div class="kpi"><div class="label">Total Commission</div><div class="value">${fmt(u.commissionTotal)}</div></div>
+        <div class="kpi"><div class="label">Funded Account</div><div class="value" style="color:${u.funded?'#86efac':'#fbbf24'}">${u.funded?'Yes':'No'}</div></div>
+        <div class="kpi"><div class="label">Bank Linked</div><div class="value" style="color:${u.bankLinked?'#86efac':'#fbbf24'}">${u.bankLinked?'Yes':'No'}</div></div>
+      </div>
+      <div class="bank-row">
+        <div>
+          <div style="font-weight:600">Bank Account / USD Payouts</div>
+          <div class="muted" style="font-size:13px">Link your bank for fast USD withdrawals. USDC crypto also supported.</div>
+        </div>
+        <button class="btn" onclick="alert('Bank linking demo')">${u.bankLinked?'Manage':'Link Bank'}</button>
+      </div>
+    </div>`;
+  }
+
+  function viewDeposit(){
+    return `
+    <div class="card card-pad">
+      <h3 style="margin:0">Deposit / Withdrawal</h3>
+      <div class="muted" style="font-size:13px">Choose method and amount. Demo transactions are instant.</div>
+      <div class="mt-4" style="display:grid;gap:14px;grid-template-columns: repeat(auto-fit, minmax(260px,1fr));">
+        <div>
+          <label class="muted" style="font-size:12px">Amount (USD)</label>
+          <div class="slider-row mt-2">
+            <input type="range" min="5" max="500" step="5" value="50" id="amtRange">
+            <div style="width:90px;text-align:right;font-weight:600" id="amtLabel">${fmt(50)}</div>
+          </div>
+          <div class="amount-pills">
+            ${[25,50,100,250].map(v=>`<button class="pill-btn" data-v="${v}" onclick="document.getElementById('amtRange').value=${v};document.getElementById('amtLabel').innerText='${fmt(v)}'">${fmt(v)}</button>`).join("")}
+          </div>
+        </div>
+        <div>
+          <label class="muted" style="font-size:12px">Method</label>
+          <select id="method" class="select" style="width:100%;margin-top:6px">
+            ${["Card","Bank Transfer (USD)","PayPal","Crypto USDC"].map(m=>`<option>${m}</option>`).join("")}
+          </select>
+        </div>
+      </div>
+      <div class="mt-4" style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="alert('Deposit demo')">Deposit</button>
+        <button class="btn" onclick="alert('Withdrawal demo')">Withdraw</button>
+        <div class="muted" style="align-self:center">Current balance: ${fmt(state.user.balance)}</div>
+      </div>
+    </div>`;
+  }
+
+  function viewRecords(){
+    const rows = state.txs.map(t=>`
+      <tr>
+        <td>${new Date(t.ts).toLocaleString()}</td>
+        <td>${t.type}</td>
+        <td>${t.note||t.method||"—"}</td>
+        <td class="right">${fmt(t.amount)}</td>
+        <td><span class="status ${t.status}">${t.status}</span></td>
+      </tr>
+    `).join("");
+    const tasks = state.tasks.map(t=>{
+      const h = hotels.find(h=>h.id===t.hotelId);
+      return `
+      <tr>
+        <td>${new Date(t.ts).toLocaleString()}</td>
+        <td>${h? h.name : "Hotel"}</td>
+        <td>${"★".repeat(t.stars)}${"☆".repeat(5-t.stars)}</td>
+        <td class="right">${fmt(t.commissionEarned)}</td>
+        <td><span class="status completed">approved</span></td>
+      </tr>`;
+    }).join("");
+    return `
+    <div class="card card-pad">
+      <h3 style="margin:0">Records</h3>
+      <div class="muted" style="font-size:13px">Completed ratings archive and transactions</div>
+      <div class="mt-4" style="display:grid;gap:16px">
+        <div>
+          <div style="font-weight:600;margin-bottom:6px">Rating Archive</div>
+          <div style="overflow:auto;border:1px solid var(--border);border-radius:14px">
+            <table style="width:100%">
+              <thead><tr><th>Date</th><th>Hotel</th><th>Stars</th><th class="right">Commission</th><th>Status</th></tr></thead>
+              <tbody>${tasks || `<tr><td colspan="5" class="muted">No ratings yet</td></tr>`}</tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div style="font-weight:600;margin-bottom:6px">Transactions</div>
+          <div style="overflow:auto;border:1px solid var(--border);border-radius:14px">
+            <table style="width:100%">
+              <thead><tr><th>Date</th><th>Type</th><th>Method/Note</th><th class="right">Amount</th><th>Status</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function viewSupport(){
+    return `
+    <div class="support-grid">
+      <div class="card card-pad">
+        <h3 style="margin:0">Bank Account & USD Payments</h3>
+        <div class="muted" style="font-size:13px">Verify your bank to enable USD withdrawals. Demo verification is instant.</div>
+        <div class="mt-3" style="display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+          <div class="panel"><div style="font-weight:600">Status</div><div class="mt-2">${state.user.bankLinked?'<span class="status completed">Verified</span>':'<span class="status pending">Unverified</span>'}</div></div>
+          <div class="panel"><div style="font-weight:600">Payout speed</div><div class="muted mt-2" style="font-size:14px">Typically under 24 hours after approval.</div></div>
+          <div class="panel"><div style="font-weight:600">Methods</div><div class="muted mt-2" style="font-size:14px">Bank Transfer (USD), PayPal, Crypto USDC.</div></div>
+        </div>
+        <div class="mt-3"><button class="btn" onclick="alert('Bank verification demo')">${state.user.bankLinked?'Manage Bank':'Verify Bank'}</button></div>
+      </div>
+      <div class="chat">
+        <div class="chat-log" id="chatLog">
+          ${state.chat.map(m=>`
+            <div class="msg ${m.from}">
+              ${m.text}
+              <time>${new Date(m.ts).toLocaleTimeString()}</time>
+            </div>
+          `).join("")}
+        </div>
+        <div class="chat-input">
+          <input class="input" id="chatInput" placeholder="Type your message…">
+          <button class="btn btn-primary" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function viewAuth(){
+    return `
+    <div class="auth-wrap">
+      <div class="card card-pad" style="max-width:500px;margin:0 auto;">
+        <div class="tabs">
+          <button class="tab ${state.authTab==='login'?'active':''}" onclick="state.authTab='login';render()">Login</button>
+          <button class="tab ${state.authTab==='create'?'active':''}" onclick="state.authTab='create';render()">Create Account</button>
+          <button class="tab" style="margin-left:auto" onclick="go('reset')">Forgot password?</button>
+        </div>
+        ${state.authTab==='login' ? `
+          <div class="field"><label>Email</label><input class="input" id="loginEmail" value="alex@windsorgrove.test" style="width:100%"></div>
+          <div class="field"><label>Password</label><input class="input" id="loginPw" type="password" value="password" style="width:100%"></div>
+          <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Login</button>
+          <div class="muted" style="font-size:12px;margin-top:8px">Demo only — no real auth.</div>
+        ` : `
+          <div class="field"><label>Full name</label><input class="input" id="createName" value="Alex Morgan" style="width:100%"></div>
+          <div class="field"><label>Email</label><input class="input" id="createEmail" value="alex@windsorgrove.test" style="width:100%"></div>
+          <div class="field"><label>Password</label><input class="input" id="createPw" type="password" value="password" style="width:100%"></div>
+          <button class="btn btn-primary" style="width:100%" onclick="doCreate()">Create Account</button>
+          <div class="muted" style="font-size:12px;margin-top:8px">Includes $25 welcome bonus in demo.</div>
+        `}
+      </div>
+    </div>`;
+  }
+
+  function viewReset(){
+    return `
+    <div class="card card-pad" style="max-width:520px;margin:0 auto">
+      <h3 style="margin:0">Password Reset</h3>
+      <div class="muted" style="font-size:13px">Enter your email to receive a reset link (simulated).</div>
+      <div class="field mt-3"><input class="input" id="resetEmail" placeholder="you@email.com" style="width:100%"></div>
+      <button class="btn btn-primary" style="width:100%" onclick="toast('Reset link sent (simulated)');go('auth')">Send Reset Link</button>
+    </div>`;
+  }
+
+  // ===== Render Main =====
+  function render(){
+    renderNav();
+    const app = $("#app");
+    let html = "";
+    switch(state.route){
+      case "home": html = viewHome(); break;
+      case "dashboard": html = viewDashboard(); break;
+      case "tasks": html = viewTasks(); break;
+      case "account": html = viewAccount(); break;
+      case "deposit": html = viewDeposit(); break;
+      case "records": html = viewRecords(); break;
+      case "support": html = viewSupport(); setTimeout(renderChat, 50); break;
+      case "auth": html = viewAuth(); break;
+      case "reset": html = viewReset(); break;
+      default: html = viewHome();
+    }
+    app.innerHTML = html;
+    $("#year").textContent = new Date().getFullYear();
+    if(state.route==="home"){ setTimeout(initTilt, 100); }
+    if(state.route==="tasks"){ bindStars(); }
+  }
+
+  // ===== Hide Loader =====
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      const loader = document.getElementById('loader');
+      if(loader){
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 800);
+      }
+    }, 1500);
+  });
+
+  // ===== Initialize =====
+  render();
+</script>
+</body>
+</html>

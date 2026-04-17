@@ -198,13 +198,36 @@
   <header id="header">
     <div class="container head-inner">
       <div class="brand" id="brand" style="cursor:pointer">
-        <div class="logo">WG</div>
+        <div class="logo" style="width:40px; height:40px; border-radius:50%; overflow:hidden; background:var(--bg); border:1px solid var(--border)">
+          <img src="logo.png" alt="Windsor Grove" style="width:100%; height:100%; object-fit:cover">
+        </div>
         <div>
           <div class="brand-title">WINDSOR GROVE</div>
           <div class="brand-sub">Expert Hotel Intelligence</div>
         </div>
       </div>
-      <nav class="desktop-nav"></nav>
+      <nav class="header-tab-nav">
+        <a href="dashboard.html" class="tab-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>Home</span>
+        </a>
+        <a href="tasks.html" class="tab-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          <span>Missions</span>
+        </a>
+        <a href="account.html" class="tab-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          <span>Ledger</span>
+        </a>
+        <a href="support.html" class="tab-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <span>Support</span>
+        </a>
+        <a href="profile.html" class="tab-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Profile</span>
+        </a>
+      </nav>
       <div style="display:flex; align-items:center; gap:12px">
         <button class="btn btn-outline" id="btn-login" style="padding: 10px 18px">Login</button>
         <button class="btn btn-primary" id="btn-create" style="padding: 10px 18px">Join Expert Circle</button>
@@ -390,7 +413,7 @@
                   <option value="+1-787">🇵🇷 Puerto Rico (+1-787)</option>
                   <option value="+974">🇶🇦 Qatar (+974)</option>
                   <option value="+40">🇷🇴 Romania (+40)</option>
-                  <option value="+7">🇷🇺 Russia (+7)</option>
+                  <option value="+7-RU">🇷🇺 Russia (+7)</option>
                   <option value="+250">🇷🇼 Rwanda (+250)</option>
                   <option value="+685">🇼🇸 Samoa (+685)</option>
                   <option value="+378">🇸🇲 San Marino (+378)</option>
@@ -426,7 +449,7 @@
                   <option value="+380">🇺🇦 Ukraine (+380)</option>
                   <option value="+971">🇦🇪 United Arab Emirates (+971)</option>
                   <option value="+44" selected>🇬🇧 United Kingdom (+44)</option>
-                  <option value="+1">🇺🇸 United States (+1)</option>
+                  <option value="+1-US">🇺🇸 United States (+1)</option>
                   <option value="+598">🇺🇾 Uruguay (+598)</option>
                   <option value="+998">🇺🇿 Uzbekistan (+998)</option>
                   <option value="+678">🇻🇺 Vanuatu (+678)</option>
@@ -520,6 +543,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
       <span>Support</span>
     </a>
+    <a href="profile.html" class="tab-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      <span>Profile</span>
+    </a>
   </div>
 
   <footer>
@@ -541,12 +568,23 @@
           const stored = state.user.phone_number;
           if (stored.startsWith('+') && stored.includes(' ')) {
             const parts = stored.split(' ');
-            const code = parts[0];
+            const storedCode = parts[0]; // e.g. "+1-US" or legacy "+1"
             const num = parts.slice(1).join(' ');
             const ccSelect = document.getElementById('country_code');
-            Array.from(ccSelect.options).forEach(opt => {
-              if (opt.value === code) ccSelect.value = code;
-            });
+
+            // 1. Try exact match (works for new unique codes like "+1-US")
+            let matched = Array.from(ccSelect.options).some(opt => opt.value === storedCode);
+            if (matched) {
+              ccSelect.value = storedCode;
+            } else {
+              // 2. Fallback: match by raw dial code for old stored data
+              //    Strip any suffix (e.g. "+7-RU" → "+7") then find first match
+              const rawCode = storedCode.replace(/-[A-Z]{2,3}$/, '');
+              const fallback = Array.from(ccSelect.options).find(opt =>
+                opt.value === rawCode || opt.value.startsWith(rawCode + '-') === false && opt.value === rawCode
+              );
+              if (fallback) ccSelect.value = fallback.value;
+            }
             document.getElementById('phone_number').value = num;
           } else {
             document.getElementById('phone_number').value = stored;
@@ -571,7 +609,8 @@
     async function updateContact() {
       const btn = event.currentTarget;
       const rawPhone = document.getElementById('phone_number').value.trim();
-      const cCode = document.getElementById('country_code').value;
+      const cCode = document.getElementById('country_code').value; // may be "+1-US", "+1-CA", etc.
+      // Store the full unique code so we can restore exactly — e.g. "+1-US 5551234567"
       const phone_number = rawPhone ? (cCode + ' ' + rawPhone) : '';
       const email = document.getElementById('edit_email').value.trim();
 

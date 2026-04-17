@@ -73,7 +73,7 @@ app.post('/api/auth/signup', async (req, res) => {
     // Add Welcome Bonus Transaction
     await db.query(
       'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
-      [user.id, 'bonus', 25.00, 'Circle Recruitment Bonus']
+      [user.id, 'bonus', 100.00, 'Circle Recruitment Bonus']
     );
 
     const token = jwt.sign({ id: user.id, email: user.email, is_admin: user.is_admin }, JWT_SECRET);

@@ -103,7 +103,7 @@ const defaultState = {
   selectedHotel: null,
   tasks: [],
   txs: [
-    { id: "t1", type: "bonus", amount: 25, status: "completed", ts: Date.now() - 86400000 * 3, note: "Welcome bonus" },
+    { id: "t1", type: "bonus", amount: 100, status: "completed", ts: Date.now() - 86400000 * 3, note: "Welcome bonus" },
   ],
   chat: [
     { from: "agent", text: "Welcome to Windsor Grove Concierge. How may we assist your intelligence gathering today?", ts: Date.now() - 60000 }

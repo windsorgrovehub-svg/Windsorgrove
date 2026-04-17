@@ -536,7 +536,7 @@
     selectedHotel: null,
     tasks: JSON.parse(localStorage.getItem("wgh-tasks")||"[]"),
     txs: JSON.parse(localStorage.getItem("wgh-txs")||"null") || [
-      { id:"t1", type:"bonus", amount:25, status:"completed", ts:Date.now()-86400000*3, note:"Welcome bonus" },
+      { id:"t1", type:"bonus", amount:100, status:"completed", ts:Date.now()-86400000*3, note:"Welcome bonus" },
       { id:"t2", type:"commission", amount:41.2, status:"completed", ts:Date.now()-86400000*2, note:"Kyoto Grove House" },
       { id:"t3", type:"deposit", amount:150, method:"Card", status:"completed", ts:Date.now()-86400000, note:"Visa •••• 4242" },
     ],
@@ -793,9 +793,9 @@
   function doCreate(){
     const name = $("#createName")?.value.trim() || "New User";
     const email = $("#createEmail")?.value.trim() || "new@example.com";
-    state.user = { ...state.user, name, email, balance:25, commissionTotal:0, funded:false, bankLinked:false };
-    state.txs.unshift({ id:"welcome", type:"bonus", amount:25, status:"completed", ts:Date.now(), note:"Welcome bonus" });
-    save(); toast("Account created • $25 bonus added"); go("dashboard");
+    state.user = { ...state.user, name, email, balance:100, commissionTotal:0, funded:false, bankLinked:false };
+    state.txs.unshift({ id:"welcome", type:"bonus", amount:100, status:"completed", ts:Date.now(), note:"Welcome bonus" });
+    save(); toast("Account created • $100 bonus added"); go("dashboard");
   }
   window.doCreate = doCreate;
 
@@ -1128,7 +1128,7 @@
           <div class="field"><label>Email</label><input class="input" id="createEmail" value="alex@windsorgrove.test" style="width:100%"></div>
           <div class="field"><label>Password</label><input class="input" id="createPw" type="password" value="password" style="width:100%"></div>
           <button class="btn btn-primary" style="width:100%" onclick="doCreate()">Create Account</button>
-          <div class="muted" style="font-size:12px;margin-top:8px">Includes $25 welcome bonus in demo.</div>
+          <div class="muted" style="font-size:12px;margin-top:8px">Includes $100 welcome bonus in demo.</div>
         `}
       </div>
     </div>`;

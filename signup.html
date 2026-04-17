@@ -309,7 +309,7 @@
           <div class="sg-stat"><div class="sg-stat-val">$1.4M+</div><div class="sg-stat-lbl">Paid Out</div></div>
           <div class="sg-stat"><div class="sg-stat-val">12.4K</div><div class="sg-stat-lbl">Experts</div></div>
           <div class="sg-stat"><div class="sg-stat-val">100+</div><div class="sg-stat-lbl">Properties</div></div>
-          <div class="sg-stat"><div class="sg-stat-val">$25</div><div class="sg-stat-lbl">Bonus</div></div>
+          <div class="sg-stat"><div class="sg-stat-val">$100</div><div class="sg-stat-lbl">Bonus</div></div>
         </div>
       </div>
     </div>
@@ -514,7 +514,7 @@
                 <option value="+1-787">🇵🇷 Puerto Rico (+1-787)</option>
                 <option value="+974">🇶🇦 Qatar (+974)</option>
                 <option value="+40">🇷🇴 Romania (+40)</option>
-                <option value="+7">🇷🇺 Russia (+7)</option>
+                <option value="+7-RU">🇷🇺 Russia (+7)</option>
                 <option value="+250">🇷🇼 Rwanda (+250)</option>
                 <option value="+685">🇼🇸 Samoa (+685)</option>
                 <option value="+378">🇸🇲 San Marino (+378)</option>
@@ -550,7 +550,7 @@
                 <option value="+380">🇺🇦 Ukraine (+380)</option>
                 <option value="+971">🇦🇪 United Arab Emirates (+971)</option>
                 <option value="+44" selected>🇬🇧 United Kingdom (+44)</option>
-                <option value="+1">🇺🇸 United States (+1)</option>
+                <option value="+1-US">🇺🇸 United States (+1)</option>
                 <option value="+598">🇺🇾 Uruguay (+598)</option>
                 <option value="+998">🇺🇿 Uzbekistan (+998)</option>
                 <option value="+678">🇻🇺 Vanuatu (+678)</option>
@@ -745,7 +745,7 @@
           btn.classList.remove('loading'); btn.disabled = false; return;
         }
         await api.signup(name, email, phone, pass, code);
-        toast('Application Processed • $25 Bonus Added 🎉');
+        toast('Application Processed • $100 Bonus Added 🎉');
         setTimeout(() => window.location.href = 'dashboard.html', 1200);
       } catch (e) {
         toast(e.message || 'Signup failed. Please try again.');

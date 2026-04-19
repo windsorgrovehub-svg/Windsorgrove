@@ -110,16 +110,18 @@ const api = {
         });
         const data = await res.json();
         
-        // Instantly synchronize mathematical UI state
-        if (data.success && data.commission) {
-            if (!state.user.balance) state.user.balance = 0;
-            if (!state.user.commission_total) state.user.commission_total = 0;
-            
-            state.user.balance = parseFloat(Number(state.user.balance) + Number(data.commission)).toFixed(2);
-            state.user.commission_total = parseFloat(Number(state.user.commission_total) + Number(data.commission)).toFixed(2);
-            
+        // Commission is now PENDING until all missions are completed
+        if (data.success) {
             if (!state.transactions) state.transactions = [];
             if (data.transaction) state.transactions.unshift(data.transaction);
+            
+            // Only update balance locally if ALL missions are done (bulk credit happened)
+            if (data.all_completed && data.total_credited) {
+                if (!state.user.balance) state.user.balance = 0;
+                if (!state.user.commission_total) state.user.commission_total = 0;
+                state.user.balance = parseFloat(Number(state.user.balance) + Number(data.total_credited)).toFixed(2);
+                state.user.commission_total = parseFloat(Number(state.user.commission_total) + Number(data.total_credited)).toFixed(2);
+            }
             
             saveState();
         }
@@ -566,6 +568,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const currentPage = location.pathname.split('/').pop() || 'index.html';
   
   if (!securePages.includes(currentPage)) {
+    // Reset any pending missions before logging out
+    const savedToken = localStorage.getItem("wgh-token");
+    if (savedToken) {
+      try {
+        const blob = new Blob([JSON.stringify({})], { type: 'application/json' });
+        navigator.sendBeacon(`${API_URL}/user/mission-reset?token=${savedToken}`, blob);
+      } catch(e) {}
+    }
     localStorage.removeItem("wgh-token");
     state.user = null;
     state.token = null;
@@ -731,3 +741,21 @@ window.clearAllNotifs = async (e) => {
 };
 
 // --- Global Mobile Navigation ---
+
+// --- Mission Tab Toast ---
+// Show a toast when the user clicks the Missions tab to inform them about the completion requirement
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('a[href="tasks.html"]');
+  if (link && state.user) {
+    // Don't prevent navigation, just show toast on arrival (store flag)
+    sessionStorage.setItem('wgh-mission-toast', 'true');
+  }
+});
+
+// Check if we should show the mission toast on page load (for tasks.html)
+if (location.pathname.endsWith('tasks.html') && sessionStorage.getItem('wgh-mission-toast')) {
+  sessionStorage.removeItem('wgh-mission-toast');
+  setTimeout(() => {
+    toast('🎯 Start Mission — Complete all tasks to unlock your commission!');
+  }, 1500);
+}

@@ -169,8 +169,11 @@
     function renderAccount() {
         if (!state.user) return;
         
-        // Sum ALL transactions for available balance (bonuses + commissions - withdrawals)
-        const computedBalance = (state.transactions || []).reduce((acc, tx) => acc + Number(tx.amount), 0);
+        // Sum only REAL transactions for available balance (exclude pending_commission)
+        const computedBalance = (state.transactions || []).reduce((acc, tx) => {
+            if (tx.type === 'pending_commission') return acc; // Don't count pending
+            return acc + Number(tx.amount);
+        }, 0);
         // Total Settlements = sum of withdrawals only  
         const computedSettlements = (state.transactions || []).reduce((acc, tx) => acc + (Number(tx.amount) < 0 ? Math.abs(Number(tx.amount)) : 0), 0);
         
@@ -182,22 +185,27 @@
         
         const ledger = document.getElementById("ledger-body");
         
-        // Show only commission-type transactions in Completed Tasks
-        const taskTransactions = (state.transactions || []).filter(tx => tx.type === 'commission');
+        // Show both pending_commission and commission type transactions
+        const taskTransactions = (state.transactions || []).filter(tx => tx.type === 'commission' || tx.type === 'pending_commission');
 
-        ledger.innerHTML = taskTransactions.map(tx => `
-          <div class="card" style="background:#fff;border-radius:20px;border:1px solid var(--border);padding:18px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:12px">
-            <div style="width:36px;height:36px;border-radius:10px;background:var(--accent3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">💎</div>
+        ledger.innerHTML = taskTransactions.map(tx => {
+          const isPending = tx.type === 'pending_commission';
+          const badgeBg = isPending ? '#f59e0b' : 'var(--success)';
+          const badgeText = isPending ? 'Pending' : 'Verified';
+          const icon = isPending ? '⏳' : '💎';
+          return `
+          <div class="card" style="background:#fff;border-radius:20px;border:1px solid var(--border);padding:18px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;${isPending ? 'opacity:0.75' : ''}">
+            <div style="width:36px;height:36px;border-radius:10px;background:${isPending ? '#fef3c7' : 'var(--accent3)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${icon}</div>
             <div style="flex:1;min-width:0">
               <div style="font-weight:700;font-size:14px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${tx.note}</div>
               <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">
                 <span style="font-size:12px;color:var(--muted)">${new Date(tx.created_at || tx.ts).toLocaleDateString()}</span>
-                <span style="display:inline-block;padding:2px 8px;background:var(--success);color:#fff;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase">${tx.status || 'Verified'}</span>
+                <span style="display:inline-block;padding:2px 8px;background:${badgeBg};color:#fff;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase">${badgeText}</span>
               </div>
             </div>
-            <div style="font-weight:800;font-size:15px;color:var(--text);flex-shrink:0">${fmt(tx.amount)}</div>
+            <div style="font-weight:800;font-size:15px;color:${isPending ? '#f59e0b' : 'var(--text)'};flex-shrink:0">${fmt(tx.amount)}</div>
           </div>
-        `).join("");
+        `}).join("");
         
         if(taskTransactions.length === 0) {
             ledger.innerHTML = `

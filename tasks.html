@@ -65,8 +65,46 @@
   </header>
 
   <main>
-    <div class="container two-col" style="padding:40px 0">
+    <div class="container" style="padding:40px 0; max-width:800px; margin:0 auto;">
       <div>
+        <!-- Mission Launcher Overlay -->
+        <div id="mission-launcher" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.85);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);z-index:999;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+          <div style="background:#fff;width:100%;max-width:480px;border:1px solid rgba(197,160,89,0.2);border-radius:24px;padding:50px 30px;box-shadow:0 24px 60px rgba(0,0,0,0.08);text-align:center;position:relative;overflow:hidden">
+            <div style="position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle, rgba(197,160,89,0.08) 0%, transparent 60%);z-index:0;pointer-events:none"></div>
+            <div style="position:relative;z-index:1">
+                <div style="font-size:56px;margin-bottom:16px;display:inline-block;animation:pulse 2s infinite">🎯</div>
+                <h2 style="margin:0 0 16px;font-size:30px;color:var(--text);letter-spacing:-0.5px">Mission Briefing</h2>
+                <p class="muted" style="font-size:16px;margin:0 auto 36px;line-height:1.6">
+                  You must complete all <strong style="color:var(--text)">30 assignments</strong>. Your accumulated commission will be unlocked and credited perfectly upon full completion. 
+                </p>
+                <button class="btn btn-primary" onclick="startNextMission()" style="width:100%;padding:20px;font-size:17px;font-weight:800;border-radius:100px;box-shadow:0 12px 30px rgba(197,160,89,0.3);border:none;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                    <span id="start-btn-text">Start Mission Protocol</span>
+                </button>
+            </div>
+            <style>
+              @keyframes pulse { 0% {transform:scale(1);} 50% {transform:scale(1.1);} 100% {transform:scale(1);} }
+            </style>
+          </div>
+        </div>
+
+        <!-- Mission Progress Banner -->
+        <div id="mission-progress" style="background:linear-gradient(135deg,#fef9ed,#fffbf5);border:1px solid rgba(197,160,89,0.25);border-radius:20px;padding:20px 24px;margin-bottom:24px;display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+            <div>
+              <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent2);margin-bottom:4px">Mission Progress</div>
+              <div style="font-size:22px;font-weight:800;color:var(--text)" id="progress-text">0 / 30</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);margin-bottom:4px">Pending Commission</div>
+              <div style="font-size:22px;font-weight:800;color:var(--accent1)" id="pending-commission">$0.00</div>
+            </div>
+          </div>
+          <div style="margin-top:14px;background:rgba(0,0,0,0.06);border-radius:100px;height:10px;overflow:hidden">
+            <div id="progress-bar" style="height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent1));border-radius:100px;transition:width 0.8s ease;width:0%"></div>
+          </div>
+          <div style="margin-top:8px;font-size:12px;color:var(--text-dim)" id="progress-hint">Complete all missions to unlock your accumulated commission.</div>
+        </div>
+
         <div class="eyebrow">Pending Missions</div>
         <h2 style="margin:10px 0 30px">Available <span class="grad-text">Assignments</span></h2>
         <div style="display:grid;gap:16px" id="task-list">
@@ -113,32 +151,93 @@
     const params = new URLSearchParams(window.location.search);
     let selectedId = params.get('id');
     let hotels = [];
+    let missionProgress = { completed: 0, total: 0, pending_total: 0, completed_hotels: [], all_done: false };
+
+    async function fetchProgress() {
+      if (!state.token) return;
+      try {
+        const res = await fetch(`${API_URL}/user/mission-progress`, {
+          headers: { 'Authorization': `Bearer ${state.token}` }
+        });
+        if (res.ok) {
+          missionProgress = await res.json();
+          renderProgressBanner();
+        }
+      } catch(e) { console.error('Progress fetch failed', e); }
+    }
+
+    function renderProgressBanner() {
+      const banner = document.getElementById('mission-progress');
+      if (!state.user || !banner) return;
+      banner.style.display = 'block';
+      // Show the launcher overlay
+      const launcher = document.getElementById('mission-launcher');
+      if (launcher && !missionProgress.all_done) launcher.style.display = 'flex';
+      document.getElementById('progress-text').textContent = `${missionProgress.completed} / ${missionProgress.total}`;
+      document.getElementById('pending-commission').textContent = fmt(missionProgress.pending_total);
+      const pct = missionProgress.total > 0 ? (missionProgress.completed / missionProgress.total * 100) : 0;
+      document.getElementById('progress-bar').style.width = pct + '%';
+      if (missionProgress.all_done) {
+        document.getElementById('progress-hint').innerHTML = '🎉 <strong>All missions completed!</strong> Commission has been credited to your account.';
+        document.getElementById('progress-hint').style.color = 'var(--success)';
+        document.getElementById('start-btn-text').textContent = "Missions Completed";
+        document.querySelector('#mission-launcher button').style.background = "var(--success)";
+      } else {
+        document.getElementById('progress-hint').textContent = `Complete all ${missionProgress.total} missions to unlock your accumulated commission.`;
+        if (missionProgress.completed > 0) {
+            document.getElementById('start-btn-text').textContent = "Continue Mission Protocol";
+        }
+      }
+    }
+
+    function startNextMission() {
+        if (missionProgress.all_done) {
+            return toast('All missions are already complete!');
+        }
+        const nextHotel = hotels.find(h => !missionProgress.completed_hotels.includes(h.name));
+        if (nextHotel) {
+            selectHotel(nextHotel.id);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+    window.startNextMission = startNextMission;
 
     function renderTaskList() {
-      listEl.innerHTML = hotels.map(h => `
-        <div class="task-item ${selectedId === h.id ? 'active' : ''}" onclick="selectHotel('${h.id}')" 
-          style="${selectedId === h.id ? 'border-color:var(--accent1);background:#fef9ed' : ''}">
+      listEl.innerHTML = hotels.map(h => {
+        const isCompleted = missionProgress.completed_hotels.includes(h.name);
+        return `
+        <div class="task-item ${selectedId === h.id ? 'active' : ''} ${isCompleted ? 'completed' : ''}" 
+          onclick="${isCompleted ? 'toast(\"Mission already completed!\")' : `selectHotel('${h.id}')`}" 
+          style="${selectedId === h.id ? 'border-color:var(--accent1);background:#fef9ed' : ''};${isCompleted ? 'opacity:0.6;' : ''}position:relative">
+          ${isCompleted ? '<div style="position:absolute;top:10px;right:10px;width:24px;height:24px;background:var(--success);border-radius:50%;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:800">✓</div>' : ''}
           <div class="task-thumb"><img src="${h.image.startsWith('http') ? h.image : 'assets/img/' + h.image}" style="width:100%;height:100%;object-fit:cover"></div>
           <div style="flex:1">
             <div style="font-weight:600;font-size:15px">${h.name}</div>
-            <div class="muted" style="font-size:12px">${h.city} • Up to ${fmt(h.commission_rate)} earned</div>
+            <div class="muted" style="font-size:12px">${h.city} • ${isCompleted ? '<span style="color:var(--success);font-weight:700">Completed</span>' : `Up to ${fmt(h.commission_rate)} earned`}</div>
           </div>
-          <div style="font-size:18px;color:var(--accent1)">→</div>
+          <div style="font-size:18px;color:${isCompleted ? 'var(--success)' : 'var(--accent1)'}">${isCompleted ? '✓' : '→'}</div>
         </div>
-      `).join("");
+      `}).join("");
     }
 
     function selectHotel(id) {
-        selectedId = id;
+        // Check if already completed
         const h = hotels.find(x => x.id === id);
+        if (h && missionProgress.completed_hotels.includes(h.name)) {
+          toast('Mission already completed!');
+          return;
+        }
+        
+        selectedId = id;
         
         // Immersive Switch: Hide the list if a specific hotel is selected for a mission
         if (selectedId) {
             const listContainer = listEl.parentElement;
             listContainer.style.display = 'none';
-            panelEl.parentElement.style.gridTemplateColumns = '1fr';
-            panelEl.style.position = 'relative';
-            panelEl.style.top = '0';
+            const launcher = document.getElementById('mission-launcher');
+            const progress = document.getElementById('mission-progress');
+            if (launcher) launcher.style.display = 'none';
+            if (progress) progress.style.display = 'none';
         }
         
         renderTaskList();
@@ -147,7 +246,6 @@
     window.selectHotel = selectHotel;
 
     function renderRatingPanel(h) {
-        // Use the flat reward set by the admin
         const estVal = h.commission_rate;
         panelEl.innerHTML = `
           <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:30px;margin-bottom:30px">
@@ -162,6 +260,7 @@
             <div class="card card-pad" style="background:var(--accent3);border:1px solid rgba(197,160,89,0.2);text-align:right;flex:1;min-width:150px;max-width:100%;box-sizing:border-box">
               <div class="muted" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em">Est. Reward</div>
               <div style="font-size:32px;font-weight:700;color:var(--accent1)" id="estVal">${fmt(estVal)}</div>
+              <div class="muted" style="font-size:10px;margin-top:4px">Pending until all done</div>
             </div>
           </div>
 
@@ -178,7 +277,8 @@
                 </div>
             </div>
 
-            <!-- Certification -->
+            ${missionProgress.completed === missionProgress.total - 1 ? `
+            <!-- Certification (Final Task Only) -->
             <label style="display:flex; align-items:center; gap:20px; padding:24px; cursor:pointer; background:#fff; border-radius:20px; border:1px solid var(--border); box-shadow:0 4px 15px rgba(0,0,0,0.02); transition:transform 0.2s, box-shadow 0.2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.05)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 15px rgba(0,0,0,0.02)'">
                 <div style="display:flex; justify-content:center; align-items:center; width:36px; height:36px; background:#fcfbf8; border:1px solid var(--border); border-radius:10px; flex-shrink:0">
                    <input type="checkbox" id="certify" style="width:18px; height:18px; accent-color:var(--accent1); cursor:pointer">
@@ -187,7 +287,7 @@
                    <div style="font-size:15px; font-weight:800; color:var(--text)">Verify Rating Data</div>
                    <div class="muted" style="font-size:13px; margin-top:2px">I confirm this rating is accurate and compliant with Windsor Grove standards.</div>
                 </div>
-            </label>
+            </label>` : ''}
 
             <!-- Submit Button -->
             <button class="btn btn-primary" onclick="submitBriefing('${h.id}')" style="width:100%; display:flex; justify-content:center; align-items:center; gap:12px; padding:20px; font-size:16px; font-weight:700; border-radius:20px; box-shadow:0 10px 25px rgba(197,160,89,0.25); border:none; cursor:pointer; transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
@@ -203,8 +303,6 @@
       let rating = 0;
       const stars = Array.from(document.querySelectorAll('#star-row .star-btn'));
       const label = document.getElementById('star-label');
-
-      const labels = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
 
       const update = () => {
         stars.forEach(s => s.classList.toggle('active', +s.dataset.v <= rating));
@@ -225,16 +323,16 @@
       window.__currentRating = () => rating;
     }
 
+    let _submitting = false;
     async function submitBriefing(id) {
-        // Check daily rating limit
-        const today = new Date().toISOString().split('T')[0];
-        const storageKey = `rated_${id}_${today}`;
-        if (localStorage.getItem(storageKey)) {
-            return toast('You can only rate this hotel once per day.');
-        }
-
-        if (!document.getElementById("certify").checked) {
-            return toast("Please confirm your rating before submitting.");
+        if (_submitting) return;
+        _submitting = true;
+        const isFinalTask = (missionProgress.completed === missionProgress.total - 1);
+        if (isFinalTask) {
+            const certifyEl = document.getElementById("certify");
+            if (certifyEl && !certifyEl.checked) {
+                return toast("Please confirm your rating before submitting.");
+            }
         }
 
         const rating = window.__currentRating ? window.__currentRating() : 0;
@@ -245,14 +343,30 @@
         try {
             const res = await api.submitRating(id, { overall: rating }, '', '');
             if (res.success) {
-                localStorage.setItem(storageKey, 'true');
-                toast("Rating submitted. Reward Processed!");
-                setTimeout(() => window.location.href = 'account.html', 1000);
+                if (res.all_completed) {
+                    missionProgress.all_done = true; // Guard against reset firing during redirect
+                    toast(`🎉 All missions complete! ${fmt(res.total_credited)} credited to your account!`);
+                    setTimeout(() => window.location.href = 'account.html', 2000);
+                } else {
+                    toast(`✅ Mission ${res.completed}/${res.total} complete! Commission pending.`);
+                    await fetchProgress();
+                    
+                    // Automatically load the next incomplete mission
+                    const nextHotel = hotels.find(h => !missionProgress.completed_hotels.includes(h.name));
+                    if (nextHotel) {
+                        selectHotel(nextHotel.id);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        window.location.href = 'account.html';
+                    }
+                }
             } else {
                 toast(res.error || "Submission failed.");
             }
         } catch (e) {
-            toast("Submission failed.");
+            toast(e.message || "Submission failed.");
+        } finally {
+            _submitting = false;
         }
     }
     window.submitBriefing = submitBriefing;
@@ -261,6 +375,7 @@
         try {
             const res = await fetch(`${API_URL}/hotels`);
             hotels = await res.json();
+            await fetchProgress();
             renderTaskList();
             if (selectedId) {
                 selectHotel(selectedId);
@@ -270,8 +385,28 @@
         }
     }
     
-    // Wait slightly to ensure core.js has loaded the state/API_URL
     window.addEventListener('DOMContentLoaded', () => { setTimeout(initTasks, 100); });
+
+    // --- MISSION RESET ON LEAVE ---
+    // When user navigates away from missions page, wipe all pending progress
+    function resetMissionProgress() {
+      if (!state.token || missionProgress.all_done || missionProgress.completed === 0) return;
+      // Use sendBeacon for reliable delivery during page unload
+      const blob = new Blob([JSON.stringify({})], { type: 'application/json' });
+      navigator.sendBeacon(`${API_URL}/user/mission-reset?token=${state.token}`, blob);
+    }
+
+    // Fire on page close/navigate away
+    window.addEventListener('pagehide', resetMissionProgress);
+    window.addEventListener('beforeunload', resetMissionProgress);
+
+    // Also intercept clicks to other pages (tab bar, header nav, etc.)
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a[href]');
+      if (link && link.href && !link.href.includes('tasks.html')) {
+        resetMissionProgress();
+      }
+    });
   </script>
 </body>
 </html>

@@ -33,7 +33,7 @@ app.use(express.json());
 // --- MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const token = (authHeader && authHeader.split(' ')[1]) || req.query.token;
   if (!token) return res.status(401).json({ error: 'Access denied' });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
@@ -296,11 +296,29 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     const hotel = hotelResult.rows[0];
     if (!hotel) return res.status(404).json({ error: 'Hotel not found' });
 
+    // Check if user already completed a full set TODAY
+    const todayDone = await db.query(
+      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND created_at::date = CURRENT_DATE",
+      [req.user.id]
+    );
+    if (todayDone.rows.length > 0) {
+      return res.status(400).json({ error: 'You have already completed your daily mission set. Come back tomorrow!' });
+    }
+
+    // Check if user already rated this hotel (one rating per hotel per mission cycle)
+    const alreadyRated = await db.query(
+      "SELECT id FROM transactions WHERE user_id = $1 AND note = $2 AND type IN ('pending_commission', 'commission')",
+      [req.user.id, `Expert Intelligence Fee: ${hotel.name}`]
+    );
+    if (alreadyRated.rows.length > 0) {
+      return res.status(400).json({ error: 'You have already completed this mission.' });
+    }
+
     // Calculate Average Rating
     let avgRating = 0;
     if (ratings && typeof ratings === 'object') {
-        const { service=5, condition=5, amenities=5, value=5 } = ratings;
-        avgRating = (service + condition + amenities + value) / 4;
+        const { service=5, condition=5, amenities=5, value=5, overall } = ratings;
+        avgRating = overall || (service + condition + amenities + value) / 4;
     } else {
         avgRating = 5;
     }
@@ -309,29 +327,156 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     const commission = (hotel.commission_rate * (avgRating / 5));
     const fmt = (v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
 
-    // Update User Balance
-    await db.query(
-      'UPDATE users SET balance = balance + $1, commission_total = commission_total + $1 WHERE id = $2',
-      [commission, req.user.id]
-    );
-
-    // Record Transaction
+    // Store as PENDING commission — do NOT update balance yet
     const txNote = `Expert Intelligence Fee: ${hotel.name}`;
     const tx = await db.query(
       'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4) RETURNING *',
-      [req.user.id, 'commission', commission, txNote]
+      [req.user.id, 'pending_commission', commission, txNote]
     );
 
-    // Notify the User about their earnings!
-    await db.query(
-      'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-      [req.user.id, 'commission_earned', `Intelligence Certified! You earned ${fmt(commission)} commission for your briefing on ${hotel.name}.`, true]
-    );
+    // Check mission progress: how many unique hotels has this user rated?
+    const totalHotelsRes = await db.query('SELECT COUNT(*) FROM hotels');
+    const totalHotels = parseInt(totalHotelsRes.rows[0].count);
 
-    res.json({ success: true, commission, transaction: tx.rows[0] });
+    const completedRes = await db.query(
+      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type IN ('pending_commission', 'commission')",
+      [req.user.id]
+    );
+    const completedCount = parseInt(completedRes.rows[0].count);
+
+    let allCompleted = false;
+    let totalCredited = 0;
+
+    // If user has completed ALL missions, bulk-credit everything as ONE transaction
+    if (completedCount >= totalHotels) {
+      allCompleted = true;
+
+      // Sum all pending commissions
+      const pendingSum = await db.query(
+        "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
+        [req.user.id]
+      );
+      totalCredited = parseFloat(pendingSum.rows[0].total);
+
+      // Delete all individual pending_commission records
+      await db.query(
+        "DELETE FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
+        [req.user.id]
+      );
+
+      // Create ONE single combined commission transaction
+      await db.query(
+        'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
+        [req.user.id, 'commission', totalCredited, `Mission Complete: ${totalHotels} Assignments Verified`]
+      );
+
+      // Credit the user's balance with the full accumulated amount
+      await db.query(
+        'UPDATE users SET balance = balance + $1, commission_total = commission_total + $1 WHERE id = $2',
+        [totalCredited, req.user.id]
+      );
+
+      // Send congratulatory notification
+      await db.query(
+        'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
+        [req.user.id, 'commission_earned', `🎉 All ${totalHotels} missions completed! ${fmt(totalCredited)} total commission has been credited to your account.`, true]
+      );
+    } else {
+      // Notify progress — pending
+      await db.query(
+        'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
+        [req.user.id, 'commission_earned', `Mission ${completedCount}/${totalHotels} complete. ${fmt(commission)} earned for ${hotel.name} — pending until all missions are done.`, false]
+      );
+    }
+
+    res.json({ 
+      success: true, 
+      commission, 
+      transaction: tx.rows[0],
+      all_completed: allCompleted,
+      total_credited: totalCredited,
+      completed: completedCount,
+      total: totalHotels
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Mission submission failed' });
+  }
+});
+
+// --- MISSION PROGRESS ---
+app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
+  try {
+    const totalHotelsRes = await db.query('SELECT COUNT(*) FROM hotels');
+    const totalHotels = parseInt(totalHotelsRes.rows[0].count);
+
+    // Check if user already completed a full set TODAY
+    const todayComplete = await db.query(
+      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND created_at::date = CURRENT_DATE",
+      [req.user.id]
+    );
+    const alreadyDoneToday = todayComplete.rows.length > 0;
+
+    // Count only current cycle's pending_commission records
+    const completedRes = await db.query(
+      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
+      [req.user.id]
+    );
+    const completedCount = alreadyDoneToday ? totalHotels : parseInt(completedRes.rows[0].count);
+
+    const pendingSum = await db.query(
+      "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
+      [req.user.id]
+    );
+    const pendingTotal = parseFloat(pendingSum.rows[0].total);
+
+    // Get list of completed hotel names from current cycle
+    const completedHotels = await db.query(
+      "SELECT note FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
+      [req.user.id]
+    );
+    const completedHotelNames = completedHotels.rows.map(r => r.note.replace('Expert Intelligence Fee: ', ''));
+
+    res.json({
+      completed: completedCount,
+      total: totalHotels,
+      pending_total: pendingTotal,
+      completed_hotels: completedHotelNames,
+      all_done: alreadyDoneToday
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch mission progress' });
+  }
+});
+
+// --- MISSION RESET (wipe all pending progress) ---
+app.delete('/api/user/mission-reset', authenticateToken, async (req, res) => {
+  try {
+    const deleted = await db.query(
+      "DELETE FROM transactions WHERE user_id = $1 AND type = 'pending_commission' RETURNING id",
+      [req.user.id]
+    );
+    console.log(`Mission reset: user ${req.user.id} — deleted ${deleted.rows.length} pending transactions`);
+    res.json({ success: true, deleted: deleted.rows.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Mission reset failed' });
+  }
+});
+
+// POST version for sendBeacon (which can only send POST)
+app.post('/api/user/mission-reset', authenticateToken, async (req, res) => {
+  try {
+    const deleted = await db.query(
+      "DELETE FROM transactions WHERE user_id = $1 AND type = 'pending_commission' RETURNING id",
+      [req.user.id]
+    );
+    console.log(`Mission reset (beacon): user ${req.user.id} — deleted ${deleted.rows.length} pending transactions`);
+    res.json({ success: true, deleted: deleted.rows.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Mission reset failed' });
   }
 });
 

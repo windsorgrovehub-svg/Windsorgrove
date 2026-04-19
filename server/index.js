@@ -364,23 +364,59 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
         [req.user.id]
       );
 
-      // Create ONE single combined commission transaction
-      await db.query(
-        'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
-        [req.user.id, 'commission', totalCredited, `Mission Complete: ${totalHotels} Assignments Verified`]
+      // Check if this is the FIRST completed set (trial bonus still active)
+      const isFirstSet = await db.query(
+        "SELECT id FROM transactions WHERE user_id = $1 AND type = 'signup_bonus' AND NOT EXISTS (SELECT 1 FROM transactions t2 WHERE t2.user_id = $1 AND t2.type = 'trial_fee')",
+        [req.user.id]
       );
 
-      // Credit the user's balance with the full accumulated amount
-      await db.query(
-        'UPDATE users SET balance = balance + $1, commission_total = commission_total + $1 WHERE id = $2',
-        [totalCredited, req.user.id]
-      );
+      if (isFirstSet.rows.length > 0) {
+        // FIRST SET: No commission credited — trial bonus was the reward
+        const bonusRes = await db.query(
+          "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = $1 AND type = 'signup_bonus'",
+          [req.user.id]
+        );
+        const bonusAmount = parseFloat(bonusRes.rows[0].total);
 
-      // Send congratulatory notification
-      await db.query(
-        'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-        [req.user.id, 'commission_earned', `🎉 All ${totalHotels} missions completed! ${fmt(totalCredited)} total commission has been credited to your account.`, true]
-      );
+        // Exhaust the trial bonus
+        await db.query(
+          'UPDATE users SET balance = balance - $1 WHERE id = $2',
+          [bonusAmount, req.user.id]
+        );
+        await db.query(
+          'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
+          [req.user.id, 'trial_fee', -bonusAmount, 'Trial Bonus Exhausted — First Mission Set Completed']
+        );
+
+        // Record mission completion with $0 (no commission on first set)
+        await db.query(
+          'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
+          [req.user.id, 'commission', 0, `Mission Complete: ${totalHotels} Assignments Verified (Trial)`]
+        );
+
+        totalCredited = 0;
+
+        await db.query(
+          'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
+          [req.user.id, 'commission_earned', `🎉 First mission set complete! Your ${fmt(bonusAmount)} trial bonus has been used. From your next set, all commissions will be credited directly.`, true]
+        );
+      } else {
+        // SUBSEQUENT SETS: Credit commission normally
+        await db.query(
+          'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
+          [req.user.id, 'commission', totalCredited, `Mission Complete: ${totalHotels} Assignments Verified`]
+        );
+
+        await db.query(
+          'UPDATE users SET balance = balance + $1, commission_total = commission_total + $1 WHERE id = $2',
+          [totalCredited, req.user.id]
+        );
+
+        await db.query(
+          'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
+          [req.user.id, 'commission_earned', `🎉 All ${totalHotels} missions completed! ${fmt(totalCredited)} total commission has been credited to your account.`, true]
+        );
+      }
     } else {
       // Notify progress — pending
       await db.query(

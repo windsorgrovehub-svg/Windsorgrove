@@ -338,8 +338,16 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     const totalHotelsRes = await db.query('SELECT COUNT(*) FROM hotels');
     const totalHotels = parseInt(totalHotelsRes.rows[0].count);
 
+    // Determine mission target: Trial (first set) = 30, Paid (subsequent) = all hotels
+    const trialCheck = await db.query(
+      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'trial_fee'",
+      [req.user.id]
+    );
+    const isTrialDone = trialCheck.rows.length > 0;
+    const missionTarget = isTrialDone ? totalHotels : 30; // 30 for trial, 66 for paid
+
     const completedRes = await db.query(
-      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type IN ('pending_commission', 'commission')",
+      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
       [req.user.id]
     );
     const completedCount = parseInt(completedRes.rows[0].count);
@@ -347,8 +355,8 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     let allCompleted = false;
     let totalCredited = 0;
 
-    // If user has completed ALL missions, bulk-credit everything as ONE transaction
-    if (completedCount >= totalHotels) {
+    // If user has completed the target number of missions
+    if (completedCount >= missionTarget) {
       allCompleted = true;
 
       // Sum all pending commissions
@@ -391,7 +399,7 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
         // Record mission completion with $0 (no commission on first set)
         await db.query(
           'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
-          [req.user.id, 'commission', 0, `Mission Complete: ${totalHotels} Assignments Verified (Trial)`]
+          [req.user.id, 'commission', 0, `Mission Complete: ${missionTarget} Assignments Verified (Trial)`]
         );
 
         totalCredited = 0;
@@ -404,7 +412,7 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
         // SUBSEQUENT SETS: Credit commission normally
         await db.query(
           'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
-          [req.user.id, 'commission', totalCredited, `Mission Complete: ${totalHotels} Assignments Verified`]
+          [req.user.id, 'commission', totalCredited, `Mission Complete: ${missionTarget} Assignments Verified`]
         );
 
         await db.query(
@@ -414,14 +422,14 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
 
         await db.query(
           'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-          [req.user.id, 'commission_earned', `🎉 All ${totalHotels} missions completed! ${fmt(totalCredited)} total commission has been credited to your account.`, true]
+          [req.user.id, 'commission_earned', `🎉 All ${missionTarget} missions completed! ${fmt(totalCredited)} total commission has been credited to your account.`, true]
         );
       }
     } else {
       // Notify progress — pending
       await db.query(
         'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-        [req.user.id, 'commission_earned', `Mission ${completedCount}/${totalHotels} complete. ${fmt(commission)} earned for ${hotel.name} — pending until all missions are done.`, false]
+        [req.user.id, 'commission_earned', `Mission ${completedCount}/${missionTarget} complete. ${fmt(commission)} earned for ${hotel.name} — pending until all missions are done.`, false]
       );
     }
 
@@ -432,7 +440,7 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
       all_completed: allCompleted,
       total_credited: totalCredited,
       completed: completedCount,
-      total: totalHotels
+      total: missionTarget
     });
   } catch (err) {
     console.error(err);
@@ -443,8 +451,16 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
 // --- MISSION PROGRESS ---
 app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
   try {
+    // Determine mission target: Trial = 30, Paid = all hotels
     const totalHotelsRes = await db.query('SELECT COUNT(*) FROM hotels');
     const totalHotels = parseInt(totalHotelsRes.rows[0].count);
+    
+    const trialCheck = await db.query(
+      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'trial_fee'",
+      [req.user.id]
+    );
+    const isTrialDone = trialCheck.rows.length > 0;
+    const missionTarget = isTrialDone ? totalHotels : 30;
 
     // Check if user already completed a full set TODAY
     const todayComplete = await db.query(
@@ -458,7 +474,7 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
       "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
       [req.user.id]
     );
-    const completedCount = alreadyDoneToday ? totalHotels : parseInt(completedRes.rows[0].count);
+    const completedCount = alreadyDoneToday ? missionTarget : parseInt(completedRes.rows[0].count);
 
     const pendingSum = await db.query(
       "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
@@ -475,10 +491,11 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
 
     res.json({
       completed: completedCount,
-      total: totalHotels,
+      total: missionTarget,
       pending_total: pendingTotal,
       completed_hotels: completedHotelNames,
-      all_done: alreadyDoneToday
+      all_done: alreadyDoneToday,
+      is_trial: !isTrialDone
     });
   } catch (err) {
     console.error(err);

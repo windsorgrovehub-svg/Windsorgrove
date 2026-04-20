@@ -281,7 +281,7 @@
       const btn = document.getElementById('stage2-req-btn');
       if (btn) { btn.disabled = true; btn.textContent = 'Submitting Request...'; }
 
-      // Submit to Mission Control API (no chat message)
+      // Submit to Mission Control API
       try {
         if (state.token) {
           await fetch(`${API_URL}/user/request-stage2`, {
@@ -292,8 +292,9 @@
         }
       } catch(e) { /* silent */ }
 
-      // Navigate to support page so user sees it
-      window.location.href = 'support.html';
+      // Navigate to support page AND send the chat message so user sees it
+      const msg = encodeURIComponent('Hi Support, I will like to continue to stage 2, kindly help unlock it and finish my task, thank you');
+      window.location.href = `support.html?stage2=1&msg=${msg}`;
     }
 
     async function fetchProgress() {

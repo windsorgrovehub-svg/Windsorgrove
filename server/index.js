@@ -423,9 +423,12 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
           [req.user.id, 'commission_earned', `🎉 Trial complete! Your ${fmt(bonusAmount)} trial bonus has been used. Start your first paid daily task to begin earning commissions.`, true]
         );
       } else {
-        // PAID SET: $30 per 33 tasks completed — 66 tasks = $60 total as ONE entry
-        // Each "stage" of 33 earns $30, so total = (missionTarget / 33) * 30
-        totalCredited = (missionTarget / 33) * 30;
+        // PAID SET: Pay the actual accumulated hotel commissions (rates calibrated to ~$60 for 66 tasks)
+        const pendingSum = await db.query(
+          "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
+          [req.user.id]
+        );
+        totalCredited = parseFloat(parseFloat(pendingSum.rows[0].total).toFixed(2));
 
         const txNote = `Daily Task Commission — ${missionTarget} Assignments Completed`;
 

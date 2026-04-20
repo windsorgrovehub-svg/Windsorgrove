@@ -392,19 +392,6 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     if (completedCount >= missionTarget) {
       allCompleted = true;
 
-      // Sum all pending commissions
-      const pendingSum = await db.query(
-        "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
-        [req.user.id]
-      );
-      totalCredited = parseFloat(pendingSum.rows[0].total);
-
-      // Enforce the progressive payout rule literally (66 = 30, 132 = 60, etc.)
-      const scaledPayout = (missionTarget / 66) * 30; 
-      if (scaledPayout >= 30) {
-         totalCredited = scaledPayout;
-      }
-
       // Delete all individual pending_commission records
       await db.query(
         "DELETE FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
@@ -412,7 +399,7 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
       );
 
       if (!isTrialDone) {
-        // FIRST SET: No commission credited — trial bonus was the reward
+        // TRIAL SET: No commission — exhaust the $100 signup bonus
         const bonusRes = await db.query(
           "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = $1 AND type = 'signup_bonus'",
           [req.user.id]
@@ -420,13 +407,10 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
         let bonusAmount = parseFloat(bonusRes.rows[0].total);
         if (bonusAmount <= 0) bonusAmount = 100;
 
-        // Exhaust the trial bonus
         await db.query(
           'UPDATE users SET balance = balance - $1 WHERE id = $2',
           [bonusAmount, req.user.id]
         );
-        
-        // Ensure Ledger explicitly deducts visually
         await db.query(
           'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
           [req.user.id, 'trial_fee', -bonusAmount, `Mission Complete: ${missionTarget} Assignments Verified (Trial)`]
@@ -436,13 +420,18 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
 
         await db.query(
           'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-          [req.user.id, 'commission_earned', `🎉 First mission set complete! Your ${fmt(bonusAmount)} trial bonus has been used. From your next set, all commissions will be credited directly.`, true]
+          [req.user.id, 'commission_earned', `🎉 Trial complete! Your ${fmt(bonusAmount)} trial bonus has been used. Start your first paid daily task to begin earning commissions.`, true]
         );
       } else {
-        // SUBSEQUENT SETS: Credit commission normally
+        // PAID SET: $30 per 33 tasks completed — 66 tasks = $60 total as ONE entry
+        // Each "stage" of 33 earns $30, so total = (missionTarget / 33) * 30
+        totalCredited = (missionTarget / 33) * 30;
+
+        const txNote = `Daily Task Commission — ${missionTarget} Assignments Completed`;
+
         await db.query(
           'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
-          [req.user.id, 'commission', totalCredited, `Mission Complete: ${missionTarget} Assignments Verified`]
+          [req.user.id, 'commission', totalCredited, txNote]
         );
 
         await db.query(
@@ -452,14 +441,19 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
 
         await db.query(
           'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-          [req.user.id, 'commission_earned', `🎉 All ${missionTarget} missions completed! ${fmt(totalCredited)} total commission has been credited to your account.`, true]
+          [req.user.id, 'commission_earned', `🎉 All ${missionTarget} missions done! ${fmt(totalCredited)} commission has been credited to your available balance.`, true]
         );
       }
+    } else if (!isTrialDone) {
+      // Trial in progress — silent, no per-task notification needed
+    } else if (completedCount === 33 && missionTarget === 66) {
+      // Stage 1 silently complete — waiting for admin to unlock Stage 2
+      // No notification spam; the locked overlay handles the UX
     } else {
-      // Notify progress — pending
+      // Progress notification for trial or mid-stage
       await db.query(
         'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-        [req.user.id, 'commission_earned', `Mission ${completedCount}/${missionTarget} complete. ${fmt(commission)} earned for ${hotel.name} — pending until all missions are done.`, false]
+        [req.user.id, 'commission_earned', `Mission ${completedCount}/${missionTarget} complete. Commission pending until all stages are done.`, false]
       );
     }
 

@@ -188,9 +188,11 @@
         }, 0);
         
         // Override local state so Withdrawal modal uses correct figure
-        state.user.balance = computedBalance;
+        // Clamp to 0 — balance should never display as negative
+        const displayBalance = Math.max(0, computedBalance);
+        state.user.balance = displayBalance;
         
-        document.getElementById("balance-val").textContent = fmt(computedBalance);
+        document.getElementById("balance-val").textContent = fmt(displayBalance);
         document.getElementById("bonus-val").textContent = fmt(trialBonus);
         document.getElementById("total-val").textContent = fmt(computedSettlements);
         

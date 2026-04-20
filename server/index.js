@@ -336,25 +336,37 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     // --- TWO-STAGE DAILY MISSION SYSTEM ---
     // Trial = 30 tasks (exhausts $100 bonus, no commission)
     // Paid day = 66 tasks split into Stage 1 (33) + Stage 2 (33)
-    // Stage 2 requires admin unlock via support
     const STAGE_1_LIMIT = 33;
     const DAILY_TOTAL = 66;
 
-    // Check if user already completed full paid set TODAY
-    const todayDone = await db.query(
-      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND note NOT LIKE '%(Trial)' AND created_at::date = CURRENT_DATE",
-      [req.user.id]
-    );
-    if (todayDone.rows.length > 0) {
-      return res.status(400).json({ error: 'You have already completed your daily mission set. Come back tomorrow!' });
-    }
-
-    // Check trial status
+    // Check trial status FIRST
     const trialCheck = await db.query(
       "SELECT id FROM transactions WHERE user_id = $1 AND type = 'trial_fee'",
       [req.user.id]
     );
     const isTrialDone = trialCheck.rows.length > 0;
+
+    // GUARD: Trial (30 tasks) can only ever be done ONCE
+    if (!isTrialDone) {
+      // Count how many trial pending_commissions exist already
+      const trialCountRes = await db.query(
+        "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
+        [req.user.id]
+      );
+      const trialCount = parseInt(trialCountRes.rows[0].count);
+      if (trialCount >= 30) {
+        return res.status(400).json({ error: 'Trial already completed. Your 30-task trial is done — please proceed to the daily missions.' });
+      }
+    }
+
+    // GUARD: Cannot redo a paid daily set that was already completed today
+    const todayDone = await db.query(
+      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Daily Task Commission%' AND created_at::date = CURRENT_DATE",
+      [req.user.id]
+    );
+    if (todayDone.rows.length > 0) {
+      return res.status(400).json({ error: 'You have already completed your daily mission set. Come back tomorrow!' });
+    }
 
     // Count how many pending_commissions exist (current cycle progress)
     const completedRes = await db.query(
@@ -442,13 +454,14 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
         let bonusAmount = parseFloat(bonusRes.rows[0].total);
         if (bonusAmount <= 0) bonusAmount = 100;
 
+        // Use GREATEST(0,...) so balance can never go negative
         await db.query(
-          'UPDATE users SET balance = balance - $1 WHERE id = $2',
+          'UPDATE users SET balance = GREATEST(0, balance - $1) WHERE id = $2',
           [bonusAmount, req.user.id]
         );
         await db.query(
           'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
-          [req.user.id, 'trial_fee', -bonusAmount, `Mission Complete: ${missionTarget} Assignments Verified (Trial)`]
+          [req.user.id, 'trial_fee', -bonusAmount, `Trial Bonus Exhausted — ${missionTarget} Assignments Verified (Trial)`]
         );
 
         totalCredited = 0;

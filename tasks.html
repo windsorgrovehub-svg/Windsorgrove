@@ -505,7 +505,18 @@
                     toast(`🎉 All missions complete! ${fmt(res.total_credited)} credited to your account!`);
                     setTimeout(() => window.location.href = 'account.html', 2000);
                 } else {
-                    toast(`✅ Mission ${res.completed}/${res.total} complete! Commission pending.`);
+                    // Show per-stage count in the toast
+                    const stage1Lim = missionProgress.stage1_limit || 33;
+                    const isTrialToast = !missionProgress.is_trial === false || res.total === 30;
+                    let toastCompleted, toastTotal;
+                    if (res.total === 30) {
+                      toastCompleted = res.completed; toastTotal = 30;
+                    } else if (res.completed > stage1Lim) {
+                      toastCompleted = res.completed - stage1Lim; toastTotal = stage1Lim;
+                    } else {
+                      toastCompleted = res.completed; toastTotal = stage1Lim;
+                    }
+                    toast(`✅ Mission ${toastCompleted}/${toastTotal} complete! Commission pending.`);
                     await fetchProgress();
                     
                     // Automatically load the next incomplete mission

@@ -72,12 +72,12 @@
           <div style="background:#fff;width:100%;max-width:480px;border:1px solid rgba(197,160,89,0.2);border-radius:24px;padding:50px 30px;box-shadow:0 24px 60px rgba(0,0,0,0.08);text-align:center;position:relative;overflow:hidden">
             <div style="position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle, rgba(197,160,89,0.08) 0%, transparent 60%);z-index:0;pointer-events:none"></div>
             <div style="position:relative;z-index:1">
-                <div style="font-size:56px;margin-bottom:16px;display:inline-block;animation:pulse 2s infinite">🎯</div>
-                <h2 style="margin:0 0 16px;font-size:30px;color:var(--text);letter-spacing:-0.5px">Daily Task</h2>
+                <div style="font-size:56px;margin-bottom:16px;display:inline-block;animation:pulse 2s infinite" id="launcher-icon">🎯</div>
+                <h2 style="margin:0 0 16px;font-size:30px;color:var(--text);letter-spacing:-0.5px" id="launcher-title">Daily Task</h2>
                 <p class="muted" id="mission-desc" style="font-size:16px;margin:0 auto 36px;line-height:1.6">
-                  Progressive task level: The higher you go, the more the tasks. You must complete all <strong style="color:var(--text)"><span id="mission-target-text"></span> assignments</strong>. Your accumulated commission will be unlocked and credited perfectly upon full completion. 
+                  Complete all <strong style="color:var(--text)"><span id="mission-target-text"></span> assignments</strong>. Your accumulated commission will be unlocked and credited perfectly upon full completion.
                 </p>
-                <button class="btn btn-primary" onclick="startNextMission()" style="width:100%;padding:20px;font-size:17px;font-weight:800;border-radius:100px;box-shadow:0 12px 30px rgba(197,160,89,0.3);border:none;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                <button class="btn btn-primary" id="launcher-btn" onclick="startNextMission()" style="width:100%;padding:20px;font-size:17px;font-weight:800;border-radius:100px;box-shadow:0 12px 30px rgba(197,160,89,0.3);border:none;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
                     <span id="start-btn-text">Start Mission Protocol</span>
                 </button>
             </div>
@@ -87,12 +87,27 @@
           </div>
         </div>
 
+        <!-- Stage 2 Locked Overlay -->
+        <div id="stage2-locked-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.92);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);z-index:998;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+          <div style="background:#fff;width:100%;max-width:480px;border:1px solid rgba(197,160,89,0.2);border-radius:24px;padding:50px 30px;box-shadow:0 24px 60px rgba(0,0,0,0.08);text-align:center">
+            <div style="font-size:56px;margin-bottom:16px">🔒</div>
+            <h2 style="margin:0 0 12px;font-size:26px;color:var(--text)">Stage 1 Complete!</h2>
+            <p style="font-size:15px;color:var(--text-dim);line-height:1.7;margin:0 0 30px">
+              You have completed <strong>33 of 33</strong> Stage 1 assignments. To unlock <strong>Stage 2</strong> and earn your full commission, please contact our support team via live chat or the support page.
+            </p>
+            <a href="support.html" class="btn btn-primary" style="display:block;width:100%;padding:18px;font-size:16px;font-weight:800;border-radius:100px;text-decoration:none;box-shadow:0 12px 30px rgba(197,160,89,0.3);margin-bottom:12px">
+              📞 Contact Support to Unlock
+            </a>
+            <p style="font-size:12px;color:var(--text-dim);margin:0">Once support unlocks Stage 2, refresh this page to continue.</p>
+          </div>
+        </div>
+
         <!-- Mission Progress Banner -->
         <div id="mission-progress" style="background:linear-gradient(135deg,#fef9ed,#fffbf5);border:1px solid rgba(197,160,89,0.25);border-radius:20px;padding:20px 24px;margin-bottom:24px;display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
             <div>
-              <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent2);margin-bottom:4px">Mission Progress</div>
-              <div style="font-size:22px;font-weight:800;color:var(--text)" id="progress-text">0 / 30</div>
+              <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--accent2);margin-bottom:4px" id="stage-label">Stage 1 Progress</div>
+              <div style="font-size:22px;font-weight:800;color:var(--text)" id="progress-text">0 / 33</div>
             </div>
             <div style="text-align:right">
               <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);margin-bottom:4px">Pending Commission</div>
@@ -173,28 +188,62 @@
       const banner = document.getElementById('mission-progress');
       if (!state.user || !banner) return;
       banner.style.display = 'block';
-      // Show the launcher overlay
-      const launcher = document.getElementById('mission-launcher');
-      if (launcher && !missionProgress.all_done) launcher.style.display = 'flex';
-      // Update mission target number dynamically
+
+      const isTrial = missionProgress.is_trial;
+      const stage = missionProgress.stage || 1;
+      const stage1Limit = missionProgress.stage1_limit || 33;
+      const stage2Unlocked = missionProgress.stage2_unlocked;
+      const total = missionProgress.total;
+      const completed = missionProgress.completed;
+
+      // Update stage label
+      const stageLabel = document.getElementById('stage-label');
+      if (stageLabel) {
+        if (isTrial) stageLabel.textContent = 'Trial Progress';
+        else if (completed >= stage1Limit && !stage2Unlocked) stageLabel.textContent = 'Stage 1 Complete — Awaiting Stage 2 Unlock';
+        else if (completed >= stage1Limit) stageLabel.textContent = 'Stage 2 Progress';
+        else stageLabel.textContent = 'Stage 1 Progress';
+      }
+
+      // Update mission target text in launcher
       const targetEl = document.getElementById('mission-target-text');
-      if (targetEl) targetEl.textContent = missionProgress.total;
-      document.getElementById('progress-text').textContent = `${missionProgress.completed} / ${missionProgress.total}`;
+      if (targetEl) targetEl.textContent = isTrial ? 30 : (completed < stage1Limit ? stage1Limit : total);
+
+      document.getElementById('progress-text').textContent = `${completed} / ${total}`;
       document.getElementById('pending-commission').textContent = fmt(missionProgress.pending_total);
-      const pct = missionProgress.total > 0 ? (missionProgress.completed / missionProgress.total * 100) : 0;
+      const pct = total > 0 ? (completed / total * 100) : 0;
       document.getElementById('progress-bar').style.width = pct + '%';
       if (document.getElementById('progress-pct')) {
         document.getElementById('progress-pct').textContent = Math.round(pct) + '%';
       }
+
+      // Show Stage 2 locked overlay if user finished 33 but NOT unlocked
+      const stage2Overlay = document.getElementById('stage2-locked-overlay');
+      if (!isTrial && completed >= stage1Limit && !stage2Unlocked && !missionProgress.all_done) {
+        if (stage2Overlay) stage2Overlay.style.display = 'flex';
+        // Hide the normal launcher
+        const launcher = document.getElementById('mission-launcher');
+        if (launcher) launcher.style.display = 'none';
+        document.getElementById('progress-hint').textContent = '🔒 Stage 1 complete! Contact support to unlock Stage 2.';
+        return;
+      } else {
+        if (stage2Overlay) stage2Overlay.style.display = 'none';
+      }
+
+      // Show the launcher overlay for new sessions
+      const launcher = document.getElementById('mission-launcher');
+      if (launcher && !missionProgress.all_done && completed === 0) launcher.style.display = 'flex';
+
       if (missionProgress.all_done) {
         document.getElementById('progress-hint').innerHTML = '🎉 <strong>All missions completed!</strong> Commission has been credited to your account.';
         document.getElementById('progress-hint').style.color = 'var(--success)';
         document.getElementById('start-btn-text').textContent = "Missions Completed";
-        document.querySelector('#mission-launcher button').style.background = "var(--success)";
+        const launcherBtn = document.querySelector('#launcher-btn');
+        if (launcherBtn) launcherBtn.style.background = "var(--success)";
       } else {
-        document.getElementById('progress-hint').textContent = `Complete all ${missionProgress.total} missions to unlock your accumulated commission.`;
-        if (missionProgress.completed > 0) {
-            document.getElementById('start-btn-text').textContent = "Continue Mission Protocol";
+        document.getElementById('progress-hint').textContent = `Complete all ${total} missions to unlock your accumulated commission.`;
+        if (completed > 0) {
+            document.getElementById('start-btn-text').textContent = "Continue Missions";
         }
       }
     }
@@ -375,7 +424,15 @@
                 toast(res.error || "Submission failed.");
             }
         } catch (e) {
-            toast(e.message || "Submission failed.");
+            // Handle Stage 2 locked response gracefully
+            let errData = {};
+            try { errData = JSON.parse(e.message); } catch(_) {}
+            if (errData.error === 'stage2_locked' || (e.message && e.message.includes('stage2_locked'))) {
+                const overlay = document.getElementById('stage2-locked-overlay');
+                if (overlay) overlay.style.display = 'flex';
+            } else {
+                toast(e.message || "Submission failed.");
+            }
         } finally {
             _submitting = false;
         }

@@ -296,7 +296,14 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     const hotel = hotelResult.rows[0];
     if (!hotel) return res.status(404).json({ error: 'Hotel not found' });
 
-    // Check if user already completed a full PAID set TODAY (Trial does not count towards daily lock)
+    // --- TWO-STAGE DAILY MISSION SYSTEM ---
+    // Trial = 30 tasks (exhausts $100 bonus, no commission)
+    // Paid day = 66 tasks split into Stage 1 (33) + Stage 2 (33)
+    // Stage 2 requires admin unlock via support
+    const STAGE_1_LIMIT = 33;
+    const DAILY_TOTAL = 66;
+
+    // Check if user already completed full paid set TODAY
     const todayDone = await db.query(
       "SELECT id FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND note NOT LIKE '%(Trial)' AND created_at::date = CURRENT_DATE",
       [req.user.id]
@@ -305,7 +312,38 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'You have already completed your daily mission set. Come back tomorrow!' });
     }
 
-    // Check if user already rated this hotel (one rating per hotel per mission cycle)
+    // Check trial status
+    const trialCheck = await db.query(
+      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'trial_fee'",
+      [req.user.id]
+    );
+    const isTrialDone = trialCheck.rows.length > 0;
+
+    // Count how many pending_commissions exist (current cycle progress)
+    const completedRes = await db.query(
+      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
+      [req.user.id]
+    );
+    const completedCount = parseInt(completedRes.rows[0].count);
+
+    // Determine mission target
+    const missionTarget = !isTrialDone ? 30 : DAILY_TOTAL;
+
+    // If on paid cycle and user has hit Stage 1 limit (33), check for stage 2 unlock
+    if (isTrialDone && completedCount >= STAGE_1_LIMIT) {
+      const unlockCheck = await db.query(
+        "SELECT id FROM mission_stage_unlocks WHERE user_id = $1 AND unlocked_date = CURRENT_DATE",
+        [req.user.id]
+      );
+      if (unlockCheck.rows.length === 0) {
+        return res.status(403).json({ 
+          error: 'stage2_locked',
+          message: 'You have completed Stage 1 (33/33). Please contact Support to unlock Stage 2 and continue earning commissions.'
+        });
+      }
+    }
+
+    // Check if user already rated this hotel
     const alreadyRated = await db.query(
       "SELECT id FROM transactions WHERE user_id = $1 AND note = $2 AND type IN ('pending_commission', 'commission')",
       [req.user.id, `Expert Intelligence Fee: ${hotel.name}`]
@@ -323,29 +361,16 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
         avgRating = 5;
     }
     
-    // Flat Reward logic: scaled slightly by average rating
     const commission = (hotel.commission_rate * (avgRating / 5));
     const fmt = (v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
 
-    // Store as PENDING commission — do NOT update balance yet
     const txNote = `Expert Intelligence Fee: ${hotel.name}`;
     const tx = await db.query(
       'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4) RETURNING *',
       [req.user.id, 'pending_commission', commission, txNote]
     );
 
-    // Check mission progress: how many unique hotels has this user rated?
-    const totalHotelsRes = await db.query('SELECT COUNT(*) FROM hotels');
-    const totalHotels = parseInt(totalHotelsRes.rows[0].count);
-
-    // Calculate progressive mission target
-    const trialCheck = await db.query(
-      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'trial_fee'",
-      [req.user.id]
-    );
-    const isTrialDone = trialCheck.rows.length > 0;
-
-    // Count completed paid sets
+    // Check paid sets count
     const paidSetsQuery = await db.query(
       "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND note NOT LIKE '%(Trial)'",
       [req.user.id]
@@ -355,15 +380,6 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     if (isTrialDone && paidSetsCount >= 5) {
       return res.status(400).json({ error: 'You have exhausted your maximum weekly task limits (5 sets).' });
     }
-
-    const targets = [66, 132, 198, 264, 330];
-    const missionTarget = !isTrialDone ? 30 : targets[paidSetsCount];
-
-    const completedRes = await db.query(
-      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
-      [req.user.id]
-    );
-    const completedCount = parseInt(completedRes.rows[0].count);
 
     let allCompleted = false;
     let totalCredited = 0;
@@ -461,7 +477,9 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
 // --- MISSION PROGRESS ---
 app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
   try {
-    // Calculate progressive mission target
+    const STAGE_1_LIMIT = 33;
+    const DAILY_TOTAL = 66;
+
     const trialCheck = await db.query(
       "SELECT id FROM transactions WHERE user_id = $1 AND type = 'trial_fee'",
       [req.user.id]
@@ -473,9 +491,8 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
       [req.user.id]
     );
     const paidSetsCount = parseInt(paidSetsQuery.rows[0].count);
-    
-    const targets = [66, 132, 198, 264, 330];
-    const missionTarget = !isTrialDone ? 30 : (paidSetsCount >= 5 ? 330 : targets[paidSetsCount]);
+
+    const missionTarget = !isTrialDone ? 30 : DAILY_TOTAL;
 
     // Check if user already completed a full PAID set TODAY
     const todayComplete = await db.query(
@@ -484,7 +501,6 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
     );
     const alreadyDoneToday = todayComplete.rows.length > 0;
 
-    // Count only current cycle's pending_commission records
     const completedRes = await db.query(
       "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
       [req.user.id]
@@ -497,7 +513,17 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
     );
     const pendingTotal = parseFloat(pendingSum.rows[0].total);
 
-    // Get list of completed hotel names from current cycle
+    // Check stage 2 unlock for today
+    const stage2Unlock = await db.query(
+      "SELECT id FROM mission_stage_unlocks WHERE user_id = $1 AND unlocked_date = CURRENT_DATE",
+      [req.user.id]
+    );
+    const stage2Unlocked = stage2Unlock.rows.length > 0;
+
+    // Determine current stage
+    let currentStage = 1;
+    if (isTrialDone && completedCount >= STAGE_1_LIMIT) currentStage = 2;
+
     const completedHotels = await db.query(
       "SELECT note FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
       [req.user.id]
@@ -510,11 +536,45 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
       pending_total: pendingTotal,
       completed_hotels: completedHotelNames,
       all_done: alreadyDoneToday,
-      is_trial: !isTrialDone
+      is_trial: !isTrialDone,
+      stage: currentStage,
+      stage2_unlocked: stage2Unlocked,
+      stage1_limit: STAGE_1_LIMIT
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch mission progress' });
+  }
+});
+
+// --- ADMIN: UNLOCK STAGE 2 FOR A USER ---
+app.post('/api/admin/unlock-stage2', authenticateToken, async (req, res) => {
+  try {
+    // Only admins can call this
+    const adminCheck = await db.query('SELECT role FROM users WHERE id = $1', [req.user.id]);
+    if (!adminCheck.rows[0] || adminCheck.rows[0].role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required.' });
+    }
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId is required.' });
+
+    await db.query(
+      `INSERT INTO mission_stage_unlocks (user_id, unlocked_date, unlocked_by)
+       VALUES ($1, CURRENT_DATE, $2)
+       ON CONFLICT (user_id, unlocked_date) DO NOTHING`,
+      [userId, req.user.id]
+    );
+
+    // Notify the user
+    await db.query(
+      'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
+      [userId, 'system', '🔓 Stage 2 has been unlocked by support! You can now continue your remaining 33 missions.', true]
+    );
+
+    res.json({ success: true, message: `Stage 2 unlocked for user ${userId} today.` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to unlock stage 2.' });
   }
 });
 
@@ -1221,9 +1281,21 @@ app.delete('/api/admin/invite-codes/:id', authenticateToken, isAdmin, async (req
       INSERT INTO platform_settings (key, value) VALUES ('withdrawal_fee_type', 'fixed'), ('withdrawal_fee_value', '0')
       ON CONFLICT (key) DO NOTHING
     `);
+    // Ensure mission_stage_unlocks table exists
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS mission_stage_unlocks (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        unlocked_date DATE NOT NULL DEFAULT CURRENT_DATE,
+        unlocked_by INTEGER REFERENCES users(id),
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, unlocked_date)
+      )
+    `);
     console.log('\u2713 pending_requests table ready');
     console.log('\u2713 guest_sessions table ready');
     console.log('\u2713 platform_settings table ready');
+    console.log('\u2713 mission_stage_unlocks table ready');
   } catch (err) {
     console.error('DB init error:', err.message);
   }

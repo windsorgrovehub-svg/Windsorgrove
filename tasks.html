@@ -132,7 +132,14 @@
             </div>
             <div id="progress-pct" style="font-size:14px;font-weight:800;color:var(--accent1)">0%</div>
           </div>
-          <div style="margin-top:8px;font-size:12px;color:var(--text-dim)" id="progress-hint">Complete all missions to unlock your accumulated commission.</div>
+          <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <div style="font-size:12px;color:var(--text-dim)" id="progress-hint">Complete all missions to unlock your accumulated commission.</div>
+            <button id="continue-btn" onclick="scrollToNextMission()" 
+              style="display:none;padding:10px 22px;background:linear-gradient(135deg,var(--accent1),#d4af37);color:#fff;border:none;border-radius:100px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 4px 14px rgba(197,160,89,0.35);transition:transform .15s,opacity .15s"
+              onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+              ▶ Continue Mission
+            </button>
+          </div>
         </div>
 
         <div class="eyebrow">Pending Missions</div>
@@ -286,6 +293,9 @@
         document.getElementById('progress-hint').textContent = `Complete all ${total} missions to unlock your accumulated commission.`;
         if (completed > 0) {
             document.getElementById('start-btn-text').textContent = "Continue Missions";
+            // Show the inline Continue button on the progress banner
+            const continueBtnEl = document.getElementById('continue-btn');
+            if (continueBtnEl) continueBtnEl.style.display = 'inline-flex';
         }
       }
     }
@@ -302,11 +312,36 @@
     }
     window.startNextMission = startNextMission;
 
+    function scrollToNextMission() {
+        // Find the first hotel card in the list that hasn't been completed
+        const nextHotel = hotels.find(h => !missionProgress.completed_hotels.includes(h.name));
+        if (!nextHotel) return toast('All missions are already complete!');
+        // Find its card in the DOM
+        const cards = document.querySelectorAll('#task-list [data-hotel-id]');
+        let target = null;
+        cards.forEach(card => {
+            if (parseInt(card.dataset.hotelId) === nextHotel.id) target = card;
+        });
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Pulse highlight
+            target.style.transition = 'box-shadow .3s';
+            target.style.boxShadow = '0 0 0 3px rgba(197,160,89,0.7)';
+            setTimeout(() => { target.style.boxShadow = ''; }, 1800);
+        } else {
+            // Fallback: open the panel directly
+            selectHotel(nextHotel.id);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+    window.scrollToNextMission = scrollToNextMission;
+
     function renderTaskList() {
       listEl.innerHTML = hotels.map(h => {
         const isCompleted = missionProgress.completed_hotels.includes(h.name);
         return `
         <div class="task-item ${selectedId === h.id ? 'active' : ''} ${isCompleted ? 'completed' : ''}" 
+          data-hotel-id="${h.id}"
           onclick="${isCompleted ? 'toast(\"Mission already completed!\")' : `selectHotel('${h.id}')`}" 
           style="${selectedId === h.id ? 'border-color:var(--accent1);background:#fef9ed' : ''};${isCompleted ? 'opacity:0.6;' : ''}position:relative">
           ${isCompleted ? '<div style="position:absolute;top:10px;right:10px;width:24px;height:24px;background:var(--success);border-radius:50%;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:800">✓</div>' : ''}

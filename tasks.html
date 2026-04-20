@@ -145,6 +145,60 @@
           </div>
         </div>
 
+        <!-- Daily Complete Overlay -->
+        <div id="daily-complete-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:997;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;overflow-y:auto">
+          <div style="background:#fff;width:100%;max-width:520px;border:1px solid rgba(16,185,129,0.2);border-radius:28px;padding:48px 36px;box-shadow:0 30px 80px rgba(0,0,0,0.1);text-align:center;position:relative;overflow:hidden">
+            <!-- Green top bar -->
+            <div style="position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,#10b981,#059669,#34d399)"></div>
+
+            <!-- Icon -->
+            <div style="width:80px;height:80px;background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:2px solid rgba(16,185,129,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 20px">🎉</div>
+
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#059669;margin-bottom:8px">All 66 Missions Complete</div>
+            <h2 style="margin:0 0 10px;font-size:26px;font-weight:800;color:var(--text)">Daily Set Complete!</h2>
+            <p style="font-size:14px;color:var(--text-dim);line-height:1.7;margin:0 0 28px">
+              You've completed <strong style="color:var(--text)">both stages (66/66)</strong> for today. Your commission has been <strong style="color:#059669">credited to your balance</strong>. Come back tomorrow to start a fresh set!
+            </p>
+
+            <!-- Countdown -->
+            <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid rgba(16,185,129,0.2);border-radius:20px;padding:20px;margin-bottom:28px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#059669;margin-bottom:10px">⏱ Next Session Unlocks In</div>
+              <div id="daily-countdown" style="font-size:36px;font-weight:800;color:var(--text);letter-spacing:2px;font-variant-numeric:tabular-nums">00:00:00</div>
+              <div style="font-size:12px;color:var(--text-dim);margin-top:6px">Missions reset daily at midnight</div>
+            </div>
+
+            <!-- What happens next steps -->
+            <div style="text-align:left;margin-bottom:28px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:flex-start;gap:14px;background:#f0fdf4;border:1px solid rgba(16,185,129,0.15);border-radius:16px;padding:14px">
+                <div style="width:32px;height:32px;background:#059669;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">1</div>
+                <div>
+                  <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:2px">Complete Stage 1 (33 Tasks)</div>
+                  <div style="font-size:12px;color:var(--text-dim)">Rate 33 properties — your commissions begin accumulating immediately.</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:14px;background:#f0fdf4;border:1px solid rgba(16,185,129,0.15);border-radius:16px;padding:14px">
+                <div style="width:32px;height:32px;background:#059669;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">2</div>
+                <div>
+                  <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:2px">Request Stage 2 Unlock</div>
+                  <div style="font-size:12px;color:var(--text-dim)">Contact support to unlock the second 33 tasks and double your payout.</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:14px;background:#f0fdf4;border:1px solid rgba(16,185,129,0.15);border-radius:16px;padding:14px">
+                <div style="width:32px;height:32px;background:#059669;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">3</div>
+                <div>
+                  <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:2px">Commission Credited Instantly</div>
+                  <div style="font-size:12px;color:var(--text-dim)">Once 66/66 is complete your full commission is swept into your balance automatically.</div>
+                </div>
+              </div>
+            </div>
+
+            <a href="account.html" style="display:block;width:100%;padding:18px;font-size:15px;font-weight:800;border-radius:100px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;text-decoration:none;box-shadow:0 12px 30px rgba(16,185,129,0.3);transition:transform .15s,opacity .15s;box-sizing:border-box"
+              onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+              💰 View My Balance
+            </a>
+          </div>
+        </div>
+
         <!-- Mission Progress Banner -->
         <div id="mission-progress" style="background:linear-gradient(135deg,#fef9ed,#fffbf5);border:1px solid rgba(197,160,89,0.25);border-radius:20px;padding:20px 24px;margin-bottom:24px;display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
@@ -358,11 +412,8 @@
       if (launcher && !missionProgress.all_done && completed === 0) launcher.style.display = 'flex';
 
       if (missionProgress.all_done) {
-        document.getElementById('progress-hint').innerHTML = '🎉 <strong>All missions completed!</strong> Your commission has been securely credited to your account. Come back tomorrow!';
-        document.getElementById('progress-hint').style.color = 'var(--success)';
-        document.getElementById('start-btn-text').textContent = "Daily Missions Completed";
-        const launcherBtn = document.querySelector('#continue-btn');
-        if (launcherBtn) { launcherBtn.style.background = "var(--success)"; launcherBtn.style.display = 'none'; }
+        showDailyCompleteScreen();
+        return;
       } else {
         const stageHint = isTrial
           ? `Complete all 30 trial missions to proceed to daily tasks.`
@@ -377,6 +428,45 @@
             if (continueBtnEl) continueBtnEl.style.display = 'inline-flex';
         }
       }
+    }
+
+    let _countdownInterval = null;
+    function showDailyCompleteScreen() {
+      const overlay = document.getElementById('daily-complete-overlay');
+      if (overlay) overlay.style.display = 'flex';
+      
+      // Hide other overlays
+      const launcher = document.getElementById('mission-launcher');
+      if (launcher) launcher.style.display = 'none';
+      const stage2Overlay = document.getElementById('stage2-locked-overlay');
+      if (stage2Overlay) stage2Overlay.style.display = 'none';
+      const listContainer = document.getElementById('tasks-container');
+      if (listContainer) listContainer.style.display = 'none';
+
+      startDailyCountdown();
+    }
+
+    function startDailyCountdown() {
+      if (_countdownInterval) clearInterval(_countdownInterval);
+      function tick() {
+        const now = new Date();
+        const midnight = new Date();
+        midnight.setHours(24, 0, 0, 0); // next midnight
+        const diff = midnight - now;
+        if (diff <= 0) {
+          // It's a new day — reload to let the user start fresh
+          clearInterval(_countdownInterval);
+          window.location.reload();
+          return;
+        }
+        const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+        const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+        const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+        const el = document.getElementById('daily-countdown');
+        if (el) el.textContent = `${h}:${m}:${s}`;
+      }
+      tick();
+      _countdownInterval = setInterval(tick, 1000);
     }
 
     function startNextMission() {

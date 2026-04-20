@@ -419,9 +419,9 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
       [req.user.id, 'pending_commission', commission, txNote]
     );
 
-    // Check paid sets count
+    // Check paid sets count (how many full daily sets completed total)
     const paidSetsQuery = await db.query(
-      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND note NOT LIKE '%(Trial)'",
+      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Daily Task Commission%'",
       [req.user.id]
     );
     const paidSetsCount = parseInt(paidSetsQuery.rows[0].count);
@@ -537,7 +537,7 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
     const isTrialDone = trialCheck.rows.length > 0;
 
     const paidSetsQuery = await db.query(
-      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND note NOT LIKE '%(Trial)'",
+      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Daily Task Commission%'",
       [req.user.id]
     );
     const paidSetsCount = parseInt(paidSetsQuery.rows[0].count);
@@ -546,7 +546,7 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
 
     // Check if user already completed a full PAID set TODAY
     const todayComplete = await db.query(
-      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND note NOT LIKE '%(Trial)' AND created_at::date = CURRENT_DATE",
+      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Daily Task Commission%' AND created_at::date = CURRENT_DATE",
       [req.user.id]
     );
     const alreadyDoneToday = todayComplete.rows.length > 0;

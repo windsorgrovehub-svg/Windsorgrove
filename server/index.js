@@ -857,28 +857,8 @@ app.delete('/api/admin/hotels/:id', authenticateToken, isAdmin, async (req, res)
   }
 });
 
-// --- ADMIN: USER LEDGER MANAGEMENT ---
-// List all users with balances
-app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
-  try {
-    const result = await db.query(`
-      SELECT u.id, u.name, u.email, u.balance,
-        COALESCE((SELECT SUM(amount) FROM transactions WHERE user_id = u.id AND amount > 0), 0) as total_credits,
-        COALESCE((SELECT SUM(ABS(amount)) FROM transactions WHERE user_id = u.id AND amount < 0), 0) as total_debits,
-        (SELECT COUNT(*) FROM transactions WHERE user_id = u.id) as tx_count,
-        u.last_login_ip,
-        u.last_login_at,
-        u.created_at
-      FROM users u
-      WHERE u.is_admin = false
-      ORDER BY u.name ASC
-    `);
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch users.' });
-  }
-});
+// --- ADMIN: USER LEDGER MANAGEMENT (used by Ledger section) ---
+// NOTE: main user list is below at /api/admin/users with account_status
 
 // --- USER: REQUEST STAGE 2 UNLOCK ---
 app.post('/api/user/request-stage2', authenticateToken, async (req, res) => {
@@ -911,14 +891,15 @@ app.post('/api/user/request-stage2', authenticateToken, async (req, res) => {
 // --- ADMIN: LIST ALL USERS ---
 app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
   try {
-    // Ensure account_status column exists
-    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS account_status VARCHAR(20) DEFAULT 'active'`);
     const result = await db.query(`
-      SELECT id, name, email, phone_number, balance, commission_total, funded, bank_linked,
-             last_login_ip, last_login_at, created_at, account_status
-      FROM users
-      WHERE is_admin = false
-      ORDER BY created_at DESC
+      SELECT u.id, u.name, u.email, u.phone_number, u.balance, u.commission_total, u.funded, u.bank_linked,
+             u.last_login_ip, u.last_login_at, u.created_at, u.account_status,
+             COALESCE((SELECT SUM(amount) FROM transactions WHERE user_id = u.id AND amount > 0), 0) as total_credits,
+             COALESCE((SELECT SUM(ABS(amount)) FROM transactions WHERE user_id = u.id AND amount < 0), 0) as total_debits,
+             (SELECT COUNT(*) FROM transactions WHERE user_id = u.id) as tx_count
+      FROM users u
+      WHERE u.is_admin = false
+      ORDER BY u.created_at DESC
     `);
     res.json(result.rows);
   } catch (err) {

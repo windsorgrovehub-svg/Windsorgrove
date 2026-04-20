@@ -568,15 +568,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const currentPage = location.pathname.split('/').pop() || 'index.html';
   
   if (!securePages.includes(currentPage)) {
-    // Reset any pending missions before logging out
+    // Log out if on an unauthenticated page
     const savedToken = localStorage.getItem("wgh-token");
     if (savedToken) {
-      try {
-        const blob = new Blob([JSON.stringify({})], { type: 'application/json' });
-        navigator.sendBeacon(`${API_URL}/user/mission-reset?token=${savedToken}`, blob);
-      } catch(e) {}
+      localStorage.removeItem("wgh-token");
     }
-    localStorage.removeItem("wgh-token");
     state.user = null;
     state.token = null;
   }

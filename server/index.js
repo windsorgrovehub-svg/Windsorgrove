@@ -344,7 +344,7 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
       [req.user.id]
     );
     const isTrialDone = trialCheck.rows.length > 0;
-    const missionTarget = isTrialDone ? totalHotels : 30; // 30 for trial, 66 for paid
+    const missionTarget = isTrialDone ? 66 : 30; // Trial=30, Paid=66 (fixed targets)
 
     const completedRes = await db.query(
       "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
@@ -460,7 +460,7 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
       [req.user.id]
     );
     const isTrialDone = trialCheck.rows.length > 0;
-    const missionTarget = isTrialDone ? totalHotels : 30;
+    const missionTarget = isTrialDone ? 66 : 30; // Trial=30, Paid=66 (fixed targets)
 
     // Check if user already completed a full set TODAY
     const todayComplete = await db.query(

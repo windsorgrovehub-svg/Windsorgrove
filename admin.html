@@ -507,6 +507,7 @@
       <a href="#" id="view-prop" class="nav-btn" style="color:var(--text-dim)">Property Management</a>
       <a href="#" id="view-invite" class="nav-btn" style="color:var(--text-dim)">Invite Codes</a>
       <a href="#" id="view-ledger" class="nav-btn" style="color:var(--text-dim)">Ledger Management</a>
+      <a href="#" id="view-missions" class="nav-btn" style="color:var(--text-dim)">🔓 Mission Control</a>
       <a href="#" id="view-support" class="nav-btn" style="color:var(--text-dim)">
         <span>Live Support</span>
         <span id="support-badge" style="display:none; background:#ef4444; color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:20px; margin-left:8px"></span>
@@ -2064,9 +2065,33 @@
           <div class="req-actions">
             <button onclick='openTxnModal(${userJson}, "credit")' class="req-approve-btn" style="flex:1;text-align:center">＋ Credit</button>
             <button onclick='openTxnModal(${userJson}, "debit")' class="req-reject-btn" style="flex:1;text-align:center">－ Debit</button>
+            <button onclick='unlockStage2(${u.id}, "${u.name.replace(/"/g, "&quot;")}")' 
+              style="flex:1;text-align:center;padding:12px 16px;border:none;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s"
+              onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+              🔓 Unlock Stage 2
+            </button>
           </div>
         </div>`;
       }).join('');
+    }
+
+    async function unlockStage2(userId, userName) {
+      if (!confirm(`Unlock Stage 2 for ${userName} today?\nThis allows them to complete their next 33 missions.`)) return;
+      try {
+        const res = await adminFetch(`${API_URL}/admin/unlock-stage2`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast(`\u2705 Stage 2 unlocked for ${userName}! They have been notified.`);
+        } else {
+          toast(`\u26a0\ufe0f ${data.error || 'Could not unlock Stage 2.'}`);
+        }
+      } catch(e) {
+        toast('\u274c Network error \u2014 could not reach server.');
+      }
     }
 
     function openTxnModal(user, action) {

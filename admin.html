@@ -470,6 +470,39 @@
 
       /* EC modal full width */
       .ec-modal-box { padding: 22px; }
+
+      /* Users table — hide header, stack each row as card */
+      #users-section thead { display: none; }
+      #users-section tbody tr {
+        display: block;
+        background: #fff;
+        border: 1px solid var(--border) !important;
+        border-radius: 16px !important;
+        margin-bottom: 12px;
+        padding: 14px 16px;
+      }
+      #users-section tbody td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 0 !important;
+        border: none !important;
+        font-size: 13px;
+      }
+      #users-section tbody td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--text-dim);
+        margin-right: 8px;
+        min-width: 70px;
+        flex-shrink: 0;
+      }
+      #users-section tbody td:first-child { display: block; }
+      #users-section tbody td:first-child::before { display: none; }
+      #users-section tbody td:last-child { justify-content: flex-end; padding-top: 10px !important; }
     }
 
     @media (max-width: 400px) {
@@ -2636,9 +2669,9 @@
               </div>
             </div>
           </td>
-          <td style="padding:14px 16px;font-weight:700;color:var(--success)">${fmtM(u.balance)}</td>
-          <td style="padding:14px 16px;font-size:12px;color:var(--text-dim)">${new Date(u.created_at).toLocaleDateString()}</td>
-          <td style="padding:14px 16px">
+          <td data-label="Balance" style="padding:14px 16px;font-weight:700;color:var(--success)">${fmtM(u.balance)}</td>
+          <td data-label="Joined" style="padding:14px 16px;font-size:12px;color:var(--text-dim)">${new Date(u.created_at).toLocaleDateString()}</td>
+          <td data-label="Status" style="padding:14px 16px">
             <span style="display:inline-block;padding:4px 10px;background:${statusBg};color:${statusColor};border-radius:100px;font-size:11px;font-weight:700;text-transform:capitalize">${status}</span>
           </td>
           <td style="padding:14px 16px;text-align:center">
@@ -2685,11 +2718,12 @@
     }
 
     async function suspendUser() {
-      if (!activeUserId) return;
+      const userId = activeUserId;
+      if (!userId) return;
       const confirmed = await askConfirm('⏸ <strong>Suspend this account?</strong><br><br>The user will be unable to log in until reactivated.');
       if (!confirmed) return;
       try {
-        const res = await adminFetch(`${API_URL}/admin/users/${activeUserId}/status`, {
+        const res = await adminFetch(`${API_URL}/admin/users/${userId}/status`, {
           method: 'PUT', body: JSON.stringify({ status: 'suspended' })
         });
         if (!res.ok) throw new Error('Failed');
@@ -2700,11 +2734,12 @@
     }
 
     async function deactivateUser() {
-      if (!activeUserId) return;
+      const userId = activeUserId;
+      if (!userId) return;
       const confirmed = await askConfirm('🚫 <strong>Deactivate this account?</strong><br><br>The user will be permanently blocked. This can be reversed.');
       if (!confirmed) return;
       try {
-        const res = await adminFetch(`${API_URL}/admin/users/${activeUserId}/status`, {
+        const res = await adminFetch(`${API_URL}/admin/users/${userId}/status`, {
           method: 'PUT', body: JSON.stringify({ status: 'deactivated' })
         });
         if (!res.ok) throw new Error('Failed');
@@ -2715,11 +2750,12 @@
     }
 
     async function reactivateUser() {
-      if (!activeUserId) return;
+      const userId = activeUserId;
+      if (!userId) return;
       const confirmed = await askConfirm('✅ <strong>Reactivate this account?</strong><br><br>The user will regain full access immediately.');
       if (!confirmed) return;
       try {
-        const res = await adminFetch(`${API_URL}/admin/users/${activeUserId}/status`, {
+        const res = await adminFetch(`${API_URL}/admin/users/${userId}/status`, {
           method: 'PUT', body: JSON.stringify({ status: 'active' })
         });
         if (!res.ok) throw new Error('Failed');

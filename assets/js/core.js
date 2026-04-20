@@ -17,12 +17,18 @@ const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const fmt = n => Number(n).toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 2 });
 
 const saveState = () => {
-    // In full-stack, we only save the token to localStorage
-    if (state.token) localStorage.setItem("wgh-token", state.token);
+    if (state.token) {
+        if (state.user && state.user.email === 'admin@windorgrove.com') {
+            localStorage.setItem("wgh-admin-token", state.token);
+        } else {
+            localStorage.setItem("wgh-token", state.token);
+        }
+    }
 };
 
 const loadState = async () => {
-    const token = localStorage.getItem("wgh-token");
+    const isAdmin = window.location.pathname.includes('admin.html');
+    const token = localStorage.getItem(isAdmin ? "wgh-admin-token" : "wgh-token");
     if (token) {
         state.token = token;
         try {
@@ -38,7 +44,7 @@ const loadState = async () => {
                 state.user = data.user;
                 state.transactions = data.transactions;
             } else {
-                localStorage.removeItem("wgh-token");
+                localStorage.removeItem(isAdmin ? "wgh-admin-token" : "wgh-token");
                 state.token = null;
             }
         } catch (e) { console.error("Sync error", e); }

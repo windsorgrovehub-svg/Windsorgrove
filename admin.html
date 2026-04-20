@@ -1027,6 +1027,19 @@
       </div>
     </div>
 
+    <!-- Custom Confirm Modal -->
+    <div id="confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);z-index:1050;align-items:center;justify-content:center">
+      <div style="background:#fff;width:100%;max-width:440px;border-radius:24px;padding:36px;box-shadow:0 30px 80px rgba(0,0,0,0.15);text-align:center;position:relative">
+        <div style="width:60px;height:60px;background:#fef9ed;border:1px solid rgba(197,160,89,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;color:#d4af37">🛡️</div>
+        <h3 style="font-size:1.4rem;font-weight:800;color:var(--text);margin:0 0 12px">Confirm Action</h3>
+        <p id="confirm-modal-text" style="font-size:15px;color:var(--text-dim);line-height:1.6;margin:0 0 32px">Are you sure?</p>
+        <div style="display:flex;gap:12px">
+          <button id="confirm-modal-cancel" class="btn btn-outline" style="flex:1;padding:16px;border-radius:12px;font-weight:700">Cancel</button>
+          <button id="confirm-modal-ok" class="btn btn-primary" style="flex:1;padding:16px;border-radius:12px;font-weight:700;background:linear-gradient(135deg,var(--accent1),#d4af37);border:none">Yes, Proceed</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <div class="toasts" id="toasts"></div>
@@ -1051,7 +1064,7 @@
 
     // --- Access Gatekeeper ---
     (async () => {
-        const token = localStorage.getItem("wgh-token");
+        const token = localStorage.getItem("wgh-admin-token");
         if (!token) { window.location.href = 'login.html'; return; }
         
         await loadState();
@@ -1071,7 +1084,7 @@
         });
         if (!testRes.ok) {
             console.error("Admin authorization failed during check:", testRes.status);
-            localStorage.removeItem('wgh-token');
+            localStorage.removeItem('wgh-admin-token');
             setTimeout(() => { window.location.href = 'login.html'; }, 500);
             return;
         }
@@ -1091,7 +1104,7 @@
 
     // Global auth-wrapped fetch for admin endpoints
     function adminFetch(url, opts = {}) {
-      const currentToken = verifiedAdminToken || localStorage.getItem('wgh-token');
+      const currentToken = verifiedAdminToken || localStorage.getItem('wgh-admin-token');
       if (!currentToken) console.error("adminFetch called but no verified token available!");
       
       opts.headers = Object.assign({ 
@@ -1145,8 +1158,7 @@
       };
       
       document.getElementById('confirm-logout').onclick = () => {
-        localStorage.removeItem('wgh-token');
-        localStorage.removeItem('verified-admin-token');
+        localStorage.removeItem('wgh-admin-token');
         verifiedAdminToken = null;
         
         // Remove confirmation toast
@@ -2191,8 +2203,11 @@
     async function handleStage2Request(requestId, action, userName) {
       const noteEl = $(`#s2note-${requestId}`);
       const note = noteEl ? noteEl.value.trim() : '';
-      const label = action === 'approve' ? 'approve' : 'reject';
-      if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} Stage 2 request for ${userName}?`)) return;
+      const label = action === 'approve' ? 'Approve' : 'Reject';
+      
+      const confirmed = await askConfirm(`<strong>${label} Stage 2 request for ${userName}?</strong><br><br>This will ${action === 'approve'? 'unlock their next 33 tasks' : 'reject the request'}.`);
+      if (!confirmed) return;
+
       try {
         const res = await adminFetch(`${API_URL}/admin/stage2-requests/${requestId}`, {
           method: 'PATCH',
@@ -2212,7 +2227,9 @@
     }
 
     async function unlockStage2(userId, userName) {
-      if (!confirm(`Unlock Stage 2 for ${userName} today?\nThis allows them to complete their next 33 missions.`)) return;
+      const confirmed = await askConfirm(`<strong>Unlock Stage 2 for ${userName} today?</strong><br><br>This instantly allows them to complete their next 33 missions.`);
+      if (!confirmed) return;
+
       try {
         const res = await adminFetch(`${API_URL}/admin/unlock-stage2`, {
           method: 'POST',

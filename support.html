@@ -194,32 +194,13 @@
     sendBtn.onclick = sendMessage;
     inputEl.onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
 
-    // --- Stage 2 pre-fill: detect ?stage2=1&msg=... in URL ---
-    (function prefillStage2() {
+    // --- Stage 2 requests now go through Mission Control, not Live Support ---
+    // If a user lands here with ?stage2=1, redirect them to tasks page
+    (function redirectStage2() {
       const urlParams = new URLSearchParams(window.location.search);
-      const isStage2 = urlParams.get('stage2') === '1';
-      const prefillMsg = urlParams.get('msg');
-
-      if (isStage2 && prefillMsg) {
-        // Clear the URL parameters immediately so refreshes don't double-send
+      if (urlParams.get('stage2') === '1') {
         window.history.replaceState({}, document.title, window.location.pathname);
-
-        // Pre-fill AND auto-send the message so user sees it in their log immediately
-        inputEl.value = decodeURIComponent(prefillMsg);
-        
-        // Let UI finish rendering before auto-sending
-        setTimeout(() => {
-            sendMessage();
-        }, 500);
-
-        // Show a gold info banner above the chat header
-        const chatBox = document.querySelector('.support-chat');
-        if (chatBox) {
-          const banner = document.createElement('div');
-          banner.style.cssText = 'background:linear-gradient(135deg,#fef9ed,#fdf3d0);border-bottom:1px solid rgba(197,160,89,0.3);padding:12px 20px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#a38144';
-          banner.innerHTML = `<span style="font-size:18px">🏆</span> Stage 1 complete — Stage 2 unlock request has been sent successfully.`;
-          chatBox.insertBefore(banner, chatBox.firstChild);
-        }
+        window.location.href = 'tasks.html';
       }
     })();
     

@@ -389,9 +389,11 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
 
     let allCompleted = false;
     let totalCredited = 0;
+    // completedCount was read BEFORE the insert above, so add 1 for the actual current count
+    const actualCount = completedCount + 1;
 
-    // If user has completed the target number of missions
-    if (completedCount >= missionTarget) {
+    // If user has now completed the target number of missions
+    if (actualCount >= missionTarget) {
       allCompleted = true;
 
       // Delete all individual pending_commission records
@@ -450,15 +452,13 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
         );
       }
     } else if (!isTrialDone) {
-      // Trial in progress — silent, no per-task notification needed
-    } else if (completedCount === 33 && missionTarget === 66) {
-      // Stage 1 silently complete — waiting for admin to unlock Stage 2
-      // No notification spam; the locked overlay handles the UX
+      // Trial in progress — silent
+    } else if (actualCount === 33 && missionTarget === 66) {
+      // Stage 1 silently complete — locked overlay handles UX
     } else {
-      // Progress notification for trial or mid-stage
       await db.query(
         'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-        [req.user.id, 'commission_earned', `Mission ${completedCount}/${missionTarget} complete. Commission pending until all stages are done.`, false]
+        [req.user.id, 'commission_earned', `Mission ${actualCount}/${missionTarget} complete. Commission pending until all stages are done.`, false]
       );
     }
 
@@ -468,7 +468,7 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
       transaction: tx.rows[0],
       all_completed: allCompleted,
       total_credited: totalCredited,
-      completed: completedCount,
+      completed: actualCount,
       total: missionTarget
     });
   } catch (err) {

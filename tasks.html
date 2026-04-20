@@ -281,27 +281,19 @@
       const btn = document.getElementById('stage2-req-btn');
       if (btn) { btn.disabled = true; btn.textContent = 'Submitting Request...'; }
 
+      // Submit to Mission Control API (no chat message)
       try {
         if (state.token) {
-          const res = await fetch(`${API_URL}/user/request-stage2`, {
+          await fetch(`${API_URL}/user/request-stage2`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${state.token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: 'Hi Support, I will like to continue to stage 2, kindly help unlock it and finish my task, thank you' })
           });
-          const data = await res.json();
-          if (res.ok) {
-            toast('✅ Stage 2 unlock request submitted! Our team will review it shortly.');
-            if (btn) { btn.textContent = '✅ Request Submitted'; btn.style.background = 'var(--success)'; }
-            document.getElementById('stage2-status-hint').textContent = '🕐 Your request has been submitted. Average approval: under 5 minutes.';
-          } else {
-            toast(data.error || 'Request failed. Please try again.');
-            if (btn) { btn.disabled = false; btn.textContent = '💬 Contact Support to Unlock Stage 2'; }
-          }
         }
-      } catch(e) {
-        toast('Connection error. Please try again.');
-        if (btn) { btn.disabled = false; btn.textContent = '💬 Contact Support to Unlock Stage 2'; }
-      }
+      } catch(e) { /* silent */ }
+
+      // Navigate to support page so user sees it
+      window.location.href = 'support.html';
     }
 
     async function fetchProgress() {

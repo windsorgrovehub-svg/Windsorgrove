@@ -201,6 +201,9 @@
       const prefillMsg = urlParams.get('msg');
 
       if (isStage2 && prefillMsg) {
+        // Clear the URL parameters immediately so refreshes don't double-send
+        window.history.replaceState({}, document.title, window.location.pathname);
+
         // Pre-fill AND auto-send the message so user sees it in their log immediately
         inputEl.value = decodeURIComponent(prefillMsg);
         

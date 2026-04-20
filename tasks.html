@@ -233,6 +233,41 @@
       } catch(e) { console.error('Progress fetch failed', e); }
     }
 
+    function showStage2LockedScreen() {
+      // Show the locked overlay
+      const overlay = document.getElementById('stage2-locked-overlay');
+      if (overlay) overlay.style.display = 'flex';
+
+      // Hide everything else — hotel list, rate panel, launcher
+      const launcher = document.getElementById('mission-launcher');
+      if (launcher) launcher.style.display = 'none';
+
+      const listContainer = listEl ? listEl.parentElement : null;
+      if (listContainer) listContainer.style.display = 'none';
+
+      const panel = document.getElementById('rate-panel');
+      if (panel) panel.innerHTML = '';
+
+      // Scroll to top so overlay is visible
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Check if request already submitted — disable the button if so
+      const btn = document.getElementById('stage2-req-btn');
+      const msgEl = document.getElementById('stage2-msg');
+      if (btn && btn.textContent.includes('Request Sent')) return; // already done
+      // Poll request status from missionProgress
+      if (missionProgress.stage2_request_pending) {
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = '⏳ Request Pending — Awaiting Admin Approval';
+          btn.style.background = 'linear-gradient(135deg,#6b7280,#9ca3af)';
+        }
+        if (msgEl) msgEl.style.display = 'none';
+        const hint = document.querySelector('#stage2-locked-overlay p:last-child');
+        if (hint) hint.textContent = 'Your request is under review. You will be notified once Stage 2 is unlocked.';
+      }
+    }
+
     function renderProgressBanner() {
       const banner = document.getElementById('mission-progress');
       if (!state.user || !banner) return;
@@ -281,17 +316,18 @@
         document.getElementById('progress-pct').textContent = Math.round(displayPct) + '%';
       }
 
-      // Show Stage 2 locked overlay if user finished 33 but NOT unlocked
-      const stage2Overlay = document.getElementById('stage2-locked-overlay');
+
+      // Show Stage 2 locked overlay if user finished Stage 1 but NOT unlocked
       if (!isTrial && completed >= stage1Limit && !stage2Unlocked && !missionProgress.all_done) {
-        if (stage2Overlay) stage2Overlay.style.display = 'flex';
-        // Hide the normal launcher
-        const launcher = document.getElementById('mission-launcher');
-        if (launcher) launcher.style.display = 'none';
+        showStage2LockedScreen();
         document.getElementById('progress-hint').textContent = '🔒 Stage 1 complete! Contact support to unlock Stage 2.';
         return;
       } else {
+        const stage2Overlay = document.getElementById('stage2-locked-overlay');
         if (stage2Overlay) stage2Overlay.style.display = 'none';
+        // Restore hotel list visibility
+        const listContainer = listEl.parentElement;
+        if (listContainer) listContainer.style.display = '';
       }
 
       // Show the launcher overlay for new sessions
@@ -518,14 +554,25 @@
                     }
                     toast(`✅ Mission ${toastCompleted}/${toastTotal} complete! Commission pending.`);
                     await fetchProgress();
-                    
-                    // Automatically load the next incomplete mission
-                    const nextHotel = hotels.find(h => !missionProgress.completed_hotels.includes(h.name));
-                    if (nextHotel) {
-                        selectHotel(nextHotel.id);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    // After fetching progress, check if Stage 1 is now done and Stage 2 is locked
+                    const isNowLocked = !missionProgress.is_trial
+                      && missionProgress.completed >= (missionProgress.stage1_limit || 33)
+                      && !missionProgress.stage2_unlocked
+                      && !missionProgress.all_done;
+
+                    if (isNowLocked) {
+                      // Show the Stage 2 locked screen — do NOT advance to next hotel
+                      showStage2LockedScreen();
                     } else {
-                        window.location.href = 'account.html';
+                      // Automatically load the next incomplete mission
+                      const nextHotel = hotels.find(h => !missionProgress.completed_hotels.includes(h.name));
+                      if (nextHotel) {
+                          selectHotel(nextHotel.id);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                      } else {
+                          window.location.href = 'account.html';
+                      }
                     }
                 }
             } else {

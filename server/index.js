@@ -577,6 +577,13 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
     );
     const completedHotelNames = completedHotels.rows.map(r => r.note.replace('Expert Intelligence Fee: ', ''));
 
+    // Check if user has already submitted a Stage 2 request today
+    const stage2ReqCheck = await db.query(
+      "SELECT id FROM stage2_requests WHERE user_id = $1 AND status = 'pending'",
+      [req.user.id]
+    );
+    const stage2RequestPending = stage2ReqCheck.rows.length > 0;
+
     res.json({
       completed: completedCount,
       total: missionTarget,
@@ -586,6 +593,7 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
       is_trial: !isTrialDone,
       stage: currentStage,
       stage2_unlocked: stage2Unlocked,
+      stage2_request_pending: stage2RequestPending,
       stage1_limit: STAGE_1_LIMIT
     });
   } catch (err) {

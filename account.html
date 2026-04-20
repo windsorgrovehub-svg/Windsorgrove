@@ -85,7 +85,7 @@
           <div class="muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Available Funds</div>
           <div class="kpi-val" style="color:var(--success)" id="balance-val">$0.00</div>
         </div>
-        <div class="kpi-card">
+        <div class="kpi-card" id="trial-bonus-card">
           <div class="muted" style="font-size:12px;font-weight:700;text-transform:uppercase">Trial Bonus</div>
           <div class="kpi-val" style="color:var(--accent1)" id="bonus-val">$0.00</div>
         </div>
@@ -181,9 +181,9 @@
         // Total Settlements = sum of actual user withdrawals only
         const computedSettlements = (state.transactions || []).reduce((acc, tx) => acc + (tx.type === 'withdrawal' ? Math.abs(Number(tx.amount)) : 0), 0);
         
-        // Trial Bonus = sum of signup_bonus transactions
+        // Trial Bonus = sum of signup_bonus and trial_fee transactions
         const trialBonus = (state.transactions || []).reduce((acc, tx) => {
-            if (tx.type === 'signup_bonus') return acc + Number(tx.amount);
+            if (tx.type === 'signup_bonus' || tx.type === 'trial_fee') return acc + Number(tx.amount);
             return acc;
         }, 0);
         
@@ -193,8 +193,15 @@
         state.user.balance = displayBalance;
         
         document.getElementById("balance-val").textContent = fmt(displayBalance);
-        document.getElementById("bonus-val").textContent = fmt(trialBonus);
         document.getElementById("total-val").textContent = fmt(computedSettlements);
+        
+        const bonusCard = document.getElementById("trial-bonus-card");
+        if (trialBonus <= 0) {
+            if (bonusCard) bonusCard.style.display = 'none';
+        } else {
+            if (bonusCard) bonusCard.style.display = 'block';
+            document.getElementById("bonus-val").textContent = fmt(trialBonus);
+        }
         
         const ledger = document.getElementById("ledger-body");
         

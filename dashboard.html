@@ -199,10 +199,10 @@
 
         stats.textContent = `Monitoring ${hotels.length} premium properties worldwide`;
 
-        grid.innerHTML = hotels.map(h => `
+        grid.innerHTML = hotels.slice(0, 50).map(h => `
               <div class="hotel">
                 <div class="hotel-img">
-                  <img src="${h.image.startsWith('http') ? h.image : 'assets/img/' + h.image}" alt="${h.name}">
+                  <img src="${h.image.startsWith('http') ? h.image : 'assets/img/' + h.image}" alt="${h.name}" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#1a1a2e,#16213e)'">
                   <div class="hotel-badge">${h.category}</div>
                 </div>
                 <div class="hotel-body">

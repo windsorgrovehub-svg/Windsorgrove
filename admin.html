@@ -2733,7 +2733,7 @@
         if (!res.ok) throw new Error('Failed');
         toast('Account suspended successfully.');
         closeUserDetailModal();
-        loadUsersTable();
+        await loadUsersTable();
       } catch(e) { toast('Failed to suspend account.'); }
     }
 
@@ -2749,7 +2749,7 @@
         if (!res.ok) throw new Error('Failed');
         toast('Account deactivated.');
         closeUserDetailModal();
-        loadUsersTable();
+        await loadUsersTable();
       } catch(e) { toast('Failed to deactivate account.'); }
     }
 
@@ -2765,7 +2765,7 @@
         if (!res.ok) throw new Error('Failed');
         toast('Account reactivated successfully.');
         closeUserDetailModal();
-        loadUsersTable();
+        await loadUsersTable();
       } catch(e) { toast('Failed to reactivate account.'); }
     }
   </script>

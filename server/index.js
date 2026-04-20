@@ -1538,7 +1538,9 @@ app.delete('/api/admin/invite-codes/:id', authenticateToken, isAdmin, async (req
     )`);
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_ip VARCHAR(64)`);
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS account_status VARCHAR(20) DEFAULT 'active'`);
     console.log('\u2713 stage2_requests + IP columns ready');
+    console.log('\u2713 account_status column ready');
   } catch (err) {
     console.error('DB init error:', err.message);
   }

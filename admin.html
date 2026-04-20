@@ -2632,7 +2632,7 @@
         statusEl.textContent = status.charAt(0).toUpperCase() + status.slice(1);
         statusEl.style.color = status === 'active' ? '#059669' : status === 'suspended' ? '#d97706' : '#ef4444';
       } catch(e) {
-        showToast('Failed to load user details.');
+        toast('Failed to load user details.');
       }
     }
 
@@ -2650,10 +2650,10 @@
           method: 'PUT', body: JSON.stringify({ status: 'suspended' })
         });
         if (!res.ok) throw new Error('Failed');
-        showToast('Account suspended successfully.');
+        toast('Account suspended successfully.');
         closeUserDetailModal();
         loadUsersTable();
-      } catch(e) { showToast('Failed to suspend account.'); }
+      } catch(e) { toast('Failed to suspend account.'); }
     }
 
     async function deactivateUser() {
@@ -2665,10 +2665,10 @@
           method: 'PUT', body: JSON.stringify({ status: 'deactivated' })
         });
         if (!res.ok) throw new Error('Failed');
-        showToast('Account deactivated.');
+        toast('Account deactivated.');
         closeUserDetailModal();
         loadUsersTable();
-      } catch(e) { showToast('Failed to deactivate account.'); }
+      } catch(e) { toast('Failed to deactivate account.'); }
     }
 
     async function reactivateUser() {
@@ -2680,10 +2680,10 @@
           method: 'PUT', body: JSON.stringify({ status: 'active' })
         });
         if (!res.ok) throw new Error('Failed');
-        showToast('Account reactivated successfully.');
+        toast('Account reactivated successfully.');
         closeUserDetailModal();
         loadUsersTable();
-      } catch(e) { showToast('Failed to reactivate account.'); }
+      } catch(e) { toast('Failed to reactivate account.'); }
     }
   </script>
 </body>

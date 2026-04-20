@@ -753,6 +753,13 @@
             <option value="suspended">Suspended</option>
             <option value="deactivated">Deactivated</option>
           </select>
+          <select id="user-page-size" onchange="usersCurrentPage=1;filterUsersTable()"
+            style="padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:14px;font-family:inherit;background:#fff;outline:none">
+            <option value="10">10 / page</option>
+            <option value="25">25 / page</option>
+            <option value="50">50 / page</option>
+            <option value="100">100 / page</option>
+          </select>
         </div>
 
         <!-- Users Table -->
@@ -772,6 +779,15 @@
                 <tr><td colspan="5" style="padding:40px;text-align:center;color:var(--text-dim)">Loading users…</td></tr>
               </tbody>
             </table>
+          </div>
+          <!-- Pagination Footer -->
+          <div id="users-pagination" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:14px 20px;border-top:1px solid var(--border);background:#fafafa">
+            <div id="users-page-info" style="font-size:13px;color:var(--text-dim);font-weight:600">Showing — users</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="users-prev-btn" onclick="usersChangePage(-1)" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--text)">← Prev</button>
+              <span id="users-page-num" style="font-size:13px;font-weight:700;color:var(--text);min-width:60px;text-align:center">Page 1</span>
+              <button id="users-next-btn" onclick="usersChangePage(1)" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--text)">Next →</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1371,10 +1387,10 @@
             $("#total-experts-val").innerText = stats.total_experts.toLocaleString();
             $("#mission-volume-val").innerHTML = `${stats.mission_volume}<span style="font-size:16px; opacity:0.5"> /hr</span>`;
             
-            // Populate Intelligence Ticker
+            // Populate Intelligence Ticker (capped at 5)
             const tickerEl = $("#intel-ticker-feed");
             if (stats.recent_events && stats.recent_events.length > 0) {
-               tickerEl.innerHTML = stats.recent_events.map(e => `
+               tickerEl.innerHTML = stats.recent_events.slice(0, 5).map(e => `
                  <div class="ticker-item">
                    <div class="ticker-icon ${e.type === 'signup' ? 'icon-signup' : 'icon-mission'}">
                      ${e.type === 'signup' ? '👤' : '✦'}
@@ -1390,10 +1406,10 @@
                tickerEl.innerHTML = `<div class="muted" style="padding:20px; text-align:center; font-size:12px">No recent events detected.</div>`;
             }
 
-            // Populate Chat Previews
+            // Populate Chat Previews (capped at 5)
             const chatBox = $("#chat-preview");
             if (stats.active_chats && stats.active_chats.length > 0) {
-               chatBox.innerHTML = stats.active_chats.map(c => {
+               chatBox.innerHTML = stats.active_chats.slice(0, 5).map(c => {
                  const initials = c.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
                  return `
                  <div class="admin-card card-pad" style="padding:16px; border-left:4px solid var(--accent1); cursor:pointer" onclick="switchView('support')">
@@ -1426,7 +1442,7 @@
              alertEl.classList.remove("show");
           }
 
-          feedEl.innerHTML = data.map(n => {
+          feedEl.innerHTML = data.slice(0, 5).map(n => {
              const isChatLead = n.type === 'chat_engagement';
              let leadDetails = '';
              if (isChatLead && n.preview) {
@@ -2543,7 +2559,16 @@
 
     // ═══════════════ USER MANAGEMENT ═══════════════
     let allUsersData = [];
+    let allUsersFiltered = [];
+    let usersCurrentPage = 1;
     let activeUserId = null;
+    function usersGetPageSize() { return parseInt(document.getElementById('user-page-size')?.value || '10'); }
+    function usersChangePage(dir) {
+      const pageSize = usersGetPageSize();
+      const totalPages = Math.max(1, Math.ceil(allUsersFiltered.length / pageSize));
+      usersCurrentPage = Math.min(Math.max(1, usersCurrentPage + dir), totalPages);
+      renderUsersTable(allUsersFiltered);
+    }
 
     async function loadUsersTable() {
       const tbody = document.getElementById('users-table-body');
@@ -2561,23 +2586,41 @@
     function filterUsersTable() {
       const q = (document.getElementById('user-search-input').value || '').toLowerCase();
       const statusFilter = document.getElementById('user-status-filter').value;
-      const filtered = allUsersData.filter(u => {
+      allUsersFiltered = allUsersData.filter(u => {
         const matchesSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
         const userStatus = u.account_status || 'active';
         const matchesStatus = statusFilter === 'all' || userStatus === statusFilter;
         return matchesSearch && matchesStatus;
       });
-      renderUsersTable(filtered);
+      usersCurrentPage = 1;
+      renderUsersTable(allUsersFiltered);
     }
 
     function renderUsersTable(users) {
+      allUsersFiltered = users;
       const fmtM = v => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(v);
       const tbody = document.getElementById('users-table-body');
-      if (!users.length) {
+      const pageSize = usersGetPageSize();
+      const totalPages = Math.max(1, Math.ceil(users.length / pageSize));
+      usersCurrentPage = Math.min(usersCurrentPage, totalPages);
+      const start = (usersCurrentPage - 1) * pageSize;
+      const pageUsers = users.slice(start, start + pageSize);
+
+      // Update pagination info
+      const pageInfo = document.getElementById('users-page-info');
+      if (pageInfo) pageInfo.textContent = `Showing ${users.length === 0 ? 0 : start + 1}–${Math.min(start + pageSize, users.length)} of ${users.length} users`;
+      const pageNum = document.getElementById('users-page-num');
+      if (pageNum) pageNum.textContent = `Page ${usersCurrentPage} / ${totalPages}`;
+      const prevBtn = document.getElementById('users-prev-btn');
+      if (prevBtn) prevBtn.disabled = usersCurrentPage === 1;
+      const nextBtn = document.getElementById('users-next-btn');
+      if (nextBtn) nextBtn.disabled = usersCurrentPage === totalPages;
+
+      if (!pageUsers.length) {
         tbody.innerHTML = '<tr><td colspan="5" style="padding:40px;text-align:center;color:var(--text-dim)">No users found.</td></tr>';
         return;
       }
-      tbody.innerHTML = users.map(u => {
+      tbody.innerHTML = pageUsers.map(u => {
         const status = u.account_status || 'active';
         const statusColor = status === 'active' ? '#059669' : status === 'suspended' ? '#d97706' : '#ef4444';
         const statusBg = status === 'active' ? '#d1fae5' : status === 'suspended' ? '#fef3c7' : '#fee2e2';

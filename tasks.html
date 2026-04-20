@@ -75,7 +75,7 @@
                 <div style="font-size:56px;margin-bottom:16px;display:inline-block;animation:pulse 2s infinite">🎯</div>
                 <h2 style="margin:0 0 16px;font-size:30px;color:var(--text);letter-spacing:-0.5px">Daily Task</h2>
                 <p class="muted" id="mission-desc" style="font-size:16px;margin:0 auto 36px;line-height:1.6">
-                  Progressive task level: The higher you go, the more the tasks. You must complete all <strong style="color:var(--text)"><span id="mission-target-text">30</span> assignments</strong>. Your accumulated commission will be unlocked and credited perfectly upon full completion. 
+                  Progressive task level: The higher you go, the more the tasks. You must complete all <strong style="color:var(--text)"><span id="mission-target-text"></span> assignments</strong>. Your accumulated commission will be unlocked and credited perfectly upon full completion. 
                 </p>
                 <button class="btn btn-primary" onclick="startNextMission()" style="width:100%;padding:20px;font-size:17px;font-weight:800;border-radius:100px;box-shadow:0 12px 30px rgba(197,160,89,0.3);border:none;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
                     <span id="start-btn-text">Start Mission Protocol</span>
@@ -340,12 +340,14 @@
         if (isFinalTask) {
             const certifyEl = document.getElementById("certify");
             if (certifyEl && !certifyEl.checked) {
+                _submitting = false;
                 return toast("Please confirm your rating before submitting.");
             }
         }
 
         const rating = window.__currentRating ? window.__currentRating() : 0;
         if (rating === 0) {
+            _submitting = false;
             return toast("Please select a star rating before submitting.");
         }
 

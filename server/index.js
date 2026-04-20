@@ -379,40 +379,37 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
       );
       totalCredited = parseFloat(pendingSum.rows[0].total);
 
+      // Enforce the progressive payout rule literally (66 = 30, 132 = 60, etc.)
+      const scaledPayout = (missionTarget / 66) * 30; 
+      if (scaledPayout >= 30) {
+         totalCredited = scaledPayout;
+      }
+
       // Delete all individual pending_commission records
       await db.query(
         "DELETE FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
         [req.user.id]
       );
 
-      // Check if this is the FIRST completed set (trial bonus still active)
-      const isFirstSet = await db.query(
-        "SELECT id FROM transactions WHERE user_id = $1 AND type = 'signup_bonus' AND NOT EXISTS (SELECT 1 FROM transactions t2 WHERE t2.user_id = $1 AND t2.type = 'trial_fee')",
-        [req.user.id]
-      );
-
-      if (isFirstSet.rows.length > 0) {
+      if (!isTrialDone) {
         // FIRST SET: No commission credited — trial bonus was the reward
         const bonusRes = await db.query(
           "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = $1 AND type = 'signup_bonus'",
           [req.user.id]
         );
-        const bonusAmount = parseFloat(bonusRes.rows[0].total);
+        let bonusAmount = parseFloat(bonusRes.rows[0].total);
+        if (bonusAmount <= 0) bonusAmount = 100;
 
         // Exhaust the trial bonus
         await db.query(
           'UPDATE users SET balance = balance - $1 WHERE id = $2',
           [bonusAmount, req.user.id]
         );
+        
+        // Ensure Ledger explicitly deducts visually
         await db.query(
           'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
-          [req.user.id, 'trial_fee', -bonusAmount, 'Trial Bonus Exhausted — First Mission Set Completed']
-        );
-
-        // Record mission completion with $0 (no commission on first set)
-        await db.query(
-          'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
-          [req.user.id, 'commission', 0, `Mission Complete: ${missionTarget} Assignments Verified (Trial)`]
+          [req.user.id, 'trial_fee', -bonusAmount, `Mission Complete: ${missionTarget} Assignments Verified (Trial)`]
         );
 
         totalCredited = 0;

@@ -31,6 +31,26 @@ app.use(cors());
 app.use(express.json());
 app.set('trust proxy', true); // Trust proxy headers (Vercel, Cloudflare, etc.) to get real client IP
 
+// --- Lightweight login rate limiter (in-memory, per IP) ---
+const loginAttempts = new Map();
+const LOGIN_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const MAX_LOGIN_ATTEMPTS = 10; // max attempts per window
+function checkLoginRateLimit(ip) {
+  const now = Date.now();
+  const record = loginAttempts.get(ip) || { count: 0, resetAt: now + LOGIN_WINDOW_MS };
+  if (now > record.resetAt) { record.count = 0; record.resetAt = now + LOGIN_WINDOW_MS; }
+  record.count++;
+  loginAttempts.set(ip, record);
+  return record.count <= MAX_LOGIN_ATTEMPTS;
+}
+// Clean up old entries every 30 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, rec] of loginAttempts.entries()) {
+    if (now > rec.resetAt) loginAttempts.delete(ip);
+  }
+}, 30 * 60 * 1000);
+
 // --- MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -100,6 +120,13 @@ app.post('/api/auth/validate-invite', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   try {
+    // Rate limit: max 10 login attempts per IP per 15 min
+    const rawIp = req.ip || req.headers['x-forwarded-for'] || '';
+    const clientIp = rawIp.split(',')[0].trim().replace(/^::ffff:/, '');
+    if (!checkLoginRateLimit(clientIp)) {
+      return res.status(429).json({ error: 'Too many login attempts. Please try again in 15 minutes.' });
+    }
+
     const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = result.rows[0];
     if (!user) return res.status(400).json({ error: 'User not found' });
@@ -108,11 +135,15 @@ app.post('/api/auth/login', async (req, res) => {
     if (!valPass) return res.status(400).json({ error: 'Invalid password' });
 
     // Capture real client IP (trust proxy is set, so req.ip gives the real address)
-    const rawIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-    const ip = rawIp.split(',')[0].trim().replace(/^::ffff:/, ''); // strip IPv6-mapped IPv4 prefix
-    await db.query('UPDATE users SET last_login_ip = $1, last_login_at = NOW() WHERE id = $2', [ip || null, user.id]);
+    const ip = clientIp || null;
+    await db.query('UPDATE users SET last_login_ip = $1, last_login_at = NOW() WHERE id = $2', [ip, user.id]);
 
-    const token = jwt.sign({ id: user.id, email: user.email, is_admin: user.is_admin }, JWT_SECRET);
+    // Token expires in 7 days — users stay logged in across sessions
+    const token = jwt.sign(
+      { id: user.id, email: user.email, is_admin: user.is_admin },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, balance: user.balance, is_admin: user.is_admin } });
   } catch (err) {
     res.status(500).json({ error: 'Database error' });

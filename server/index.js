@@ -439,7 +439,14 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     if (actualCount >= missionTarget) {
       allCompleted = true;
 
-      // Delete all individual pending_commission records
+      // PRE-CALCULATE ACCUMULATED PENDING COMMISSIONS BEFORE DELETING THEM
+      const pendingSum = await db.query(
+        "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
+        [req.user.id]
+      );
+      const pendingTotalRaw = parseFloat(pendingSum.rows[0].total);
+
+      // Now it is safe to delete all individual pending_commission records
       await db.query(
         "DELETE FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
         [req.user.id]
@@ -472,11 +479,7 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
         );
       } else {
         // PAID SET: Pay the actual accumulated hotel commissions (rates calibrated to ~$60 for 66 tasks)
-        const pendingSum = await db.query(
-          "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
-          [req.user.id]
-        );
-        totalCredited = parseFloat(parseFloat(pendingSum.rows[0].total).toFixed(2));
+        totalCredited = parseFloat(pendingTotalRaw.toFixed(2));
 
         const txNote = `Daily Task Commission — ${missionTarget} Assignments Completed`;
 

@@ -729,6 +729,49 @@
       </div>
     </div>
 
+    <!-- Stage 2 Unlock Requests Section -->
+    <div id="stage2-section" class="hidden">
+      <div style="max-width:960px;margin:0 auto">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:28px">
+          <div>
+            <h2 style="font-size:1.9rem;margin-bottom:6px">🔓 Stage 2 Unlock <span class="grad-text">Requests</span></h2>
+            <p class="muted" style="font-size:14px">Review and approve Stage 2 mission unlock requests submitted by clients.</p>
+          </div>
+          <button onclick="loadStage2Requests(currentS2Filter)" class="ledger-refresh-btn">&#8635; Refresh</button>
+        </div>
+
+        <!-- Filter Pills -->
+        <div class="ltabs" style="margin-bottom:24px">
+          <button id="s2tab-all" class="ltab-btn active" onclick="loadStage2Requests('all')">&#128203; All</button>
+          <button id="s2tab-pending" class="ltab-btn" onclick="loadStage2Requests('pending')">&#9203; Pending</button>
+          <button id="s2tab-approved" class="ltab-btn" onclick="loadStage2Requests('approved')">&#9989; Approved</button>
+          <button id="s2tab-rejected" class="ltab-btn" onclick="loadStage2Requests('rejected')">&#10060; Rejected</button>
+        </div>
+
+        <!-- Stats Row -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:24px">
+          <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px 20px;text-align:center">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:6px">Total</div>
+            <div style="font-size:26px;font-weight:800;color:var(--text)" id="s2stat-total">&mdash;</div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px 20px;text-align:center">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#d97706;margin-bottom:6px">Pending</div>
+            <div style="font-size:26px;font-weight:800;color:#d97706" id="s2stat-pending">&mdash;</div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px 20px;text-align:center">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#059669;margin-bottom:6px">Approved</div>
+            <div style="font-size:26px;font-weight:800;color:#059669" id="s2stat-approved">&mdash;</div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px 20px;text-align:center">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#dc2626;margin-bottom:6px">Rejected</div>
+            <div style="font-size:26px;font-weight:800;color:#dc2626" id="s2stat-rejected">&mdash;</div>
+          </div>
+        </div>
+
+        <div id="s2-requests-list"></div>
+      </div>
+    </div>
+
     <!-- Ledger Management Section -->
     <div id="ledger-section" class="hidden">
       <div style="max-width:1100px;margin:0 auto">
@@ -1123,7 +1166,7 @@
     }
 
     // --- View Switching ---
-    const ALL_VIEWS = ['mon', 'prop', 'invite', 'ledger', 'support', 'settings'];
+    const ALL_VIEWS = ['mon', 'prop', 'invite', 'stage2', 'ledger', 'support', 'settings'];
     function switchView(active) {
         closeSidebar(); // always close mobile sidebar when switching sections
         ALL_VIEWS.forEach(v => {
@@ -1140,12 +1183,14 @@
         if (active === 'invite') loadInviteCodes();
         if (active === 'prop') loadPropertiesTable();
         if (active === 'ledger') loadPendingRequests('pending');
+        if (active === 'stage2') loadStage2Requests('all');
         if (active === 'settings') loadSettings();
     }
     $("#view-mon").onclick    = (e) => { e.preventDefault(); switchView('mon'); };
     $("#view-prop").onclick   = (e) => { e.preventDefault(); switchView('prop'); };
     $("#view-invite").onclick = (e) => { e.preventDefault(); switchView('invite'); };
     $("#view-ledger").onclick = (e) => { e.preventDefault(); switchView('ledger'); };
+    $("#view-missions").onclick = (e) => { e.preventDefault(); switchView('stage2'); };
     $("#view-support").onclick = (e) => { e.preventDefault(); switchView('support'); };
     $("#view-settings").onclick = (e) => { e.preventDefault(); switchView('settings'); };
 
@@ -2059,6 +2104,11 @@
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:5px">Txns</div>
               <div style="font-size:14px;font-weight:700;color:var(--text)">${u.tx_count}</div>
             </div>
+            <div style="flex:1;min-width:140px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:10px 14px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#0369a1;margin-bottom:5px">🌐 Last Login IP</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text);font-family:monospace">${u.last_login_ip || '—'}</div>
+              <div style="font-size:10px;color:var(--text-dim);margin-top:3px">${u.last_login_at ? new Date(u.last_login_at).toLocaleString() : 'Never logged in'}</div>
+            </div>
           </div>
 
           <!-- Action buttons -->
@@ -2073,6 +2123,92 @@
           </div>
         </div>`;
       }).join('');
+    }
+
+    let currentS2Filter = 'all';
+    async function loadStage2Requests(filter = 'all') {
+      currentS2Filter = filter;
+      // Update tab UI
+      ['all','pending','approved','rejected'].forEach(f => {
+        const el = $(`#s2tab-${f}`);
+        if (el) el.classList.toggle('active', f === filter);
+      });
+      const container = $('#s2-requests-list');
+      container.innerHTML = `<div style="padding:40px;text-align:center;opacity:.4">Loading...</div>`;
+      try {
+        const url = filter === 'all' ? `${API_URL}/admin/stage2-requests` : `${API_URL}/admin/stage2-requests?status=${filter}`;
+        const res = await adminFetch(url);
+        const data = await res.json();
+        // Update stat cards
+        if ($('#s2stat-total')) {
+          const allRes = await adminFetch(`${API_URL}/admin/stage2-requests`);
+          const all = await allRes.json();
+          $('#s2stat-total').textContent = all.length;
+          $('#s2stat-pending').textContent = all.filter(r => r.status === 'pending').length;
+          $('#s2stat-approved').textContent = all.filter(r => r.status === 'approved').length;
+          $('#s2stat-rejected').textContent = all.filter(r => r.status === 'rejected').length;
+        }
+        renderStage2Requests(data);
+      } catch(e) {
+        container.innerHTML = `<div style="padding:40px;text-align:center;opacity:.4">Failed to load requests.</div>`;
+      }
+    }
+
+    function renderStage2Requests(requests) {
+      const container = $('#s2-requests-list');
+      if (!requests.length) {
+        container.innerHTML = `<div class="admin-card card-pad" style="text-align:center;padding:60px;opacity:.45">No requests found.</div>`;
+        return;
+      }
+      const statusColors = { pending: '#d97706', approved: '#059669', rejected: '#dc2626' };
+      const statusBg = { pending: '#fef3c7', approved: '#d1fae5', rejected: '#fee2e2' };
+      container.innerHTML = requests.map(r => {
+        const initials = r.user_name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
+        const dt = new Date(r.created_at).toLocaleString();
+        const isPending = r.status === 'pending';
+        return `
+        <div class="req-card" style="margin-bottom:16px">
+          <div class="req-card-header">
+            <div style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,var(--accent1),#d4af37);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0">${initials}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:2px">${r.user_name}</div>
+              <div style="font-size:12px;color:var(--text-dim)">${r.user_email}</div>
+              <div style="font-size:11px;color:var(--text-dim);margin-top:3px">${dt}</div>
+            </div>
+            <div style="background:${statusBg[r.status]};color:${statusColors[r.status]};font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px;text-transform:uppercase;flex-shrink:0">${r.status}</div>
+          </div>
+          ${r.message ? `<div style="padding:12px 20px;font-size:14px;color:var(--text-dim);border-top:1px solid var(--border);background:#fafaf8"><em>"${r.message}"</em></div>` : ''}
+          ${isPending ? `
+          <div class="req-actions" style="align-items:center;gap:10px">
+            <input type="text" id="s2note-${r.id}" class="input" style="flex:1;background:#fff;font-size:13px;padding:10px 14px" placeholder="Admin note (optional)">
+            <button onclick='handleStage2Request(${r.id}, "approve", "${r.user_name}")' class="req-approve-btn" style="flex:0;white-space:nowrap">&#x2713; Approve</button>
+            <button onclick='handleStage2Request(${r.id}, "reject", "${r.user_name}")' class="req-reject-btn" style="flex:0;white-space:nowrap">&#x2715; Reject</button>
+          </div>` : r.admin_note ? `<div style="padding:10px 20px;font-size:12px;color:var(--text-dim);border-top:1px solid var(--border)">Admin note: ${r.admin_note}</div>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    async function handleStage2Request(requestId, action, userName) {
+      const noteEl = $(`#s2note-${requestId}`);
+      const note = noteEl ? noteEl.value.trim() : '';
+      const label = action === 'approve' ? 'approve' : 'reject';
+      if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} Stage 2 request for ${userName}?`)) return;
+      try {
+        const res = await adminFetch(`${API_URL}/admin/stage2-requests/${requestId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, admin_note: note })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast(action === 'approve' ? `\u2705 Approved & Stage 2 unlocked for ${userName}!` : `\u274c Request rejected for ${userName}.`);
+          loadStage2Requests(currentS2Filter);
+        } else {
+          toast(data.error || 'Action failed.');
+        }
+      } catch(e) {
+        toast('Network error.');
+      }
     }
 
     async function unlockStage2(userId, userName) {

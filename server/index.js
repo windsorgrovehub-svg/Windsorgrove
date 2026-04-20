@@ -106,6 +106,10 @@ app.post('/api/auth/login', async (req, res) => {
     const valPass = await bcrypt.compare(password, user.password_hash);
     if (!valPass) return res.status(400).json({ error: 'Invalid password' });
 
+    // Capture IP address
+    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+    await db.query('UPDATE users SET last_login_ip = $1, last_login_at = NOW() WHERE id = $2', [ip, user.id]);
+
     const token = jwt.sign({ id: user.id, email: user.email, is_admin: user.is_admin }, JWT_SECRET);
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, balance: user.balance, is_admin: user.is_admin } });
   } catch (err) {
@@ -794,6 +798,8 @@ app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
         COALESCE((SELECT SUM(amount) FROM transactions WHERE user_id = u.id AND amount > 0), 0) as total_credits,
         COALESCE((SELECT SUM(ABS(amount)) FROM transactions WHERE user_id = u.id AND amount < 0), 0) as total_debits,
         (SELECT COUNT(*) FROM transactions WHERE user_id = u.id) as tx_count,
+        u.last_login_ip,
+        u.last_login_at,
         u.created_at
       FROM users u
       WHERE u.is_admin = false
@@ -803,6 +809,100 @@ app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch users.' });
+  }
+});
+
+// --- USER: REQUEST STAGE 2 UNLOCK ---
+app.post('/api/user/request-stage2', authenticateToken, async (req, res) => {
+  const { message } = req.body;
+  try {
+    // Check if user already has a pending request today
+    const existing = await db.query(
+      "SELECT id FROM stage2_requests WHERE user_id = $1 AND status = 'pending' AND created_at::date = CURRENT_DATE",
+      [req.user.id]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'You already have a pending Stage 2 unlock request today. Please wait for admin review.' });
+    }
+    await db.query(
+      'INSERT INTO stage2_requests (user_id, message) VALUES ($1, $2)',
+      [req.user.id, message || 'Request to unlock Stage 2 tasks']
+    );
+    // Notify the user their request was received
+    await db.query(
+      'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
+      [req.user.id, 'system', '⏳ Your Stage 2 unlock request has been submitted. Our team will review it shortly.', false]
+    );
+    res.json({ success: true, message: 'Request submitted. You will be notified once approved.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to submit request.' });
+  }
+});
+
+// --- ADMIN: LIST STAGE 2 UNLOCK REQUESTS ---
+app.get('/api/admin/stage2-requests', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const { status } = req.query; // 'pending', 'approved', 'rejected', or blank for all
+    let query = `
+      SELECT r.id, r.status, r.message, r.admin_note, r.created_at, r.updated_at,
+             u.id as user_id, u.name as user_name, u.email as user_email
+      FROM stage2_requests r
+      JOIN users u ON u.id = r.user_id
+    `;
+    const params = [];
+    if (status && ['pending','approved','rejected'].includes(status)) {
+      query += ' WHERE r.status = $1';
+      params.push(status);
+    }
+    query += ' ORDER BY r.created_at DESC';
+    const result = await db.query(query, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch requests.' });
+  }
+});
+
+// --- ADMIN: APPROVE / REJECT A STAGE 2 REQUEST ---
+app.patch('/api/admin/stage2-requests/:id', authenticateToken, isAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { action, admin_note } = req.body; // action: 'approve' | 'reject'
+  if (!['approve', 'reject'].includes(action)) return res.status(400).json({ error: 'action must be approve or reject.' });
+  try {
+    const reqRes = await db.query('SELECT * FROM stage2_requests WHERE id = $1', [id]);
+    if (!reqRes.rows[0]) return res.status(404).json({ error: 'Request not found.' });
+    const stageReq = reqRes.rows[0];
+
+    const newStatus = action === 'approve' ? 'approved' : 'rejected';
+    await db.query(
+      'UPDATE stage2_requests SET status = $1, admin_note = $2, handled_by = $3, updated_at = NOW() WHERE id = $4',
+      [newStatus, admin_note || null, req.user.id, id]
+    );
+
+    if (action === 'approve') {
+      // Actually unlock Stage 2 for the user today
+      await db.query(
+        `INSERT INTO mission_stage_unlocks (user_id, unlocked_date, unlocked_by)
+         VALUES ($1, CURRENT_DATE, $2)
+         ON CONFLICT (user_id, unlocked_date) DO NOTHING`,
+        [stageReq.user_id, req.user.id]
+      );
+      await db.query(
+        'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
+        [stageReq.user_id, 'system', '🔓 Your Stage 2 unlock request has been approved! Refresh your Tasks page to continue.', true]
+      );
+    } else {
+      await db.query(
+        'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
+        [stageReq.user_id, 'system', `❌ Your Stage 2 unlock request was not approved. ${admin_note ? 'Reason: ' + admin_note : 'Please contact support for more information.'}`, true]
+      );
+    }
+
+    res.json({ success: true, status: newStatus });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update request.' });
   }
 });
 
@@ -1296,6 +1396,20 @@ app.delete('/api/admin/invite-codes/:id', authenticateToken, isAdmin, async (req
     console.log('\u2713 guest_sessions table ready');
     console.log('\u2713 platform_settings table ready');
     console.log('\u2713 mission_stage_unlocks table ready');
+    // Stage 2 unlock requests
+    await db.query(`CREATE TABLE IF NOT EXISTS stage2_requests (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      status VARCHAR(20) DEFAULT 'pending',
+      message TEXT,
+      admin_note TEXT,
+      handled_by INTEGER REFERENCES users(id),
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_ip VARCHAR(64)`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ`);
+    console.log('\u2713 stage2_requests + IP columns ready');
   } catch (err) {
     console.error('DB init error:', err.message);
   }

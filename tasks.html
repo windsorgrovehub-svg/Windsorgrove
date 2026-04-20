@@ -95,22 +95,53 @@
         </div>
 
         <!-- Stage 2 Locked Overlay -->
-        <div id="stage2-locked-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.92);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);z-index:998;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
-          <div style="background:#fff;width:100%;max-width:480px;border:1px solid rgba(197,160,89,0.2);border-radius:24px;padding:50px 30px;box-shadow:0 24px 60px rgba(0,0,0,0.08);text-align:center">
-            <div style="font-size:56px;margin-bottom:16px">🔒</div>
-            <h2 style="margin:0 0 12px;font-size:26px;color:var(--text)">Stage 1 Complete!</h2>
-            <p style="font-size:15px;color:var(--text-dim);line-height:1.7;margin:0 0 24px">
-              You have completed <strong>33 of 33</strong> Stage 1 assignments. Request access to <strong>Stage 2</strong> to earn your full daily commission.
+        <div id="stage2-locked-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:998;display:none;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;overflow-y:auto">
+          <div style="background:#fff;width:100%;max-width:520px;border:1px solid rgba(197,160,89,0.2);border-radius:28px;padding:48px 36px;box-shadow:0 30px 80px rgba(0,0,0,0.1);text-align:center;position:relative;overflow:hidden">
+            <!-- Gold top bar -->
+            <div style="position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--accent2),var(--accent1),#d4af37)"></div>
+            
+            <!-- Icon -->
+            <div style="width:80px;height:80px;background:linear-gradient(135deg,#fef9ed,#fdf3d0);border:2px solid rgba(197,160,89,0.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 20px">🏆</div>
+            
+            <div style="font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent2);margin-bottom:8px">Stage 1 Complete</div>
+            <h2 style="margin:0 0 10px;font-size:26px;font-weight:800;color:var(--text)">Unlock Stage 2</h2>
+            <p style="font-size:14px;color:var(--text-dim);line-height:1.7;margin:0 0 32px">
+              You've completed all <strong style="color:var(--text)">33 assignments</strong> in Stage 1. 
+              Your commission is accumulating — complete Stage 2 to earn your full <strong style="color:var(--accent1)">$60 payout</strong>.
             </p>
-            <textarea id="stage2-msg" placeholder="Optional: add a short message to support..." 
-              style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:14px;padding:12px 16px;font-size:14px;font-family:inherit;resize:none;height:80px;margin-bottom:16px;outline:none;color:var(--text)" 
-              onfocus="this.style.borderColor='var(--accent1)'" onblur="this.style.borderColor='var(--border)'"></textarea>
-            <button id="stage2-req-btn" onclick="submitStage2Request()" 
-              style="display:block;width:100%;padding:18px;font-size:16px;font-weight:800;border-radius:100px;background:linear-gradient(135deg,var(--accent1),#d4af37);color:#fff;border:none;cursor:pointer;box-shadow:0 12px 30px rgba(197,160,89,0.3);margin-bottom:12px;transition:opacity .2s"
-              onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
-              📨 Request Stage 2 Unlock
+
+            <!-- Steps -->
+            <div style="text-align:left;margin-bottom:32px;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;align-items:flex-start;gap:14px;background:#fafafa;border:1px solid var(--border);border-radius:16px;padding:16px">
+                <div style="width:36px;height:36px;background:var(--text);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0">1</div>
+                <div>
+                  <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:3px">Contact Support</div>
+                  <div style="font-size:13px;color:var(--text-dim)">Tap the button below to open live support. A pre-written message will be ready for you.</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:14px;background:#fafafa;border:1px solid var(--border);border-radius:16px;padding:16px">
+                <div style="width:36px;height:36px;background:var(--text);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0">2</div>
+                <div>
+                  <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:3px">Send the Message</div>
+                  <div style="font-size:13px;color:var(--text-dim)">Simply hit Send — our admin team will receive your Stage 2 unlock request instantly.</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:14px;background:#fafafa;border:1px solid var(--border);border-radius:16px;padding:16px">
+                <div style="width:36px;height:36px;background:var(--text);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0">3</div>
+                <div>
+                  <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:3px">Return & Complete Stage 2</div>
+                  <div style="font-size:13px;color:var(--text-dim)">Once approved, come back to this page — Stage 2 (33 more tasks) will be unlocked and ready.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CTA Button -->
+            <button id="stage2-req-btn" onclick="openSupportForStage2()"
+              style="display:block;width:100%;padding:19px;font-size:16px;font-weight:800;border-radius:100px;background:linear-gradient(135deg,var(--accent1),#d4af37);color:#fff;border:none;cursor:pointer;box-shadow:0 12px 30px rgba(197,160,89,0.35);margin-bottom:14px;transition:transform .15s,opacity .15s"
+              onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+              💬 Contact Support to Unlock Stage 2
             </button>
-            <p style="font-size:12px;color:var(--text-dim);margin:0">Our team will review your request and notify you once approved.</p>
+            <p id="stage2-status-hint" style="font-size:12px;color:var(--text-dim);margin:0">Our team reviews requests promptly. Average approval: under 5 minutes.</p>
           </div>
         </div>
 
@@ -142,10 +173,12 @@
           </div>
         </div>
 
-        <div class="eyebrow">Pending Missions</div>
-        <h2 style="margin:10px 0 30px">Available <span class="grad-text">Assignments</span></h2>
-        <div style="display:grid;gap:16px" id="task-list">
-          <!-- Rendered via JS -->
+        <div id="tasks-container" style="display:none">
+          <div class="eyebrow">Pending Missions</div>
+          <h2 style="margin:10px 0 30px">Available <span class="grad-text">Assignments</span></h2>
+          <div style="display:grid;gap:16px" id="task-list">
+            <!-- Rendered via JS -->
+          </div>
         </div>
       </div>
       <div id="rate-panel"></div>
@@ -190,34 +223,24 @@
     let hotels = [];
     let missionProgress = { completed: 0, total: 0, pending_total: 0, completed_hotels: [], all_done: false };
 
-    async function submitStage2Request() {
+    async function openSupportForStage2() {
       const btn = document.getElementById('stage2-req-btn');
-      const msg = (document.getElementById('stage2-msg')?.value || '').trim();
-      if (!state.token) return toast('Please log in first.');
-      btn.disabled = true;
-      btn.textContent = 'Submitting...';
+      if (btn) { btn.disabled = true; btn.textContent = 'Opening Support...'; }
+
+      // Silently file the Mission Control request in the background
       try {
-        const res = await fetch(`${API_URL}/user/request-stage2`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${state.token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: msg || 'Request to unlock Stage 2 tasks' })
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          btn.textContent = '✅ Request Sent!';
-          btn.style.background = 'linear-gradient(135deg,#059669,#047857)';
-          document.querySelector('#stage2-locked-overlay p:last-child').textContent = 'Request submitted! Our team will review and notify you.';
-          document.getElementById('stage2-msg').style.display = 'none';
-        } else {
-          toast(data.error || 'Could not submit request.');
-          btn.disabled = false;
-          btn.textContent = '📨 Request Stage 2 Unlock';
+        if (state.token) {
+          await fetch(`${API_URL}/user/request-stage2`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${state.token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: 'Hi Support, I will like to continue to stage 2, kindly help unlock it and finish my task, thank you' })
+          });
         }
-      } catch(e) {
-        toast('Network error — please try again.');
-        btn.disabled = false;
-        btn.textContent = '📨 Request Stage 2 Unlock';
-      }
+      } catch(e) { /* silent — chat will still open */ }
+
+      // Navigate to support with pre-filled Stage 2 message
+      const msg = encodeURIComponent('Hi Support, I will like to continue to stage 2, kindly help unlock it and finish my task, thank you');
+      window.location.href = `support.html?stage2=1&msg=${msg}`;
     }
 
     async function fetchProgress() {
@@ -242,7 +265,7 @@
       const launcher = document.getElementById('mission-launcher');
       if (launcher) launcher.style.display = 'none';
 
-      const listContainer = listEl ? listEl.parentElement : null;
+      const listContainer = document.getElementById('tasks-container');
       if (listContainer) listContainer.style.display = 'none';
 
       const panel = document.getElementById('rate-panel');
@@ -326,8 +349,8 @@
         const stage2Overlay = document.getElementById('stage2-locked-overlay');
         if (stage2Overlay) stage2Overlay.style.display = 'none';
         // Restore hotel list visibility
-        const listContainer = listEl.parentElement;
-        if (listContainer) listContainer.style.display = '';
+        const listContainer = document.getElementById('tasks-container');
+        if (listContainer) listContainer.style.display = 'block';
       }
 
       // Show the launcher overlay for new sessions

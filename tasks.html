@@ -74,9 +74,16 @@
             <div style="position:relative;z-index:1">
                 <div style="font-size:56px;margin-bottom:16px;display:inline-block;animation:pulse 2s infinite" id="launcher-icon">🎯</div>
                 <h2 style="margin:0 0 16px;font-size:30px;color:var(--text);letter-spacing:-0.5px" id="launcher-title">Daily Task</h2>
-                <p class="muted" id="mission-desc" style="font-size:16px;margin:0 auto 36px;line-height:1.6">
-                  Complete all <strong style="color:var(--text)"><span id="mission-target-text"></span> assignments</strong>. Your accumulated commission will be unlocked and credited perfectly upon full completion.
+                <p class="muted" id="mission-desc" style="font-size:15px;margin:0 auto 20px;line-height:1.7">
+                  Today's session is divided into <strong style="color:var(--text)">2 Stages &mdash; 33 assignments each</strong>, totalling <strong style="color:var(--text)">66 tasks</strong>. You must complete <em>both stages within the day</em> to unlock your full commission.
                 </p>
+                <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:28px;font-size:13px;font-weight:700">
+                  <div style="background:#fef3c7;color:#d97706;padding:8px 14px;border-radius:12px;white-space:nowrap">Stage 1<br><span style="font-size:11px;font-weight:500">33 Tasks</span></div>
+                  <div style="color:var(--text-dim);font-size:18px">&rarr;</div>
+                  <div style="background:#ede9fe;color:#7c3aed;padding:8px 14px;border-radius:12px;white-space:nowrap">Stage 2<br><span style="font-size:11px;font-weight:500">33 Tasks <span style="opacity:.6">(unlock req.)</span></span></div>
+                  <div style="color:var(--text-dim);font-size:18px">&rarr;</div>
+                  <div style="background:#d1fae5;color:#059669;padding:8px 14px;border-radius:12px;white-space:nowrap">Commission<br><span style="font-size:11px;font-weight:500">Credited</span></div>
+                </div>
                 <button class="btn btn-primary" id="launcher-btn" onclick="startNextMission()" style="width:100%;padding:20px;font-size:17px;font-weight:800;border-radius:100px;box-shadow:0 12px 30px rgba(197,160,89,0.3);border:none;cursor:pointer;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
                     <span id="start-btn-text">Start Mission Protocol</span>
                 </button>

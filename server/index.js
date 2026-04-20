@@ -620,10 +620,16 @@ app.post('/api/admin/unlock-stage2', authenticateToken, async (req, res) => {
       [userId, req.user.id]
     );
 
-    // Notify the user
+    // Notify the user via system alert
     await db.query(
       'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-      [userId, 'system', '🔓 Stage 2 has been unlocked by support! You can now continue your remaining 33 missions.', true]
+      [userId, 'system', '🔓 Stage 2 has been unlocked by support! Your request has been approved and you can continue your task.', true]
+    );
+
+    // Send a message in live chat from the agent
+    await db.query(
+      "INSERT INTO chats (user_id, sender, text) VALUES ($1, 'agent', $2)",
+      [userId, 'Your Stage 2 unlock request has been approved. You can now continue your task.']
     );
 
     res.json({ success: true, message: `Stage 2 unlocked for user ${userId} today.` });
@@ -941,7 +947,12 @@ app.patch('/api/admin/stage2-requests/:id', authenticateToken, isAdmin, async (r
       );
       await db.query(
         'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-        [stageReq.user_id, 'system', '🔓 Your Stage 2 unlock request has been approved! Refresh your Tasks page to continue.', true]
+        [stageReq.user_id, 'system', '🔓 Your Stage 2 unlock request has been approved! You can now continue your task.', true]
+      );
+      // Send a message in live chat from the agent
+      await db.query(
+        "INSERT INTO chats (user_id, sender, text) VALUES ($1, 'agent', $2)",
+        [stageReq.user_id, 'Your request has been approved and you can continue your task.']
       );
     } else {
       await db.query(

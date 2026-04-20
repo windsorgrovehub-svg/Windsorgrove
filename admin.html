@@ -1309,11 +1309,15 @@
       const currentToken = verifiedAdminToken || localStorage.getItem('wgh-admin-token');
       if (!currentToken) console.error("adminFetch called but no verified token available!");
       
-      opts.headers = Object.assign({ 
+      const defaultHeaders = { 
         'Authorization': `Bearer ${currentToken}`,
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache'
-      }, opts.headers || {});
+      };
+      // Auto-inject Content-Type for requests with a body
+      if (opts.body) defaultHeaders['Content-Type'] = 'application/json';
+
+      opts.headers = Object.assign(defaultHeaders, opts.headers || {});
       
       // Append cache buster
       const sep = url.includes('?') ? '&' : '?';

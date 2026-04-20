@@ -134,6 +134,14 @@ app.post('/api/auth/login', async (req, res) => {
     const valPass = await bcrypt.compare(password, user.password_hash);
     if (!valPass) return res.status(400).json({ error: 'Invalid password' });
 
+    // Block suspended or deactivated accounts
+    if (user.account_status === 'suspended') {
+      return res.status(403).json({ error: 'Your account has been suspended. Please contact support.' });
+    }
+    if (user.account_status === 'deactivated') {
+      return res.status(403).json({ error: 'Your account has been deactivated. Please contact support for assistance.' });
+    }
+
     // Capture real client IP (trust proxy is set, so req.ip gives the real address)
     const ip = clientIp || null;
     await db.query('UPDATE users SET last_login_ip = $1, last_login_at = NOW() WHERE id = $2', [ip, user.id]);
@@ -897,6 +905,62 @@ app.post('/api/user/request-stage2', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to submit request.' });
+  }
+});
+
+// --- ADMIN: LIST ALL USERS ---
+app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    // Ensure account_status column exists
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS account_status VARCHAR(20) DEFAULT 'active'`);
+    const result = await db.query(`
+      SELECT id, name, email, phone_number, balance, commission_total, funded, bank_linked,
+             last_login_ip, last_login_at, created_at, account_status
+      FROM users
+      WHERE is_admin = false
+      ORDER BY created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch users.' });
+  }
+});
+
+// --- ADMIN: SINGLE USER DETAIL ---
+app.get('/api/admin/users/:id', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT id, name, email, phone_number, balance, commission_total, funded, bank_linked,
+             last_login_ip, last_login_at, created_at, account_status
+      FROM users WHERE id = $1
+    `, [req.params.id]);
+    if (!result.rows[0]) return res.status(404).json({ error: 'User not found.' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch user.' });
+  }
+});
+
+// --- ADMIN: UPDATE USER ACCOUNT STATUS ---
+app.put('/api/admin/users/:id/status', authenticateToken, isAdmin, async (req, res) => {
+  const { status } = req.body;
+  const allowed = ['active', 'suspended', 'deactivated'];
+  if (!allowed.includes(status)) return res.status(400).json({ error: 'Invalid status.' });
+  try {
+    await db.query('UPDATE users SET account_status = $1 WHERE id = $2', [status, req.params.id]);
+    const userRes = await db.query('SELECT name FROM users WHERE id = $1', [req.params.id]);
+    const userName = userRes.rows[0]?.name || 'User';
+    const actionLabel = status === 'active' ? 'reactivated' : status;
+    await db.query(
+      'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
+      [req.params.id, 'system', `🔔 Your account has been ${actionLabel} by an administrator.`, true]
+    );
+    res.json({ success: true, message: `${userName}'s account has been ${actionLabel}.` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update account status.' });
   }
 });
 

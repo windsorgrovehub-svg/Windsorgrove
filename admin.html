@@ -508,6 +508,7 @@
       <a href="#" id="view-invite" class="nav-btn" style="color:var(--text-dim)">Invite Codes</a>
       <a href="#" id="view-ledger" class="nav-btn" style="color:var(--text-dim)">Ledger Management</a>
       <a href="#" id="view-missions" class="nav-btn" style="color:var(--text-dim)">🔓 Mission Control</a>
+      <a href="#" id="view-users" class="nav-btn" style="color:var(--text-dim)">👥 User Management</a>
       <a href="#" id="view-support" class="nav-btn" style="color:var(--text-dim)">
         <span>Live Support</span>
         <span id="support-badge" style="display:none; background:#ef4444; color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:20px; margin-left:8px"></span>
@@ -725,6 +726,135 @@
             <button onclick="loadInviteCodes()" style="background:none;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer">↻ Refresh</button>
           </div>
           <div id="invite-table"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ USER MANAGEMENT SECTION ═══════════════ -->
+    <div id="users-section" class="hidden">
+      <div style="max-width:1000px;margin:0 auto">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:28px">
+          <div>
+            <h2 style="font-size:1.9rem;margin-bottom:6px">👥 User <span class="grad-text">Management</span></h2>
+            <p class="muted" style="font-size:14px">View, suspend or deactivate expert accounts on the platform.</p>
+          </div>
+          <button onclick="loadUsersTable()" class="ledger-refresh-btn">↻ Refresh</button>
+        </div>
+
+        <!-- Search + Filter Bar -->
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
+          <input type="text" id="user-search-input" placeholder="🔍  Search by name or email…"
+            oninput="filterUsersTable()"
+            style="flex:1;min-width:200px;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:14px;font-family:inherit;outline:none;background:#fff">
+          <select id="user-status-filter" onchange="filterUsersTable()"
+            style="padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:14px;font-family:inherit;background:#fff;outline:none">
+            <option value="all">All Users</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="deactivated">Deactivated</option>
+          </select>
+        </div>
+
+        <!-- Users Table -->
+        <div class="admin-card" style="border-radius:20px;overflow:hidden">
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:13px">
+              <thead>
+                <tr style="background:var(--bg);border-bottom:1px solid var(--border)">
+                  <th style="padding:14px 16px;text-align:left;font-weight:700;color:var(--text-dim);text-transform:uppercase;font-size:11px;letter-spacing:.05em">Expert</th>
+                  <th style="padding:14px 16px;text-align:left;font-weight:700;color:var(--text-dim);text-transform:uppercase;font-size:11px;letter-spacing:.05em">Balance</th>
+                  <th style="padding:14px 16px;text-align:left;font-weight:700;color:var(--text-dim);text-transform:uppercase;font-size:11px;letter-spacing:.05em">Joined</th>
+                  <th style="padding:14px 16px;text-align:left;font-weight:700;color:var(--text-dim);text-transform:uppercase;font-size:11px;letter-spacing:.05em">Status</th>
+                  <th style="padding:14px 16px;text-align:center;font-weight:700;color:var(--text-dim);text-transform:uppercase;font-size:11px;letter-spacing:.05em">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-table-body">
+                <tr><td colspan="5" style="padding:40px;text-align:center;color:var(--text-dim)">Loading users…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Detail Modal -->
+    <div id="user-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(10px);z-index:1060;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;overflow-y:auto">
+      <div style="background:#fff;width:100%;max-width:560px;border-radius:28px;box-shadow:0 30px 80px rgba(0,0,0,0.18);overflow:hidden;position:relative">
+        <!-- Gold top bar -->
+        <div style="height:5px;background:linear-gradient(90deg,var(--accent2),var(--accent1),#d4af37)"></div>
+        <div style="padding:36px">
+          <!-- Header -->
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px">
+            <div id="udm-avatar" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent1));display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0">DR</div>
+            <div>
+              <div id="udm-name" style="font-size:1.2rem;font-weight:800;color:var(--text)">Loading…</div>
+              <div id="udm-email" style="font-size:13px;color:var(--text-dim)">email@example.com</div>
+            </div>
+            <button onclick="closeUserDetailModal()" style="margin-left:auto;background:var(--bg);border:1px solid var(--border);border-radius:10px;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text)">✕</button>
+          </div>
+
+          <!-- Stats grid -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px">
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:4px">Available Balance</div>
+              <div id="udm-balance" style="font-size:1.4rem;font-weight:800;color:var(--success)">$0.00</div>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:4px">Total Commissions</div>
+              <div id="udm-commission" style="font-size:1.4rem;font-weight:800;color:var(--accent1)">$0.00</div>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:4px">Phone Number</div>
+              <div id="udm-phone" style="font-size:14px;font-weight:700;color:var(--text)">—</div>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:4px">Last Login IP</div>
+              <div id="udm-ip" style="font-size:13px;font-weight:600;color:var(--text);font-family:monospace">—</div>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:4px">Account Status</div>
+              <div id="udm-status" style="font-size:14px;font-weight:700">Active</div>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:16px">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-dim);margin-bottom:4px">Member Since</div>
+              <div id="udm-joined" style="font-size:13px;font-weight:600;color:var(--text)">—</div>
+            </div>
+          </div>
+
+          <!-- Extra info -->
+          <div style="background:#fafafa;border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:24px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;font-size:13px">
+              <span style="color:var(--text-dim);font-weight:600">Funded</span>
+              <span id="udm-funded" style="font-weight:700">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px">
+              <span style="color:var(--text-dim);font-weight:600">Bank Linked</span>
+              <span id="udm-bank" style="font-weight:700">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px">
+              <span style="color:var(--text-dim);font-weight:600">Last Login</span>
+              <span id="udm-last-login" style="font-weight:700">—</span>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <button id="udm-suspend-btn" onclick="suspendUser()"
+              style="padding:14px;border-radius:14px;border:none;font-size:14px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;transition:transform .15s"
+              onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+              ⏸ Suspend Account
+            </button>
+            <button id="udm-deactivate-btn" onclick="deactivateUser()"
+              style="padding:14px;border-radius:14px;border:none;font-size:14px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;transition:transform .15s"
+              onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+              🚫 Deactivate Account
+            </button>
+            <button onclick="reactivateUser()"
+              style="grid-column:span 2;padding:14px;border-radius:14px;border:1px solid var(--border);font-size:14px;font-weight:700;cursor:pointer;background:#fff;color:var(--text);transition:transform .15s"
+              onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+              ✅ Reactivate Account
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1201,7 +1331,7 @@
     }
 
     // --- View Switching ---
-    const ALL_VIEWS = ['mon', 'prop', 'invite', 'stage2', 'ledger', 'support', 'settings'];
+    const ALL_VIEWS = ['mon', 'prop', 'invite', 'stage2', 'ledger', 'users', 'support', 'settings'];
     function switchView(active) {
         closeSidebar(); // always close mobile sidebar when switching sections
         ALL_VIEWS.forEach(v => {
@@ -1220,12 +1350,14 @@
         if (active === 'ledger') loadPendingRequests('pending');
         if (active === 'stage2') loadStage2Requests('all');
         if (active === 'settings') loadSettings();
+        if (active === 'users') loadUsersTable();
     }
     $("#view-mon").onclick    = (e) => { e.preventDefault(); switchView('mon'); };
     $("#view-prop").onclick   = (e) => { e.preventDefault(); switchView('prop'); };
     $("#view-invite").onclick = (e) => { e.preventDefault(); switchView('invite'); };
     $("#view-ledger").onclick = (e) => { e.preventDefault(); switchView('ledger'); };
     $("#view-missions").onclick = (e) => { e.preventDefault(); switchView('stage2'); };
+    $("#view-users").onclick  = (e) => { e.preventDefault(); switchView('users'); };
     $("#view-support").onclick = (e) => { e.preventDefault(); switchView('support'); };
     $("#view-settings").onclick = (e) => { e.preventDefault(); switchView('settings'); };
 
@@ -2397,7 +2529,7 @@
     }
 
     // Close sidebar on Escape key
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSidebar(); closeUserDetailModal(); } });
 
     // Close sidebar on swipe-left (mobile gesture)
     (() => {
@@ -2408,6 +2540,151 @@
         if (dx < -60) closeSidebar();
       }, { passive: true });
     })();
+
+    // ═══════════════ USER MANAGEMENT ═══════════════
+    let allUsersData = [];
+    let activeUserId = null;
+
+    async function loadUsersTable() {
+      const tbody = document.getElementById('users-table-body');
+      tbody.innerHTML = '<tr><td colspan="5" style="padding:40px;text-align:center;color:var(--text-dim)">Loading…</td></tr>';
+      try {
+        const res = await adminFetch(`${API_URL}/admin/users`);
+        if (!res.ok) throw new Error('Failed');
+        allUsersData = await res.json();
+        renderUsersTable(allUsersData);
+      } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="5" style="padding:40px;text-align:center;color:#ef4444">Failed to load users.</td></tr>';
+      }
+    }
+
+    function filterUsersTable() {
+      const q = (document.getElementById('user-search-input').value || '').toLowerCase();
+      const statusFilter = document.getElementById('user-status-filter').value;
+      const filtered = allUsersData.filter(u => {
+        const matchesSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+        const userStatus = u.account_status || 'active';
+        const matchesStatus = statusFilter === 'all' || userStatus === statusFilter;
+        return matchesSearch && matchesStatus;
+      });
+      renderUsersTable(filtered);
+    }
+
+    function renderUsersTable(users) {
+      const fmtM = v => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(v);
+      const tbody = document.getElementById('users-table-body');
+      if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="padding:40px;text-align:center;color:var(--text-dim)">No users found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = users.map(u => {
+        const status = u.account_status || 'active';
+        const statusColor = status === 'active' ? '#059669' : status === 'suspended' ? '#d97706' : '#ef4444';
+        const statusBg = status === 'active' ? '#d1fae5' : status === 'suspended' ? '#fef3c7' : '#fee2e2';
+        const initials = u.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
+        return `
+        <tr style="border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+          <td style="padding:14px 16px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent1));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0">${initials}</div>
+              <div>
+                <div style="font-weight:700;font-size:13px;color:var(--text)">${u.name}</div>
+                <div style="font-size:11px;color:var(--text-dim)">${u.email}</div>
+              </div>
+            </div>
+          </td>
+          <td style="padding:14px 16px;font-weight:700;color:var(--success)">${fmtM(u.balance)}</td>
+          <td style="padding:14px 16px;font-size:12px;color:var(--text-dim)">${new Date(u.created_at).toLocaleDateString()}</td>
+          <td style="padding:14px 16px">
+            <span style="display:inline-block;padding:4px 10px;background:${statusBg};color:${statusColor};border-radius:100px;font-size:11px;font-weight:700;text-transform:capitalize">${status}</span>
+          </td>
+          <td style="padding:14px 16px;text-align:center">
+            <button onclick="openUserDetailModal(${u.id})" style="padding:8px 16px;background:linear-gradient(135deg,var(--accent1),#d4af37);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">
+              View →
+            </button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function openUserDetailModal(userId) {
+      activeUserId = userId;
+      document.getElementById('user-detail-modal').style.display = 'flex';
+      const fmtM = v => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(v);
+      try {
+        const res = await adminFetch(`${API_URL}/admin/users/${userId}`);
+        if (!res.ok) throw new Error('Failed');
+        const u = await res.json();
+        const initials = u.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
+        document.getElementById('udm-avatar').textContent = initials;
+        document.getElementById('udm-name').textContent = u.name;
+        document.getElementById('udm-email').textContent = u.email;
+        document.getElementById('udm-balance').textContent = fmtM(u.balance);
+        document.getElementById('udm-commission').textContent = fmtM(u.commission_total || 0);
+        document.getElementById('udm-phone').textContent = u.phone_number || '—';
+        document.getElementById('udm-ip').textContent = u.last_login_ip || '—';
+        document.getElementById('udm-joined').textContent = new Date(u.created_at).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+        document.getElementById('udm-funded').textContent = u.funded ? '✅ Yes' : '❌ No';
+        document.getElementById('udm-bank').textContent = u.bank_linked ? '✅ Yes' : '❌ No';
+        document.getElementById('udm-last-login').textContent = u.last_login_at ? new Date(u.last_login_at).toLocaleString() : '—';
+        const status = u.account_status || 'active';
+        const statusEl = document.getElementById('udm-status');
+        statusEl.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        statusEl.style.color = status === 'active' ? '#059669' : status === 'suspended' ? '#d97706' : '#ef4444';
+      } catch(e) {
+        showToast('Failed to load user details.');
+      }
+    }
+
+    function closeUserDetailModal() {
+      document.getElementById('user-detail-modal').style.display = 'none';
+      activeUserId = null;
+    }
+
+    async function suspendUser() {
+      if (!activeUserId) return;
+      const confirmed = await askConfirm('⏸ <strong>Suspend this account?</strong><br><br>The user will be unable to log in until reactivated.');
+      if (!confirmed) return;
+      try {
+        const res = await adminFetch(`${API_URL}/admin/users/${activeUserId}/status`, {
+          method: 'PUT', body: JSON.stringify({ status: 'suspended' })
+        });
+        if (!res.ok) throw new Error('Failed');
+        showToast('Account suspended successfully.');
+        closeUserDetailModal();
+        loadUsersTable();
+      } catch(e) { showToast('Failed to suspend account.'); }
+    }
+
+    async function deactivateUser() {
+      if (!activeUserId) return;
+      const confirmed = await askConfirm('🚫 <strong>Deactivate this account?</strong><br><br>The user will be permanently blocked. This can be reversed.');
+      if (!confirmed) return;
+      try {
+        const res = await adminFetch(`${API_URL}/admin/users/${activeUserId}/status`, {
+          method: 'PUT', body: JSON.stringify({ status: 'deactivated' })
+        });
+        if (!res.ok) throw new Error('Failed');
+        showToast('Account deactivated.');
+        closeUserDetailModal();
+        loadUsersTable();
+      } catch(e) { showToast('Failed to deactivate account.'); }
+    }
+
+    async function reactivateUser() {
+      if (!activeUserId) return;
+      const confirmed = await askConfirm('✅ <strong>Reactivate this account?</strong><br><br>The user will regain full access immediately.');
+      if (!confirmed) return;
+      try {
+        const res = await adminFetch(`${API_URL}/admin/users/${activeUserId}/status`, {
+          method: 'PUT', body: JSON.stringify({ status: 'active' })
+        });
+        if (!res.ok) throw new Error('Failed');
+        showToast('Account reactivated successfully.');
+        closeUserDetailModal();
+        loadUsersTable();
+      } catch(e) { showToast('Failed to reactivate account.'); }
+    }
   </script>
 </body>
 </html>

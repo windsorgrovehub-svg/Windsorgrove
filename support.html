@@ -193,9 +193,32 @@
 
     sendBtn.onclick = sendMessage;
     inputEl.onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
-    
-    // Initial render and periodic sync
-    renderMessages();
+
+    // --- Stage 2 pre-fill: detect ?stage2=1&msg=... in URL ---
+    (function prefillStage2() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isStage2 = urlParams.get('stage2') === '1';
+      const prefillMsg = urlParams.get('msg');
+
+      if (isStage2 && prefillMsg) {
+        // Pre-fill AND auto-send the message so user sees it in their log immediately
+        inputEl.value = decodeURIComponent(prefillMsg);
+        
+        // Let UI finish rendering before auto-sending
+        setTimeout(() => {
+            sendMessage();
+        }, 500);
+
+        // Show a gold info banner above the chat header
+        const chatBox = document.querySelector('.support-chat');
+        if (chatBox) {
+          const banner = document.createElement('div');
+          banner.style.cssText = 'background:linear-gradient(135deg,#fef9ed,#fdf3d0);border-bottom:1px solid rgba(197,160,89,0.3);padding:12px 20px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:#a38144';
+          banner.innerHTML = `<span style="font-size:18px">🏆</span> Stage 1 complete — Stage 2 unlock request has been sent successfully.`;
+          chatBox.insertBefore(banner, chatBox.firstChild);
+        }
+      }
+    })();
     
     // Periodic sync - only update if there are new messages from agent
     let lastChatLength = state.chat ? state.chat.length : 0;

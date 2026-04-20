@@ -29,6 +29,7 @@ app.use(express.static(FRONTEND_DIR));
 
 app.use(cors());
 app.use(express.json());
+app.set('trust proxy', true); // Trust proxy headers (Vercel, Cloudflare, etc.) to get real client IP
 
 // --- MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
@@ -106,9 +107,10 @@ app.post('/api/auth/login', async (req, res) => {
     const valPass = await bcrypt.compare(password, user.password_hash);
     if (!valPass) return res.status(400).json({ error: 'Invalid password' });
 
-    // Capture IP address
-    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
-    await db.query('UPDATE users SET last_login_ip = $1, last_login_at = NOW() WHERE id = $2', [ip, user.id]);
+    // Capture real client IP (trust proxy is set, so req.ip gives the real address)
+    const rawIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+    const ip = rawIp.split(',')[0].trim().replace(/^::ffff:/, ''); // strip IPv6-mapped IPv4 prefix
+    await db.query('UPDATE users SET last_login_ip = $1, last_login_at = NOW() WHERE id = $2', [ip || null, user.id]);
 
     const token = jwt.sign({ id: user.id, email: user.email, is_admin: user.is_admin }, JWT_SECRET);
     res.json({ token, user: { id: user.id, name: user.name, email: user.email, balance: user.balance, is_admin: user.is_admin } });

@@ -122,7 +122,7 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     // Rate limit: max 10 login attempts per IP per 15 min
     const rawIp = req.ip || req.headers['x-forwarded-for'] || '';
-    const clientIp = rawIp.split(',')[0].trim().replace(/^::ffff:/, '');
+    const clientIp = (rawIp.split(',')[0].trim().replace(/^::ffff:/, '') || '').replace(/^::1$/, '127.0.0.1');
     if (!checkLoginRateLimit(clientIp)) {
       return res.status(429).json({ error: 'Too many login attempts. Please try again in 15 minutes.' });
     }

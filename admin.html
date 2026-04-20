@@ -1188,7 +1188,7 @@
 
   </div>
 
-  <div class="toasts" id="toasts"></div>
+  <div class="toasts" id="toasts" style="z-index:2147483647"></div>
 
   <!-- End Chat Confirmation Modal -->
   <div id="end-chat-modal">
@@ -2665,7 +2665,7 @@
         document.getElementById('udm-balance').textContent = fmtM(u.balance);
         document.getElementById('udm-commission').textContent = fmtM(u.commission_total || 0);
         document.getElementById('udm-phone').textContent = u.phone_number || '—';
-        document.getElementById('udm-ip').textContent = u.last_login_ip || '—';
+        document.getElementById('udm-ip').textContent = u.last_login_ip === '::1' ? '127.0.0.1 (localhost)' : (u.last_login_ip || '—');
         document.getElementById('udm-joined').textContent = new Date(u.created_at).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
         document.getElementById('udm-funded').textContent = u.funded ? '✅ Yes' : '❌ No';
         document.getElementById('udm-bank').textContent = u.bank_linked ? '✅ Yes' : '❌ No';

@@ -1059,6 +1059,29 @@
 
   <script src="assets/js/core.js"></script>
   <script>
+    // --- Custom Confirm Utility ---
+    let pendingConfirmResolve = null;
+    window.askConfirm = function(text) {
+      return new Promise(resolve => {
+        document.getElementById('confirm-modal-text').innerHTML = text.replace(/\n/g, '<br>');
+        document.getElementById('confirm-modal').style.display = 'flex';
+        
+        pendingConfirmResolve = resolve;
+        
+        document.getElementById('confirm-modal-cancel').onclick = () => {
+          document.getElementById('confirm-modal').style.display = 'none';
+          if (pendingConfirmResolve) pendingConfirmResolve(false);
+          pendingConfirmResolve = null;
+        };
+        
+        document.getElementById('confirm-modal-ok').onclick = () => {
+          document.getElementById('confirm-modal').style.display = 'none';
+          if (pendingConfirmResolve) pendingConfirmResolve(true);
+          pendingConfirmResolve = null;
+        };
+      });
+    }
+
     // Token cached in memory to survive aggressive async/localstorage resets
     let verifiedAdminToken = null;
 

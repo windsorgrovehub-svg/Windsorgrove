@@ -296,9 +296,9 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     const hotel = hotelResult.rows[0];
     if (!hotel) return res.status(404).json({ error: 'Hotel not found' });
 
-    // Check if user already completed a full set TODAY
+    // Check if user already completed a full PAID set TODAY (Trial does not count towards daily lock)
     const todayDone = await db.query(
-      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND created_at::date = CURRENT_DATE",
+      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND note NOT LIKE '%(Trial)' AND created_at::date = CURRENT_DATE",
       [req.user.id]
     );
     if (todayDone.rows.length > 0) {
@@ -338,13 +338,26 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     const totalHotelsRes = await db.query('SELECT COUNT(*) FROM hotels');
     const totalHotels = parseInt(totalHotelsRes.rows[0].count);
 
-    // Determine mission target: Trial (first set) = 30, Paid (subsequent) = all hotels
+    // Calculate progressive mission target
     const trialCheck = await db.query(
       "SELECT id FROM transactions WHERE user_id = $1 AND type = 'trial_fee'",
       [req.user.id]
     );
     const isTrialDone = trialCheck.rows.length > 0;
-    const missionTarget = isTrialDone ? 66 : 30; // Trial=30, Paid=66 (fixed targets)
+
+    // Count completed paid sets
+    const paidSetsQuery = await db.query(
+      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND note NOT LIKE '%(Trial)'",
+      [req.user.id]
+    );
+    const paidSetsCount = parseInt(paidSetsQuery.rows[0].count);
+
+    if (isTrialDone && paidSetsCount >= 5) {
+      return res.status(400).json({ error: 'You have exhausted your maximum weekly task limits (5 sets).' });
+    }
+
+    const targets = [66, 132, 198, 264, 330];
+    const missionTarget = !isTrialDone ? 30 : targets[paidSetsCount];
 
     const completedRes = await db.query(
       "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
@@ -451,20 +464,25 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
 // --- MISSION PROGRESS ---
 app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
   try {
-    // Determine mission target: Trial = 30, Paid = all hotels
-    const totalHotelsRes = await db.query('SELECT COUNT(*) FROM hotels');
-    const totalHotels = parseInt(totalHotelsRes.rows[0].count);
-    
+    // Calculate progressive mission target
     const trialCheck = await db.query(
       "SELECT id FROM transactions WHERE user_id = $1 AND type = 'trial_fee'",
       [req.user.id]
     );
     const isTrialDone = trialCheck.rows.length > 0;
-    const missionTarget = isTrialDone ? 66 : 30; // Trial=30, Paid=66 (fixed targets)
 
-    // Check if user already completed a full set TODAY
+    const paidSetsQuery = await db.query(
+      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND note NOT LIKE '%(Trial)'",
+      [req.user.id]
+    );
+    const paidSetsCount = parseInt(paidSetsQuery.rows[0].count);
+    
+    const targets = [66, 132, 198, 264, 330];
+    const missionTarget = !isTrialDone ? 30 : (paidSetsCount >= 5 ? 330 : targets[paidSetsCount]);
+
+    // Check if user already completed a full PAID set TODAY
     const todayComplete = await db.query(
-      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND created_at::date = CURRENT_DATE",
+      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Mission Complete:%' AND note NOT LIKE '%(Trial)' AND created_at::date = CURRENT_DATE",
       [req.user.id]
     );
     const alreadyDoneToday = todayComplete.rows.length > 0;
@@ -503,33 +521,19 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
   }
 });
 
-// --- MISSION RESET (wipe all pending progress) ---
-app.delete('/api/user/mission-reset', authenticateToken, async (req, res) => {
+// --- MISSION HOTELS (Randomized daily subset per user) ---
+app.get('/api/user/mission-hotels', authenticateToken, async (req, res) => {
   try {
-    const deleted = await db.query(
-      "DELETE FROM transactions WHERE user_id = $1 AND type = 'pending_commission' RETURNING id",
-      [req.user.id]
+    // Generate a fixed daily seed for this user
+    const seed = `${req.user.id}-${new Date().toISOString().slice(0, 10)}`;
+    const result = await db.query(
+      'SELECT id, name, city, country, image, price, commission_rate FROM hotels ORDER BY md5(id || $1) LIMIT 400',
+      [seed]
     );
-    console.log(`Mission reset: user ${req.user.id} — deleted ${deleted.rows.length} pending transactions`);
-    res.json({ success: true, deleted: deleted.rows.length });
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Mission reset failed' });
-  }
-});
-
-// POST version for sendBeacon (which can only send POST)
-app.post('/api/user/mission-reset', authenticateToken, async (req, res) => {
-  try {
-    const deleted = await db.query(
-      "DELETE FROM transactions WHERE user_id = $1 AND type = 'pending_commission' RETURNING id",
-      [req.user.id]
-    );
-    console.log(`Mission reset (beacon): user ${req.user.id} — deleted ${deleted.rows.length} pending transactions`);
-    res.json({ success: true, deleted: deleted.rows.length });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Mission reset failed' });
+    res.status(500).json({ error: 'Failed to fetch mission hotels' });
   }
 });
 

@@ -348,9 +348,9 @@
       } else {
         const stage2Overlay = document.getElementById('stage2-locked-overlay');
         if (stage2Overlay) stage2Overlay.style.display = 'none';
-        // Restore hotel list visibility
+        // Hide hotel list if all missions are completely finished
         const listContainer = document.getElementById('tasks-container');
-        if (listContainer) listContainer.style.display = 'block';
+        if (listContainer) listContainer.style.display = missionProgress.all_done ? 'none' : 'block';
       }
 
       // Show the launcher overlay for new sessions
@@ -358,11 +358,11 @@
       if (launcher && !missionProgress.all_done && completed === 0) launcher.style.display = 'flex';
 
       if (missionProgress.all_done) {
-        document.getElementById('progress-hint').innerHTML = '🎉 <strong>All missions completed!</strong> Commission has been credited to your account.';
+        document.getElementById('progress-hint').innerHTML = '🎉 <strong>All missions completed!</strong> Your commission has been securely credited to your account. Come back tomorrow!';
         document.getElementById('progress-hint').style.color = 'var(--success)';
-        document.getElementById('start-btn-text').textContent = "Missions Completed";
-        const launcherBtn = document.querySelector('#launcher-btn');
-        if (launcherBtn) launcherBtn.style.background = "var(--success)";
+        document.getElementById('start-btn-text').textContent = "Daily Missions Completed";
+        const launcherBtn = document.querySelector('#continue-btn');
+        if (launcherBtn) { launcherBtn.style.background = "var(--success)"; launcherBtn.style.display = 'none'; }
       } else {
         const stageHint = isTrial
           ? `Complete all 30 trial missions to proceed to daily tasks.`
@@ -392,6 +392,7 @@
     window.startNextMission = startNextMission;
 
     function scrollToNextMission() {
+        if (missionProgress.all_done) return toast('All missions are already complete!');
         // Find the first hotel card in the list that hasn't been completed
         const nextHotel = hotels.find(h => !missionProgress.completed_hotels.includes(h.name));
         if (!nextHotel) return toast('All missions are already complete!');
@@ -421,8 +422,8 @@
         return `
         <div class="task-item ${selectedId === h.id ? 'active' : ''} ${isCompleted ? 'completed' : ''}" 
           data-hotel-id="${h.id}"
-          onclick="${isCompleted ? 'toast(\"Mission already completed!\")' : `selectHotel('${h.id}')`}" 
-          style="${selectedId === h.id ? 'border-color:var(--accent1);background:#fef9ed' : ''};${isCompleted ? 'opacity:0.6;' : ''}position:relative">
+          onclick="${isCompleted || missionProgress.all_done ? 'toast(\"Daily limit reached.\")' : `selectHotel('${h.id}')`}" 
+          style="${selectedId === h.id ? 'border-color:var(--accent1);background:#fef9ed' : ''};${isCompleted || missionProgress.all_done ? 'opacity:0.6;' : ''}position:relative">
           ${isCompleted ? '<div style="position:absolute;top:10px;right:10px;width:24px;height:24px;background:var(--success);border-radius:50%;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:800">✓</div>' : ''}
           <div class="task-thumb"><img src="${h.image.startsWith('http') ? h.image : 'assets/img/' + h.image}" style="width:100%;height:100%;object-fit:cover"></div>
           <div style="flex:1">
@@ -435,6 +436,10 @@
     }
 
     function selectHotel(id) {
+        if (missionProgress.all_done) {
+          toast('Your daily missions are fully complete!');
+          return;
+        }
         // Check if already completed
         const h = hotels.find(x => x.id === id);
         if (h && missionProgress.completed_hotels.includes(h.name)) {

@@ -402,6 +402,9 @@
 
       /* Settings grid */
       #setting-fee-type, #setting-fee-value { font-size: 16px; } /* prevent iOS zoom */
+
+      /* Payment Methods: force single column grid on tablet */
+      #paymethods-section [style*="repeat(auto-fill"] { grid-template-columns: 1fr !important; }
     }
 
     /* Back button in thread header — visible on all screen sizes */
@@ -465,11 +468,16 @@
       .notify-card { padding: 14px; }
 
       /* Settings fee grid */
-      .pm-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:6px;display:block}
-      .pm-preview{font-size:13px;color:var(--text-dim);margin-bottom:16px;padding:10px 14px;background:#f0fdf4;border-radius:10px;border:1px solid rgba(16,185,129,0.2)}
-      .pm-input{background:#fafbfc !important;border:1px solid var(--border) !important;color:var(--text) !important}
       #settings-section [style*="grid-template-columns:1fr 1fr"] { display: block !important; }
       #settings-section .field + .field { margin-top: 12px; }
+
+      /* Payment Methods mobile overrides */
+      #paymethods-section [style*="repeat(auto-fill"] { grid-template-columns: 1fr !important; }
+      #paymethods-section [style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+      #paymethods-section [style*="grid-column:span 2"] { grid-column: span 1 !important; }
+      #paymethods-section [style*="padding:20px 22px"] { padding: 14px 16px !important; }
+      #paymethods-section [style*="padding:18px 22px"] { padding: 14px 16px !important; }
+      #paymethods-section { padding: 0 4px; }
 
       /* EC modal full width */
       .ec-modal-box { padding: 22px; }
@@ -516,6 +524,11 @@
     /* ──── GLOBAL ADMIN OVERRIDES ──── */
     /* Hide the client-side guest chat widget completely on the admin dashboard */
     #chat-widget-wrapper { display: none !important; }
+
+    /* Payment Method form styles (global — NOT inside media query) */
+    .pm-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:6px;display:block}
+    .pm-preview{font-size:13px;color:var(--text-dim);margin-bottom:16px;padding:10px 14px;background:#f0fdf4;border-radius:10px;border:1px solid rgba(16,185,129,0.2)}
+    .pm-input{background:#fafbfc !important;border:1px solid var(--border) !important;color:var(--text) !important}
   </style>
 </head>
 <body>
@@ -2734,8 +2747,6 @@
     async function loadSettings() {
       const preview = $('#fee-preview');
       if (preview) preview.textContent = 'Loading…';
-      const s2preview = document.getElementById('stage2-bal-preview');
-      if (s2preview) s2preview.textContent = 'Loading…';
       try {
         const res = await adminFetch(`${API_URL}/admin/settings`);
         if (!res.ok) { if (preview) preview.textContent = 'Could not load settings.'; return; }
@@ -2751,46 +2762,6 @@
         if (preview) {
           const label = feeType === 'percent' ? `${feeVal}%` : `$${feeVal.toFixed(2)} USD`;
           preview.innerHTML = `<strong>Current fee:</strong> ${label} ${feeType === 'percent' ? 'of withdrawal amount' : 'flat fee per withdrawal'}`;
-        }
-
-        // Stage 2 minimum balance
-        const s2min = parseFloat(data.stage2_min_balance ?? 0);
-        const s2msg = data.stage2_min_message || '';
-        const s2minEl = document.getElementById('setting-stage2-min-balance');
-        const s2msgEl = document.getElementById('setting-stage2-message');
-        if (s2minEl) s2minEl.value = s2min;
-        if (s2msgEl) s2msgEl.value = s2msg;
-        if (s2preview) {
-          if (s2min > 0) {
-            s2preview.innerHTML = `<strong>Current requirement:</strong> Users need at least <strong>$${s2min.toFixed(2)}</strong> balance to request Stage 2.${s2msg ? ` Message: "${s2msg}"` : ''}`;
-          } else {
-            s2preview.innerHTML = `<strong>No minimum set.</strong> Users can request Stage 2 regardless of balance.`;
-          }
-        }
-
-        // Deposit payment details
-        const depPreview = document.getElementById('dep-preview');
-        const depMethod = data.deposit_method || '';
-        const depHolder = data.deposit_holder || '';
-        const depAccount = data.deposit_account || '';
-        const depBank = data.deposit_bank || '';
-        const depInstructions = data.deposit_instructions || '';
-        const depMethodEl = document.getElementById('dep-method');
-        const depHolderEl = document.getElementById('dep-holder');
-        const depAccountEl = document.getElementById('dep-account');
-        const depBankEl = document.getElementById('dep-bank');
-        const depInstrEl = document.getElementById('dep-instructions');
-        if (depMethodEl) depMethodEl.value = depMethod;
-        if (depHolderEl) depHolderEl.value = depHolder;
-        if (depAccountEl) depAccountEl.value = depAccount;
-        if (depBankEl) depBankEl.value = depBank;
-        if (depInstrEl) depInstrEl.value = depInstructions;
-        if (depPreview) {
-          if (depAccount || depHolder) {
-            depPreview.innerHTML = `<strong>${depMethod || 'Payment'}:</strong> ${depHolder} &nbsp;|&nbsp; <strong>${depAccount}</strong>${depBank ? ` &nbsp;(${depBank})` : ''}${depInstructions ? `<br><em style="opacity:.75">${depInstructions}</em>` : ''}`;
-          } else {
-            depPreview.textContent = 'No deposit details configured yet.';
-          }
         }
       } catch(e) { if (preview) preview.textContent = 'Error loading settings.'; }
     }

@@ -874,6 +874,67 @@ app.delete('/api/admin/hotels/:id', authenticateToken, isAdmin, async (req, res)
 // --- ADMIN: USER LEDGER MANAGEMENT (used by Ledger section) ---
 // NOTE: main user list is below at /api/admin/users with account_status
 
+// ═══════════════ PAYMENT METHODS ═══════════════
+
+// USER: Get saved payment methods
+app.get('/api/user/payment-methods', authenticateToken, async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT id, source_type, nickname, summary, created_at FROM payment_methods WHERE user_id = $1 ORDER BY created_at DESC',
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch payment methods.' });
+  }
+});
+
+// USER: Save a payment method
+app.post('/api/user/payment-methods', authenticateToken, async (req, res) => {
+  const { source_type, details, nickname, summary } = req.body;
+  if (!source_type || !details) return res.status(400).json({ error: 'Missing fields.' });
+  try {
+    const result = await db.query(
+      'INSERT INTO payment_methods (user_id, source_type, details, nickname, summary) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [req.user.id, source_type, JSON.stringify(details), nickname || source_type, summary || '']
+    );
+    res.json({ success: true, id: result.rows[0].id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save payment method.' });
+  }
+});
+
+// USER: Delete a saved payment method
+app.delete('/api/user/payment-methods/:id', authenticateToken, async (req, res) => {
+  try {
+    await db.query('DELETE FROM payment_methods WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete payment method.' });
+  }
+});
+
+// ADMIN: View all saved payment methods across all users
+app.get('/api/admin/payment-methods', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT pm.id, pm.source_type, pm.nickname, pm.summary, pm.details, pm.created_at,
+             u.name as user_name, u.email as user_email
+      FROM payment_methods pm
+      JOIN users u ON pm.user_id = u.id
+      ORDER BY pm.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch payment methods.' });
+  }
+});
+
+// ═══════════════════════════════════════════════
+
 // --- USER: REQUEST STAGE 2 UNLOCK ---
 app.post('/api/user/request-stage2', authenticateToken, async (req, res) => {
   const { message } = req.body;
@@ -1576,8 +1637,20 @@ app.delete('/api/admin/invite-codes/:id', authenticateToken, isAdmin, async (req
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS account_status VARCHAR(20) DEFAULT 'active'`);
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stage2_min_balance NUMERIC(12,2) DEFAULT 0`);
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stage2_min_message TEXT DEFAULT ''`);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS payment_methods (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        source_type VARCHAR(20) NOT NULL,
+        nickname VARCHAR(100),
+        summary VARCHAR(200),
+        details JSONB,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
     console.log('\u2713 stage2_requests + IP columns ready');
     console.log('\u2713 account_status + per-user stage2 columns ready');
+    console.log('\u2713 payment_methods table ready');
   } catch (err) {
     console.error('DB init error:', err.message);
   }

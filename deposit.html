@@ -12,184 +12,82 @@
   <style>
     *,*::before,*::after{box-sizing:border-box}
     body{background:#f8f9fb;overflow-x:hidden}
+    .dp-page{max-width:700px;margin:0 auto;padding:20px 16px 100px}
 
-    /* ── Layout ── */
-    .dp-page{max-width:720px;margin:0 auto;padding:32px 20px 120px}
-
-    /* ── Back link ── */
-    .back-link{
-      display:inline-flex;align-items:center;gap:8px;
-      font-size:14px;font-weight:600;color:var(--muted);
-      text-decoration:none;transition:color .2s;margin-bottom:28px;
-    }
+    /* Back */
+    .back-link{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text-dim);text-decoration:none;margin-bottom:16px;transition:color .2s}
     .back-link:hover{color:var(--text)}
+    .back-link:hover svg{transform:translateX(-2px)}
     .back-link svg{transition:transform .2s}
-    .back-link:hover svg{transform:translateX(-3px)}
 
-    /* ── Hero card ── */
-    .hero-card{
-      background:linear-gradient(160deg,#0f1728 0%,#1a2744 60%,#1e293b 100%);
-      border-radius:28px;padding:clamp(28px,6vw,48px);
-      color:#fff;position:relative;overflow:hidden;
-      margin-bottom:28px;
-    }
-    .hero-card::before{
-      content:'';position:absolute;
-      top:-80px;right:-40px;width:260px;height:260px;
-      background:radial-gradient(circle,rgba(197,160,89,.25) 0%,transparent 70%);
-      border-radius:50%;pointer-events:none;
-    }
-    .hero-card::after{
-      content:'';position:absolute;
-      bottom:-50px;left:20%;width:200px;height:200px;
-      background:radial-gradient(circle,rgba(197,160,89,.12) 0%,transparent 70%);
-      border-radius:50%;pointer-events:none;
-    }
-    .hero-inner{position:relative;z-index:1}
-    .hero-eyebrow{
-      font-size:11px;font-weight:700;letter-spacing:.14em;
-      text-transform:uppercase;color:var(--accent1);margin-bottom:10px;
-    }
-    .hero-title{
-      font-family:'Fraunces',serif;font-weight:700;
-      font-size:clamp(1.8rem,6vw,2.8rem);line-height:1.15;
-      margin:0 0 14px;letter-spacing:-.02em;
-    }
-    .hero-desc{font-size:14px;opacity:.65;max-width:400px;line-height:1.6;margin:0 0 22px}
-    .hero-badges{display:flex;gap:10px;flex-wrap:wrap}
-    .hero-badge{
-      display:inline-flex;align-items:center;gap:6px;
-      background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);
-      padding:5px 14px;border-radius:100px;font-size:12px;font-weight:600;color:#cbd5e1;
-    }
+    /* Page header */
+    .dp-header{display:flex;align-items:center;gap:14px;margin-bottom:18px;padding:16px 20px;background:linear-gradient(135deg,#0f1728,#1a2744);border-radius:20px;color:#fff}
+    .dp-header-icon{width:44px;height:44px;background:rgba(197,160,89,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .dp-header h1{font-size:1.15rem;font-weight:800;margin:0 0 3px;font-family:'Outfit',sans-serif}
+    .dp-header p{font-size:12px;opacity:.6;margin:0}
+    .dp-header-badges{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+    .dp-badge{font-size:10px;font-weight:700;padding:4px 10px;border-radius:100px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1);color:#cbd5e1;white-space:nowrap}
 
-    /* ── Feature pills ── */
-    .features{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
-    .feat-pill{
-      display:inline-flex;align-items:center;gap:6px;
-      background:#fff;border:1px solid #e8ecf1;
-      padding:7px 14px;border-radius:10px;
-      font-size:13px;font-weight:600;color:var(--text);
-    }
+    /* Saved methods */
+    .saved-section{margin-bottom:14px}
+    .saved-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-dim);margin-bottom:8px}
+    .saved-list{display:flex;flex-direction:column;gap:6px}
+    .saved-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:1px solid #e8ecf1;border-radius:12px;cursor:pointer;transition:border-color .2s}
+    .saved-item:hover{border-color:var(--accent1)}
+    .saved-item.selected{border-color:var(--accent1);background:#fffbf5}
+    .saved-item-icon{font-size:18px;width:32px;text-align:center;flex-shrink:0}
+    .saved-item-name{font-size:13px;font-weight:700;color:var(--text)}
+    .saved-item-sub{font-size:11px;color:var(--text-dim)}
+    .saved-item-del{margin-left:auto;background:none;border:none;font-size:14px;cursor:pointer;color:var(--text-dim);padding:4px;border-radius:6px;flex-shrink:0;opacity:.5}
+    .saved-item-del:hover{opacity:1;color:#ef4444}
 
-    /* ── Section cards ── */
-    .dp-card{
-      background:#fff;border:1px solid #e8ecf1;border-radius:24px;
-      padding:clamp(20px,5vw,32px);margin-bottom:20px;
-      transition:box-shadow .25s;
-    }
-    .dp-card:hover{box-shadow:0 8px 32px rgba(0,0,0,.05)}
-    .dp-card-head{display:flex;align-items:center;gap:14px;margin-bottom:24px}
-    .step-num{
-      width:30px;height:30px;border-radius:9px;
-      background:var(--accent1);color:#fff;font-size:13px;font-weight:800;
-      display:flex;align-items:center;justify-content:center;flex-shrink:0;
-    }
-    .step-title{font-weight:700;font-size:16px;color:var(--text)}
-    .step-sub{font-size:13px;color:var(--muted);margin-top:2px}
+    /* Main card */
+    .dp-card{background:#fff;border:1px solid #e8ecf1;border-radius:20px;padding:18px 20px;margin-bottom:14px}
+    .dp-card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .dp-card-title span{width:22px;height:22px;background:var(--accent1);color:#fff;font-size:11px;font-weight:800;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 
-    /* ── Source selector ── */
-    .sources{display:flex;flex-direction:column;gap:12px}
-    .s-card{
-      display:flex;align-items:center;gap:14px;
-      padding:16px;border-radius:16px;cursor:pointer;
-      border:2px solid #eef0f4;background:#fafbfc;
-      transition:all .2s ease;
-    }
-    .s-card:hover{border-color:#d4d9e1;background:#fff}
-    .s-card.active{border-color:var(--accent1);background:#fffbf5}
-    .s-icon{
-      width:44px;height:44px;border-radius:12px;
-      background:#f1f3f6;display:flex;align-items:center;justify-content:center;
-      font-size:20px;flex-shrink:0;transition:all .2s;
-    }
-    .s-card.active .s-icon{background:rgba(197,160,89,.12)}
-    .s-name{font-weight:700;font-size:14px;color:var(--text)}
-    .s-desc{font-size:12px;color:var(--muted);margin-top:2px}
-    .s-check{
-      margin-left:auto;width:22px;height:22px;border-radius:50%;
-      border:2px solid #d4d9e1;display:flex;align-items:center;justify-content:center;
-      transition:all .2s;flex-shrink:0;
-    }
-    .s-card.active .s-check{border-color:var(--accent1);background:var(--accent1)}
-    .s-card.active .s-check::after{
-      content:'';width:8px;height:5px;
-      border-left:2px solid #fff;border-bottom:2px solid #fff;
-      transform:rotate(-45deg) translateY(-1px);
-    }
+    /* Source tabs */
+    .source-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:0}
+    .s-tab{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:12px;cursor:pointer;border:2px solid #eef0f4;background:#fafbfc;transition:all .2s;text-align:center}
+    .s-tab:hover{border-color:#d4d9e1}
+    .s-tab.active{border-color:var(--accent1);background:#fffbf5}
+    .s-tab-icon{font-size:20px;line-height:1}
+    .s-tab-name{font-size:11px;font-weight:700;color:var(--text)}
 
-    /* ── Form fields ── */
-    .form-fields{display:flex;flex-direction:column;gap:14px}
-    .form-fields label{
-      display:block;font-size:13px;font-weight:600;
-      color:var(--text);margin-bottom:6px;
-    }
-    .form-fields .input,
-    .form-fields select{
-      width:100%;padding:14px 16px;font-size:14px;
-      border:2px solid #eef0f4;border-radius:14px;
-      background:#fafbfc;transition:all .2s;outline:none;
-      color:var(--text);font-family:inherit;
-      appearance:auto;
-    }
-    .form-fields .input:focus,
-    .form-fields select:focus{
-      border-color:var(--accent1);background:#fff;
-      box-shadow:0 0 0 4px rgba(197,160,89,.08);
-    }
+    /* Form */
+    .form-fields{display:flex;flex-direction:column;gap:10px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .form-fields label{display:block;font-size:11px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+    .form-fields .input,.form-fields select{width:100%;padding:11px 13px;font-size:13px;border:1.5px solid #eef0f4;border-radius:11px;background:#fafbfc;transition:all .2s;outline:none;color:var(--text);font-family:inherit}
+    .form-fields .input:focus,.form-fields select:focus{border-color:var(--accent1);background:#fff;box-shadow:0 0 0 3px rgba(197,160,89,.08)}
 
-    /* ── Agreement box ── */
-    .agree-box{
-      display:flex;align-items:flex-start;gap:14px;
-      padding:18px;background:#fafbfc;border-radius:14px;
-      border:1px solid #e8ecf1;margin-top:8px;
-    }
-    .agree-box input[type=checkbox]{
-      margin-top:3px;width:18px;height:18px;flex-shrink:0;
-      accent-color:var(--accent1);cursor:pointer;
-    }
-    .agree-box label{
-      font-size:13px;color:var(--muted);cursor:pointer;line-height:1.6;margin:0;
-    }
+    /* Save method row */
+    .save-row{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fafbfc;border:1px solid #e8ecf1;border-radius:11px;margin-top:4px}
+    .save-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent1);cursor:pointer;flex-shrink:0}
+    .save-row label{font-size:12px;color:var(--text-dim);cursor:pointer;margin:0;font-weight:600}
+
+    /* Amount + agree */
+    .agree-box{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:#fafbfc;border:1px solid #e8ecf1;border-radius:11px}
+    .agree-box input[type=checkbox]{width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:var(--accent1);cursor:pointer}
+    .agree-box label{font-size:12px;color:var(--text-dim);cursor:pointer;line-height:1.5;margin:0}
     .agree-box a{color:var(--accent1);text-decoration:none}
 
-    /* ── Submit ── */
-    .submit-btn{
-      width:100%;padding:20px;font-size:16px;font-weight:800;
-      border:none;border-radius:18px;cursor:pointer;
-      background:linear-gradient(135deg,var(--accent1),#a68442);
-      color:#fff;transition:all .25s;
-      display:flex;align-items:center;justify-content:center;gap:10px;
-      box-shadow:0 8px 28px rgba(197,160,89,.25);
-    }
-    .submit-btn:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(197,160,89,.3)}
-    .submit-btn:active{transform:translateY(0)}
+    /* Submit */
+    .submit-btn{width:100%;padding:16px;font-size:15px;font-weight:800;border:none;border-radius:16px;cursor:pointer;background:linear-gradient(135deg,var(--accent1),#a68442);color:#fff;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 24px rgba(197,160,89,.25)}
+    .submit-btn:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(197,160,89,.3)}
     .submit-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .secure-note{display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;color:var(--text-dim);margin-top:12px}
 
-    .secure-note{
-      display:flex;align-items:center;justify-content:center;
-      gap:6px;font-size:12px;color:var(--muted);margin-top:20px;
-    }
-
-    /* ── Responsive ── */
     @media(max-width:480px){
-      .dp-page{padding:16px 14px 110px}
-      .hero-card{border-radius:22px}
-      .dp-card{border-radius:20px}
-      .s-card{padding:14px 12px}
-      .s-icon{width:38px;height:38px;font-size:18px;border-radius:10px}
-      .s-name{font-size:13px}
-      .s-desc{font-size:11px}
-      .submit-btn{padding:18px;font-size:15px;border-radius:16px}
+      .dp-header-badges{display:none}
+      .source-tabs{grid-template-columns:repeat(2,1fr)}
+      .form-row{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
   <div class="loader-wrapper" id="loader">
-    <div class="loader">
-      <div class="loader-ring"></div>
-      <div class="loader-text">WINDSOR GROVE</div>
-    </div>
+    <div class="loader"><div class="loader-ring"></div><div class="loader-text">WINDSOR GROVE</div></div>
   </div>
   <div class="bg-wrap"><div class="bg-gradient"></div><div class="grid-overlay"></div></div>
 
@@ -203,9 +101,9 @@
         </div>
       </div>
       <nav class="desktop-nav"></nav>
-      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:flex-end; max-width:100%">
-        <button class="btn btn-outline" id="btn-login" style="padding: 10px 18px; flex:1 1 auto; white-space:nowrap; text-align:center; min-width:80px">Login</button>
-        <button class="btn btn-primary" id="btn-create" style="padding: 10px 18px; flex:1 1 auto; white-space:nowrap; text-align:center; min-width:140px">Join Expert Circle</button>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn btn-outline" id="btn-login" style="padding:10px 18px">Login</button>
+        <button class="btn btn-primary" id="btn-create" style="padding:10px 18px">Join Expert Circle</button>
       </div>
     </div>
   </header>
@@ -213,128 +111,92 @@
   <main>
     <div class="dp-page">
 
-      <!-- Back -->
       <a href="account.html" class="back-link">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         Back to Account
       </a>
 
-      <!-- Hero -->
-      <div class="hero-card">
-        <div class="hero-inner">
-          <div class="hero-eyebrow">Funding Management</div>
-          <h1 class="hero-title">Link a Funding<br>Source</h1>
-          <p class="hero-desc">Connect your preferred bank or payment method to receive commission payouts securely.</p>
-          <div class="hero-badges">
-            <span class="hero-badge">🔒 256-bit Encrypted</span>
-            <span class="hero-badge">✓ PCI Compliant</span>
-          </div>
+      <!-- Compact header -->
+      <div class="dp-header">
+        <div class="dp-header-icon">🏦</div>
+        <div>
+          <h1>Add Funding Source</h1>
+          <p>Connect your bank or payment method to receive commission payouts</p>
+        </div>
+        <div class="dp-header-badges">
+          <span class="dp-badge">🔒 256-bit</span>
+          <span class="dp-badge">✓ PCI</span>
         </div>
       </div>
 
-      <!-- Features -->
-      <div class="features">
-        <span class="feat-pill">⚡ Instant Payouts</span>
-        <span class="feat-pill">🌍 190+ Countries</span>
-        <span class="feat-pill">💰 Zero Fees</span>
-        <span class="feat-pill">🔄 Auto Settlement</span>
+      <!-- Saved methods -->
+      <div class="saved-section" id="saved-section" style="display:none">
+        <div class="saved-label">💾 Saved Payment Methods</div>
+        <div class="saved-list" id="saved-list"></div>
       </div>
 
-      <!-- Step 1 -->
+      <!-- Step 1: Source type tabs -->
       <div class="dp-card">
-        <div class="dp-card-head">
-          <div class="step-num">1</div>
-          <div>
-            <div class="step-title">Choose Funding Type</div>
-            <div class="step-sub">Select the type of account you want to link</div>
+        <div class="dp-card-title"><span>1</span> Choose Payment Type</div>
+        <div class="source-tabs">
+          <div class="s-tab active" data-source="bank" onclick="selectSource(this,'bank')">
+            <div class="s-tab-icon">🏦</div>
+            <div class="s-tab-name">Bank / IBAN</div>
           </div>
-        </div>
-        <div class="sources">
-          <div class="s-card active" data-source="bank" onclick="selectSource(this,'bank')">
-            <div class="s-icon">🏦</div>
-            <div style="flex:1">
-              <div class="s-name">Bank Account (SWIFT / IBAN)</div>
-              <div class="s-desc">Recommended · Best for large payouts</div>
-            </div>
-            <div class="s-check" id="check-bank"></div>
+          <div class="s-tab" data-source="crypto" onclick="selectSource(this,'crypto')">
+            <div class="s-tab-icon">₿</div>
+            <div class="s-tab-name">Crypto</div>
           </div>
-          <div class="s-card" data-source="crypto" onclick="selectSource(this,'crypto')">
-            <div class="s-icon">₿</div>
-            <div style="flex:1">
-              <div class="s-name">Crypto Wallet (USDC)</div>
-              <div class="s-desc">Stablecoin · ETH, Polygon, or Solana</div>
-            </div>
-            <div class="s-check" id="check-crypto"></div>
+          <div class="s-tab" data-source="paypal" onclick="selectSource(this,'paypal')">
+            <div class="s-tab-icon">💳</div>
+            <div class="s-tab-name">PayPal</div>
           </div>
-          <div class="s-card" data-source="paypal" onclick="selectSource(this,'paypal')">
-            <div class="s-icon">💳</div>
-            <div style="flex:1">
-              <div class="s-name">PayPal</div>
-              <div class="s-desc">Instant delivery to PayPal balance</div>
-            </div>
-            <div class="s-check" id="check-paypal"></div>
-          </div>
-          <div class="s-card" data-source="wise" onclick="selectSource(this,'wise')">
-            <div class="s-icon">🌐</div>
-            <div style="flex:1">
-              <div class="s-name">Wise (TransferWise)</div>
-              <div class="s-desc">Multi-currency · Low exchange fees</div>
-            </div>
-            <div class="s-check" id="check-wise"></div>
+          <div class="s-tab" data-source="wise" onclick="selectSource(this,'wise')">
+            <div class="s-tab-icon">🌐</div>
+            <div class="s-tab-name">Wise</div>
           </div>
         </div>
       </div>
 
-      <!-- Step 2 -->
+      <!-- Step 2: Account details -->
       <div class="dp-card">
-        <div class="dp-card-head">
-          <div class="step-num">2</div>
-          <div>
-            <div class="step-title">Account Details</div>
-            <div class="step-sub">Enter your account information securely</div>
-          </div>
-        </div>
+        <div class="dp-card-title"><span>2</span> Account Details</div>
         <div class="form-fields" id="source-fields">
-          <div><label>Account Holder Full Name</label><input type="text" class="input" id="holder-name" placeholder="As it appears on your bank account"></div>
-          <div><label>IBAN or Account Number</label><input type="text" class="input" id="iban" placeholder="e.g. GB29 NWBK 6016 1331 9268 19"></div>
-          <div><label>SWIFT / BIC Code</label><input type="text" class="input" id="swift" placeholder="e.g. BARCGB22XXX"></div>
-          <div><label>Bank Name</label><input type="text" class="input" id="bank-name" placeholder="e.g. Barclays, Chase, HSBC"></div>
+          <div class="form-row">
+            <div><label>Account Holder Name</label><input type="text" class="input" id="holder-name" placeholder="Full name on account"></div>
+            <div><label>Bank Name</label><input type="text" class="input" id="bank-name" placeholder="e.g. Barclays, Chase"></div>
+          </div>
+          <div class="form-row">
+            <div><label>IBAN / Account Number</label><input type="text" class="input" id="iban" placeholder="e.g. GB29 NWBK..."></div>
+            <div><label>SWIFT / BIC</label><input type="text" class="input" id="swift" placeholder="e.g. BARCGB22"></div>
+          </div>
           <div><label>Country</label><input type="text" class="input" id="country" placeholder="Country of your bank"></div>
         </div>
+        <div class="save-row" style="margin-top:10px">
+          <input type="checkbox" id="save-method">
+          <label for="save-method">Save this payment method for future use</label>
+        </div>
       </div>
 
-      <!-- Step 3 -->
+      <!-- Step 3: Amount + agree -->
       <div class="dp-card">
-        <div class="dp-card-head">
-          <div class="step-num">3</div>
-          <div>
-            <div class="step-title">Deposit Amount</div>
-            <div class="step-sub">How much are you depositing?</div>
-          </div>
-        </div>
+        <div class="dp-card-title"><span>3</span> Deposit Amount</div>
         <div class="form-fields">
-          <div>
-            <label>Amount (USD)</label>
-            <input type="number" class="input" id="deposit-amount" placeholder="e.g. 250.00" min="1" step="0.01">
-          </div>
+          <div><label>Amount (USD)</label><input type="number" class="input" id="deposit-amount" placeholder="e.g. 250.00" min="1" step="0.01"></div>
         </div>
-        <div class="agree-box">
+        <div class="agree-box" style="margin-top:10px">
           <input type="checkbox" id="agree-terms">
-          <label for="agree-terms">
-            I confirm that I am the authorized holder of this account and I agree to the
-            <a href="privacy.html">Payment Terms</a> and Windsor Grove's settlement policies.
-          </label>
+          <label for="agree-terms">I confirm I am the authorized holder of this account and agree to the <a href="privacy.html">Payment Terms</a> and Windsor Grove's settlement policies.</label>
         </div>
       </div>
 
       <!-- Submit -->
       <button class="submit-btn" id="submit-btn" onclick="submitFundingSource()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
         Submit Deposit Request
       </button>
-
       <div class="secure-note">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         Bank-grade 256-bit AES encryption. Never shared with third parties.
       </div>
 
@@ -364,111 +226,176 @@
     </a>
   </div>
 
-  <footer>
-    <div class="container foot-inner"></div>
-  </footer>
-
+  <footer><div class="container foot-inner"></div></footer>
   <div class="toasts" id="toasts"></div>
-
   <script src="assets/js/core.js?v=3"></script>
   <script>
-    // Auth guard
-    if (!localStorage.getItem('wgh-token')) {
-      window.location.href = 'login.html';
-    }
+    if (!localStorage.getItem('wgh-token')) window.location.href = 'login.html';
+
+    const SOURCE_ICONS = { bank:'🏦', crypto:'₿', paypal:'💳', wise:'🌐' };
 
     const sourceFieldTemplates = {
       bank: `
-        <div><label>Account Holder Full Name</label><input type="text" class="input" id="holder-name" placeholder="As it appears on your bank account"></div>
-        <div><label>IBAN or Account Number</label><input type="text" class="input" id="iban" placeholder="e.g. GB29 NWBK 6016 1331 9268 19"></div>
-        <div><label>SWIFT / BIC Code</label><input type="text" class="input" id="swift" placeholder="e.g. BARCGB22XXX"></div>
-        <div><label>Bank Name</label><input type="text" class="input" id="bank-name" placeholder="e.g. Barclays, Chase, HSBC"></div>
+        <div class="form-row">
+          <div><label>Account Holder Name</label><input type="text" class="input" id="holder-name" placeholder="Full name on account"></div>
+          <div><label>Bank Name</label><input type="text" class="input" id="bank-name" placeholder="e.g. Barclays, Chase"></div>
+        </div>
+        <div class="form-row">
+          <div><label>IBAN / Account Number</label><input type="text" class="input" id="iban" placeholder="e.g. GB29 NWBK..."></div>
+          <div><label>SWIFT / BIC</label><input type="text" class="input" id="swift" placeholder="e.g. BARCGB22"></div>
+        </div>
         <div><label>Country</label><input type="text" class="input" id="country" placeholder="Country of your bank"></div>
       `,
       crypto: `
         <div><label>Wallet Address</label><input type="text" class="input" placeholder="0x... or wallet address"></div>
-        <div><label>Network</label>
-          <select class="input" style="appearance:auto;cursor:pointer">
-            <option>Ethereum (ERC-20)</option>
-            <option>Polygon</option>
-            <option>Solana</option>
-            <option>BSC (BEP-20)</option>
-          </select>
+        <div class="form-row">
+          <div><label>Network</label><select class="input"><option>Ethereum (ERC-20)</option><option>Polygon</option><option>Solana</option><option>BSC (BEP-20)</option></select></div>
+          <div><label>Wallet Label</label><input type="text" class="input" placeholder="e.g. My MetaMask"></div>
         </div>
-        <div><label>Wallet Label (optional)</label><input type="text" class="input" placeholder="e.g. My MetaMask Wallet"></div>
       `,
       paypal: `
-        <div><label>PayPal Email Address</label><input type="email" class="input" placeholder="your@paypal.email"></div>
-        <div><label>Confirm PayPal Email</label><input type="email" class="input" placeholder="Re-enter email"></div>
-        <div><label>PayPal Account Name</label><input type="text" class="input" placeholder="Full name on PayPal account"></div>
+        <div class="form-row">
+          <div><label>PayPal Email</label><input type="email" class="input" placeholder="your@paypal.email"></div>
+          <div><label>Confirm Email</label><input type="email" class="input" placeholder="Re-enter email"></div>
+        </div>
+        <div><label>Full Name on PayPal</label><input type="text" class="input" placeholder="Full name on PayPal account"></div>
       `,
       wise: `
-        <div><label>Wise Email Address</label><input type="email" class="input" placeholder="your@wise.com"></div>
-        <div><label>Account Holder Name</label><input type="text" class="input" placeholder="Full legal name"></div>
+        <div class="form-row">
+          <div><label>Wise Email</label><input type="email" class="input" placeholder="your@wise.com"></div>
+          <div><label>Account Holder</label><input type="text" class="input" placeholder="Full legal name"></div>
+        </div>
         <div><label>Wise Account ID (optional)</label><input type="text" class="input" placeholder="e.g. P12345678"></div>
       `
     };
 
+    let currentSource = 'bank';
+
     function selectSource(el, type) {
-      document.querySelectorAll('.s-card').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.s-tab').forEach(c => c.classList.remove('active'));
       el.classList.add('active');
+      currentSource = type;
       document.getElementById('source-fields').innerHTML = sourceFieldTemplates[type];
     }
 
+    // Load saved payment methods
+    async function loadSavedMethods() {
+      try {
+        const res = await fetch(`${API_URL}/user/payment-methods`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('wgh-token')}` }
+        });
+        if (!res.ok) return;
+        const methods = await res.json();
+        if (!methods.length) return;
+        const section = document.getElementById('saved-section');
+        const list = document.getElementById('saved-list');
+        section.style.display = 'block';
+        list.innerHTML = methods.map(m => `
+          <div class="saved-item" onclick="prefillSaved(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+            <div class="saved-item-icon">${SOURCE_ICONS[m.source_type] || '💳'}</div>
+            <div>
+              <div class="saved-item-name">${m.nickname || m.source_type.toUpperCase()}</div>
+              <div class="saved-item-sub">${m.summary || ''}</div>
+            </div>
+            <button class="saved-item-del" onclick="event.stopPropagation();deleteMethod(${m.id})" title="Remove">✕</button>
+          </div>
+        `).join('');
+      } catch(e) {}
+    }
+
+    function prefillSaved(m) {
+      // Select the right tab
+      const tab = document.querySelector(`.s-tab[data-source="${m.source_type}"]`);
+      if (tab) selectSource(tab, m.source_type);
+      // Prefill fields from details
+      const d = m.details || {};
+      setTimeout(() => {
+        Object.keys(d).forEach(label => {
+          const fields = document.querySelectorAll('#source-fields input, #source-fields select');
+          fields.forEach(f => {
+            if ((f.previousElementSibling?.textContent || f.closest('div')?.querySelector('label')?.textContent || '').trim().toLowerCase() === label.toLowerCase()) {
+              f.value = d[label];
+            }
+          });
+        });
+      }, 50);
+      document.querySelectorAll('.saved-item').forEach(i => i.classList.remove('selected'));
+      event.currentTarget?.classList.add('selected');
+    }
+
+    async function deleteMethod(id) {
+      if (!confirm('Remove this saved payment method?')) return;
+      await fetch(`${API_URL}/user/payment-methods/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('wgh-token')}` }
+      });
+      loadSavedMethods();
+    }
+
     async function submitFundingSource() {
-      if (!document.getElementById('agree-terms').checked) {
-        return toast('Please agree to the payment terms to continue.');
-      }
-
-      const selectedType = document.querySelector('.s-card.active')?.dataset.source || 'bank';
-      const amountEl = document.getElementById('deposit-amount');
-      const amount = parseFloat(amountEl?.value) || 0;
-
+      if (!document.getElementById('agree-terms').checked) return toast('Please agree to the payment terms.');
+      const amount = parseFloat(document.getElementById('deposit-amount')?.value) || 0;
       if (amount <= 0) return toast('Please enter a deposit amount.');
 
       const btn = document.getElementById('submit-btn');
       btn.disabled = true;
-      btn.textContent = 'Submitting Request…';
+      btn.textContent = 'Submitting…';
 
-      // Collect all source field labels + values
       const sourceFields = document.querySelectorAll('#source-fields > div');
       const source_details = {};
       sourceFields.forEach(div => {
-        const label = div.querySelector('label')?.textContent?.trim();
-        const input = div.querySelector('input, select');
-        if (label && input) source_details[label] = input.value;
+        const rows = div.querySelectorAll(':scope > div') || [div];
+        const items = div.classList.contains('form-row') ? Array.from(div.querySelectorAll(':scope > div')) : [div];
+        items.forEach(item => {
+          const label = item.querySelector('label')?.textContent?.trim();
+          const input = item.querySelector('input, select');
+          if (label && input) source_details[label] = input.value;
+        });
       });
 
+      const saveMethod = document.getElementById('save-method')?.checked;
+      const token = localStorage.getItem('wgh-token');
+
       try {
+        // Save payment method first if checked
+        if (saveMethod) {
+          const firstVal = Object.values(source_details)[0] || '';
+          await fetch(`${API_URL}/user/payment-methods`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({
+              source_type: currentSource,
+              details: source_details,
+              nickname: `${currentSource.toUpperCase()} — ${firstVal.substring(0, 20)}`,
+              summary: firstVal.substring(0, 40)
+            })
+          });
+        }
+
+        // Submit deposit request
         const res = await fetch(`${API_URL}/user/request-deposit`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('wgh-token')}`
-          },
-          body: JSON.stringify({
-            amount,
-            source_type: selectedType,
-            source_details
-          })
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ amount, source_type: currentSource, source_details })
         });
         const data = await res.json();
         if (!res.ok || data.error) {
           toast(data.error || 'Failed to submit deposit request.');
           btn.disabled = false;
-          btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Submit Deposit Request';
+          btn.textContent = 'Submit Deposit Request';
           return;
         }
         toast('✓ Deposit request submitted — pending admin approval.');
-        btn.innerHTML = '✓ Request Submitted';
+        btn.textContent = '✓ Request Submitted';
         setTimeout(() => window.location.href = 'account.html', 2000);
       } catch (e) {
         toast('Network error. Please try again.');
         btn.disabled = false;
-        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Submit Deposit Request';
+        btn.textContent = 'Submit Deposit Request';
       }
     }
 
+    loadSavedMethods();
   </script>
 </body>
 </html>

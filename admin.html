@@ -886,6 +886,29 @@
             </div>
           </div>
 
+          <!-- Per-User Stage 2 Balance Requirement -->
+          <div style="background:#faf8ff;border:1px solid rgba(139,92,246,0.15);border-radius:16px;padding:20px;margin-bottom:24px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <div style="width:32px;height:32px;border-radius:8px;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:16px">🔓</div>
+              <div style="font-weight:700;font-size:14px;color:var(--text)">Stage 2 Minimum Balance</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div>
+                <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);display:block;margin-bottom:4px">Min Balance (USD)</label>
+                <input type="number" id="udm-stage2-min" step="1" min="0" placeholder="0" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);font-size:14px;font-weight:700;background:#fff;color:var(--text)">
+              </div>
+              <div>
+                <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);display:block;margin-bottom:4px">Custom Message</label>
+                <input type="text" id="udm-stage2-msg" placeholder="e.g. Fund account first" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);font-size:13px;background:#fff;color:var(--text)">
+              </div>
+            </div>
+            <button onclick="saveUserStage2Settings()"
+              style="width:100%;padding:12px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;transition:transform .15s"
+              onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+              💾 Save Balance Requirement
+            </button>
+          </div>
+
           <!-- Action Buttons -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <button id="udm-suspend-btn" onclick="suspendUser()"
@@ -2773,9 +2796,29 @@
         const statusEl = document.getElementById('udm-status');
         statusEl.textContent = status.charAt(0).toUpperCase() + status.slice(1);
         statusEl.style.color = status === 'active' ? '#059669' : status === 'suspended' ? '#d97706' : '#ef4444';
+
+        // Per-user Stage 2 balance settings
+        document.getElementById('udm-stage2-min').value = parseFloat(u.stage2_min_balance ?? 0);
+        document.getElementById('udm-stage2-msg').value = u.stage2_min_message || '';
       } catch(e) {
         toast('Failed to load user details.');
       }
+    }
+
+    async function saveUserStage2Settings() {
+      const userId = activeUserId;
+      if (!userId) return;
+      const minBal = parseFloat(document.getElementById('udm-stage2-min')?.value ?? 0);
+      const msg = document.getElementById('udm-stage2-msg')?.value || '';
+      if (isNaN(minBal) || minBal < 0) { toast('Enter a valid amount.'); return; }
+      try {
+        const res = await adminFetch(`${API_URL}/admin/users/${userId}/stage2-settings`, {
+          method: 'PUT',
+          body: JSON.stringify({ stage2_min_balance: minBal, stage2_min_message: msg })
+        });
+        if (!res.ok) throw new Error('Failed');
+        toast(`✓ Stage 2 requirement saved — $${minBal.toFixed(2)} minimum.`);
+      } catch(e) { toast('Failed to save Stage 2 settings.'); }
     }
 
     function closeUserDetailModal() {

@@ -878,24 +878,32 @@ app.delete('/api/admin/hotels/:id', authenticateToken, isAdmin, async (req, res)
 app.post('/api/user/request-stage2', authenticateToken, async (req, res) => {
   const { message } = req.body;
   try {
-    // Check minimum balance requirement
-    const minBalRow = await db.query("SELECT value FROM platform_settings WHERE key = 'stage2_min_balance'");
-    const minBal = parseFloat(minBalRow.rows[0]?.value ?? 0);
-    if (minBal > 0) {
-      const userRow = await db.query('SELECT balance FROM users WHERE id = $1', [req.user.id]);
-      const userBalance = parseFloat(userRow.rows[0]?.balance ?? 0);
-      if (userBalance < minBal) {
-        // Get custom announcement message
-        const msgRow = await db.query("SELECT value FROM platform_settings WHERE key = 'stage2_min_message'");
-        const customMsg = msgRow.rows[0]?.value || '';
-        const announcement = customMsg || `You need a minimum balance of $${minBal.toFixed(2)} to unlock Stage 2. Please fund your account to continue.`;
-        return res.status(403).json({
-          error: 'insufficient_balance',
-          announcement,
-          required: minBal,
-          current: userBalance
-        });
+    // Check per-user minimum balance first, then fall back to global setting
+    const userRow = await db.query('SELECT balance, stage2_min_balance, stage2_min_message FROM users WHERE id = $1', [req.user.id]);
+    const user = userRow.rows[0];
+    const userBalance = parseFloat(user?.balance ?? 0);
+
+    let minBal = parseFloat(user?.stage2_min_balance ?? 0);
+    let customMsg = user?.stage2_min_message || '';
+
+    // If no per-user setting, check global
+    if (minBal <= 0) {
+      const globalRow = await db.query("SELECT value FROM platform_settings WHERE key = 'stage2_min_balance'");
+      minBal = parseFloat(globalRow.rows[0]?.value ?? 0);
+      if (minBal > 0 && !customMsg) {
+        const globalMsgRow = await db.query("SELECT value FROM platform_settings WHERE key = 'stage2_min_message'");
+        customMsg = globalMsgRow.rows[0]?.value || '';
       }
+    }
+
+    if (minBal > 0 && userBalance < minBal) {
+      const announcement = customMsg || `You need a minimum balance of $${minBal.toFixed(2)} to unlock Stage 2. Please fund your account to continue.`;
+      return res.status(403).json({
+        error: 'insufficient_balance',
+        announcement,
+        required: minBal,
+        current: userBalance
+      });
     }
 
     // Check if user already has a pending request today
@@ -910,7 +918,6 @@ app.post('/api/user/request-stage2', authenticateToken, async (req, res) => {
       'INSERT INTO stage2_requests (user_id, message) VALUES ($1, $2)',
       [req.user.id, message || 'Request to unlock Stage 2 tasks']
     );
-    // Notify the user their request was received
     await db.query(
       'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
       [req.user.id, 'system', '⏳ Your Stage 2 unlock request has been submitted. Our team will review it shortly.', false]
@@ -947,7 +954,8 @@ app.get('/api/admin/users/:id', authenticateToken, isAdmin, async (req, res) => 
   try {
     const result = await db.query(`
       SELECT id, name, email, phone_number, balance, commission_total, funded, bank_linked,
-             last_login_ip, last_login_at, created_at, account_status
+             last_login_ip, last_login_at, created_at, account_status,
+             stage2_min_balance, stage2_min_message
       FROM users WHERE id = $1
     `, [req.params.id]);
     if (!result.rows[0]) return res.status(404).json({ error: 'User not found.' });
@@ -976,6 +984,21 @@ app.put('/api/admin/users/:id/status', authenticateToken, isAdmin, async (req, r
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update account status.' });
+  }
+});
+
+// --- ADMIN: UPDATE PER-USER STAGE 2 BALANCE SETTINGS ---
+app.put('/api/admin/users/:id/stage2-settings', authenticateToken, isAdmin, async (req, res) => {
+  const { stage2_min_balance, stage2_min_message } = req.body;
+  try {
+    await db.query(
+      'UPDATE users SET stage2_min_balance = $1, stage2_min_message = $2 WHERE id = $3',
+      [parseFloat(stage2_min_balance ?? 0), stage2_min_message || '', req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save Stage 2 settings.' });
   }
 });
 
@@ -1551,8 +1574,10 @@ app.delete('/api/admin/invite-codes/:id', authenticateToken, isAdmin, async (req
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_ip VARCHAR(64)`);
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ`);
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS account_status VARCHAR(20) DEFAULT 'active'`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stage2_min_balance NUMERIC(12,2) DEFAULT 0`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS stage2_min_message TEXT DEFAULT ''`);
     console.log('\u2713 stage2_requests + IP columns ready');
-    console.log('\u2713 account_status column ready');
+    console.log('\u2713 account_status + per-user stage2 columns ready');
   } catch (err) {
     console.error('DB init error:', err.message);
   }

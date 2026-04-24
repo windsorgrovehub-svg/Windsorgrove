@@ -542,7 +542,6 @@
       <a href="#" id="view-ledger" class="nav-btn" style="color:var(--text-dim)">Ledger Management</a>
       <a href="#" id="view-missions" class="nav-btn" style="color:var(--text-dim)">🔓 Mission Control</a>
       <a href="#" id="view-users" class="nav-btn" style="color:var(--text-dim)">👥 User Management</a>
-      <a href="#" id="view-payments" class="nav-btn" style="color:var(--text-dim)">💳 Payment Methods</a>
       <a href="#" id="view-support" class="nav-btn" style="color:var(--text-dim)">
         <span>Live Support</span>
         <span id="support-badge" style="display:none; background:#ef4444; color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:20px; margin-left:8px"></span>
@@ -887,6 +886,12 @@
             </div>
           </div>
 
+          <!-- Saved Payment Methods (per user) -->
+          <div style="background:#f0fdf4;border:1px solid rgba(16,185,129,0.15);border-radius:11px;padding:9px 12px;margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:7px">💳 Linked Payment Accounts</div>
+            <div id="udm-payment-methods" style="font-size:12px;color:var(--text-dim)">Loading…</div>
+          </div>
+
           <!-- Stage 2 — compact inline row -->
           <div style="background:#faf8ff;border:1px solid rgba(139,92,246,0.15);border-radius:11px;padding:9px 12px;margin-bottom:8px">
             <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:7px">🔓 Stage 2 Min Balance</div>
@@ -920,39 +925,6 @@
     </div>
 
     <!-- Payment Methods Section -->
-    <div id="payments-section" class="hidden">
-      <div style="max-width:960px;margin:0 auto">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;margin-bottom:28px">
-          <div>
-            <h2 style="font-size:1.9rem;margin-bottom:6px">💳 Payment <span class="grad-text">Methods</span></h2>
-            <p class="muted" style="font-size:14px">All saved bank accounts and payment methods submitted by users.</p>
-          </div>
-          <button onclick="loadPaymentMethods()" style="padding:10px 20px;background:#fff;border:1px solid var(--border);border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text)">↻ Refresh</button>
-        </div>
-
-        <!-- Search -->
-        <div style="position:relative;margin-bottom:16px">
-          <input type="text" id="pm-search" placeholder="🔍  Search by user, name, type…" oninput="filterPaymentMethods()" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:14px;font-size:14px;outline:none;background:#fff;color:var(--text)">
-        </div>
-
-        <div class="admin-card" style="overflow:hidden">
-          <table style="width:100%;border-collapse:collapse">
-            <thead>
-              <tr style="border-bottom:2px solid var(--border)">
-                <th style="padding:14px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)">User</th>
-                <th style="padding:14px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)">Type</th>
-                <th style="padding:14px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)">Account / Details</th>
-                <th style="padding:14px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)">Saved</th>
-              </tr>
-            </thead>
-            <tbody id="pm-table-body">
-              <tr><td colspan="4" style="padding:40px;text-align:center;color:var(--text-dim)">Loading…</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div id="pm-page-info" style="font-size:13px;color:var(--text-dim);margin-top:12px;text-align:center"></div>
-      </div>
-    </div>
 
     <!-- Stage 2 Unlock Requests Section -->
     <div id="stage2-section" class="hidden">
@@ -1458,7 +1430,7 @@
     }
 
     // --- View Switching ---
-    const ALL_VIEWS = ['mon', 'prop', 'invite', 'stage2', 'ledger', 'users', 'payments', 'support', 'settings'];
+    const ALL_VIEWS = ['mon', 'prop', 'invite', 'stage2', 'ledger', 'users', 'support', 'settings'];
     function switchView(active) {
         closeSidebar(); // always close mobile sidebar when switching sections
         ALL_VIEWS.forEach(v => {
@@ -1486,7 +1458,7 @@
     $("#view-ledger").onclick = (e) => { e.preventDefault(); switchView('ledger'); };
     $("#view-missions").onclick = (e) => { e.preventDefault(); switchView('stage2'); };
     $("#view-users").onclick  = (e) => { e.preventDefault(); switchView('users'); };
-    $("#view-payments").onclick = (e) => { e.preventDefault(); switchView('payments'); };
+    $("#view-payments") && ($("#view-payments").onclick = (e) => { e.preventDefault(); switchView('users'); });
     $("#view-support").onclick = (e) => { e.preventDefault(); switchView('support'); };
     $("#view-settings").onclick = (e) => { e.preventDefault(); switchView('settings'); };
 
@@ -2709,6 +2681,7 @@
     let allUsersFiltered = [];
     let usersCurrentPage = 1;
     let activeUserId = null;
+    let activeUserEmail = null;
     function usersGetPageSize() { return parseInt(document.getElementById('user-page-size')?.value || '10'); }
     function usersChangePage(dir) {
       const pageSize = usersGetPageSize();
@@ -2869,6 +2842,7 @@
 
     async function openUserDetailModal(userId) {
       activeUserId = userId;
+      activeUserEmail = null;
       document.getElementById('user-detail-modal').style.display = 'flex';
       const fmtM = v => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(v);
       try {
@@ -2879,6 +2853,7 @@
         document.getElementById('udm-avatar').textContent = initials;
         document.getElementById('udm-name').textContent = u.name;
         document.getElementById('udm-email').textContent = u.email;
+        activeUserEmail = u.email;
         document.getElementById('udm-balance').textContent = fmtM(u.balance);
         document.getElementById('udm-commission').textContent = fmtM(u.commission_total || 0);
         document.getElementById('udm-phone').textContent = u.phone_number || '—';
@@ -2895,8 +2870,40 @@
         // Per-user Stage 2 balance settings
         document.getElementById('udm-stage2-min').value = parseFloat(u.stage2_min_balance ?? 0);
         document.getElementById('udm-stage2-msg').value = u.stage2_min_message || '';
+
+        // Load this user's saved payment methods
+        loadUserPaymentMethods(userId);
       } catch(e) {
         toast('Failed to load user details.');
+      }
+    }
+
+    const PM_ICONS_MODAL = { bank:'🏦', crypto:'₿', paypal:'💳', wise:'🌐' };
+
+    async function loadUserPaymentMethods(userId) {
+      const el = document.getElementById('udm-payment-methods');
+      if (!el) return;
+      el.textContent = 'Loading…';
+      try {
+        const res = await adminFetch(`${API_URL}/admin/users/${userId}/payment-methods`);
+        if (!res.ok) throw new Error();
+        const methods = await res.json();
+        if (!methods.length) {
+          el.innerHTML = '<span style="color:var(--text-dim);font-style:italic">No saved accounts yet</span>';
+          return;
+        }
+        el.innerHTML = methods.map(m => `
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.05)">
+            <span style="font-size:15px">${PM_ICONS_MODAL[m.source_type]||'💳'}</span>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:12px;color:var(--text)">${m.nickname||m.source_type.toUpperCase()}</div>
+              <div style="font-size:11px;color:var(--text-dim)">${m.summary||''}</div>
+            </div>
+            <span style="font-size:10px;background:var(--bg);border:1px solid var(--border);padding:2px 7px;border-radius:6px;font-weight:700;color:var(--text-dim)">${m.source_type.toUpperCase()}</span>
+          </div>
+        `).join('');
+      } catch(e) {
+        el.innerHTML = '<span style="color:var(--text-dim)">—</span>';
       }
     }
 

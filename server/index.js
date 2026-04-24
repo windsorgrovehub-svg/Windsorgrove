@@ -933,6 +933,20 @@ app.get('/api/admin/payment-methods', authenticateToken, isAdmin, async (req, re
   }
 });
 
+// ADMIN: View saved payment methods for a specific user
+app.get('/api/admin/users/:id/payment-methods', authenticateToken, isAdmin, async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT id, source_type, nickname, summary, details, created_at FROM payment_methods WHERE user_id = $1 ORDER BY created_at DESC',
+      [req.params.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch payment methods.' });
+  }
+});
+
 // ═══════════════════════════════════════════════
 
 // --- USER: REQUEST STAGE 2 UNLOCK ---

@@ -140,12 +140,6 @@
         </div>
       </div>
 
-      <!-- Saved methods -->
-      <div class="saved-section" id="saved-section" style="display:none">
-        <div class="saved-label">💾 Saved Payment Methods</div>
-        <div class="saved-list" id="saved-list"></div>
-      </div>
-
       <!-- Step 1: Method tabs -->
       <div class="wd-card">
         <div class="wd-card-title"><span>1</span> Withdrawal Method</div>
@@ -305,47 +299,6 @@
       document.getElementById('sum-total').textContent = fmt(amt);
     }
 
-    // Load saved payment methods
-    async function loadSavedMethods() {
-      try {
-        const res = await fetch(`${API_URL}/user/payment-methods`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('wgh-token')}` }
-        });
-        if (!res.ok) return;
-        const methods = await res.json();
-        if (!methods.length) return;
-        const section = document.getElementById('saved-section');
-        const list = document.getElementById('saved-list');
-        section.style.display = 'block';
-        list.innerHTML = methods.map(m => `
-          <div class="saved-item" onclick="prefillSaved(${JSON.stringify(m).replace(/"/g,'&quot;')})">
-            <div class="saved-item-icon">${SOURCE_ICONS[m.source_type] || '💳'}</div>
-            <div>
-              <div class="saved-item-name">${m.nickname || m.source_type.toUpperCase()}</div>
-              <div class="saved-item-sub">${m.summary || ''}</div>
-            </div>
-          </div>
-        `).join('');
-      } catch(e) {}
-    }
-
-    function prefillSaved(m) {
-      const tab = document.querySelector(`.m-tab[data-method="${m.source_type}"]`);
-      if (tab) selectMethod(tab, m.source_type);
-      const d = m.details || {};
-      setTimeout(() => {
-        Object.keys(d).forEach(label => {
-          const fields = document.querySelectorAll('#destination-fields input, #destination-fields select');
-          fields.forEach(f => {
-            const lbl = (f.closest('div')?.querySelector('label')?.textContent || '').trim();
-            if (lbl.toLowerCase() === label.toLowerCase()) f.value = d[label];
-          });
-        });
-      }, 50);
-      document.querySelectorAll('.saved-item').forEach(i => i.classList.remove('selected'));
-      event.currentTarget?.classList.add('selected');
-    }
-
     // Auth guard + init
     let _retries = 0;
     function initPage() {
@@ -357,7 +310,6 @@
       }
       availableBalance = Math.max(0, state.user.balance || 0);
       document.getElementById('hero-balance').textContent = fmt(availableBalance);
-      loadSavedMethods();
     }
     initPage();
 

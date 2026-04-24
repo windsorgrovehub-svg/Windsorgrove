@@ -1214,6 +1214,44 @@
           </div>
         </div>
 
+        <!-- Deposit Payment Details Card -->
+        <div class="admin-card card-pad" style="margin-bottom:20px">
+          <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:20px">
+            <div style="width:44px;height:44px;border-radius:12px;background:#ecfdf5;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏦</div>
+            <div>
+              <div style="font-weight:700;font-size:16px;margin-bottom:4px">Deposit Payment Details</div>
+              <div style="font-size:13px;color:var(--text-dim)">These details are shown to clients on the deposit page so they know where to send funds. Configure your bank, MoMo, or crypto receiving account here.</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+            <div>
+              <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:6px;display:block">Method Label</label>
+              <input type="text" id="dep-method" class="input" placeholder="e.g. MTN MoMo, Bank Transfer, USDC" style="background:#fafbfc;border:1px solid var(--border);color:var(--text)">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:6px;display:block">Account Holder / Name</label>
+              <input type="text" id="dep-holder" class="input" placeholder="e.g. Windsor Grove Hub Ltd" style="background:#fafbfc;border:1px solid var(--border);color:var(--text)">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:6px;display:block">Account / Phone / Wallet Number</label>
+              <input type="text" id="dep-account" class="input" placeholder="e.g. 024 064 2807 or IBAN or 0x..." style="background:#fafbfc;border:1px solid var(--border);color:var(--text)">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:6px;display:block">Bank / Network Name</label>
+              <input type="text" id="dep-bank" class="input" placeholder="e.g. MTN, Barclays, Ethereum" style="background:#fafbfc;border:1px solid var(--border);color:var(--text)">
+            </div>
+            <div style="grid-column:span 2">
+              <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:6px;display:block">Instructions for Client (shown below the details)</label>
+              <textarea id="dep-instructions" class="input" rows="2" placeholder="e.g. Send exact amount and use your name as payment reference. Screenshot required." style="background:#fafbfc;border:1px solid var(--border);color:var(--text);resize:vertical;font-family:inherit"></textarea>
+            </div>
+          </div>
+          <div id="dep-preview" style="font-size:13px;color:var(--text-dim);margin-bottom:16px;padding:10px 14px;background:#f0fdf4;border-radius:10px;border:1px solid rgba(16,185,129,0.2)">No deposit details configured yet.</div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <button onclick="saveDepositDetails()" class="btn btn-primary" style="padding:12px 28px">Save Deposit Details</button>
+            <button onclick="loadSettings()" style="padding:12px 18px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--text-dim)">↻ Reset</button>
+          </div>
+        </div>
+
         <!-- Future Settings Placeholder -->
         <div class="admin-card card-pad" style="opacity:.55">
           <div style="display:flex;align-items:center;gap:14px">
@@ -2606,6 +2644,31 @@
             s2preview.innerHTML = `<strong>No minimum set.</strong> Users can request Stage 2 regardless of balance.`;
           }
         }
+
+        // Deposit payment details
+        const depPreview = document.getElementById('dep-preview');
+        const depMethod = data.deposit_method || '';
+        const depHolder = data.deposit_holder || '';
+        const depAccount = data.deposit_account || '';
+        const depBank = data.deposit_bank || '';
+        const depInstructions = data.deposit_instructions || '';
+        const depMethodEl = document.getElementById('dep-method');
+        const depHolderEl = document.getElementById('dep-holder');
+        const depAccountEl = document.getElementById('dep-account');
+        const depBankEl = document.getElementById('dep-bank');
+        const depInstrEl = document.getElementById('dep-instructions');
+        if (depMethodEl) depMethodEl.value = depMethod;
+        if (depHolderEl) depHolderEl.value = depHolder;
+        if (depAccountEl) depAccountEl.value = depAccount;
+        if (depBankEl) depBankEl.value = depBank;
+        if (depInstrEl) depInstrEl.value = depInstructions;
+        if (depPreview) {
+          if (depAccount || depHolder) {
+            depPreview.innerHTML = `<strong>${depMethod || 'Payment'}:</strong> ${depHolder} &nbsp;|&nbsp; <strong>${depAccount}</strong>${depBank ? ` &nbsp;(${depBank})` : ''}${depInstructions ? `<br><em style="opacity:.75">${depInstructions}</em>` : ''}`;
+          } else {
+            depPreview.textContent = 'No deposit details configured yet.';
+          }
+        }
       } catch(e) { if (preview) preview.textContent = 'Error loading settings.'; }
     }
 
@@ -2621,6 +2684,25 @@
         });
         if (!res.ok) { toast('Failed to save settings.'); return; }
         toast('✓ Fee settings saved successfully.');
+        loadSettings();
+      } catch(e) { toast('Network error.'); }
+    }
+
+    async function saveDepositDetails() {
+      const method = document.getElementById('dep-method')?.value.trim() || '';
+      const holder = document.getElementById('dep-holder')?.value.trim() || '';
+      const account = document.getElementById('dep-account')?.value.trim() || '';
+      const bank = document.getElementById('dep-bank')?.value.trim() || '';
+      const instructions = document.getElementById('dep-instructions')?.value.trim() || '';
+      if (!account && !holder) { toast('Please enter at least an account number or holder name.'); return; }
+      try {
+        const res = await adminFetch(`${API_URL}/admin/settings`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deposit_method: method, deposit_holder: holder, deposit_account: account, deposit_bank: bank, deposit_instructions: instructions })
+        });
+        if (!res.ok) { toast('Failed to save deposit details.'); return; }
+        toast('✓ Deposit payment details saved.');
         loadSettings();
       } catch(e) { toast('Network error.'); }
     }

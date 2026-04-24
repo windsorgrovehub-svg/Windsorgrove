@@ -129,12 +129,13 @@
         </div>
       </div>
 
-      <!-- Saved methods -->
-      <div class="saved-section" id="saved-section" style="display:none">
-        <div class="saved-label">💾 Saved Payment Methods</div>
-        <div class="saved-list" id="saved-list"></div>
+      <!-- Admin-configured payment details -->
+      <div id="payment-details-card" style="display:none;background:#fff;border:1.5px solid #d1fae5;border-radius:18px;padding:16px 18px;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#059669;margin-bottom:10px">🏦 Send Payment To</div>
+        <div id="payment-details-body"></div>
       </div>
 
+      <div id="payment-details-loading" style="background:#f0fdf4;border:1px solid #d1fae5;border-radius:14px;padding:14px 16px;margin-bottom:14px;font-size:13px;color:var(--text-dim);display:block">Loading payment details…</div>
       <!-- Step 1: Source type tabs -->
       <div class="dp-card">
         <div class="dp-card-title"><span>1</span> Choose Payment Type</div>
@@ -160,7 +161,7 @@
 
       <!-- Step 2: Account details -->
       <div class="dp-card">
-        <div class="dp-card-title"><span>2</span> Account Details</div>
+        <div class="dp-card-title"><span>2</span> Your Account Details <span style="font-size:11px;font-weight:500;color:var(--text-dim);background:none;width:auto;height:auto;border-radius:0">(for admin records)</span></div>
         <div class="form-fields" id="source-fields">
           <div class="form-row">
             <div><label>Account Holder Name</label><input type="text" class="input" id="holder-name" placeholder="Full name on account"></div>
@@ -171,11 +172,6 @@
             <div><label>SWIFT / BIC</label><input type="text" class="input" id="swift" placeholder="e.g. BARCGB22"></div>
           </div>
           <div><label>Country</label><input type="text" class="input" id="country" placeholder="Country of your bank"></div>
-        </div>
-        <div class="save-row" style="margin-top:10px">
-          <input type="checkbox" id="save-method">
-          <label for="save-method">Save this payment method for future use</label>
-        </div>
       </div>
 
       <!-- Step 3: Amount + agree -->
@@ -278,58 +274,43 @@
       document.getElementById('source-fields').innerHTML = sourceFieldTemplates[type];
     }
 
-    // Load saved payment methods
-    async function loadSavedMethods() {
+    // Load admin-configured deposit payment details
+    async function loadDepositDetails() {
+      const card = document.getElementById('payment-details-card');
+      const body = document.getElementById('payment-details-body');
+      const loading = document.getElementById('payment-details-loading');
       try {
-        const res = await fetch(`${API_URL}/user/payment-methods`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('wgh-token')}` }
-        });
-        if (!res.ok) return;
-        const methods = await res.json();
-        if (!methods.length) return;
-        const section = document.getElementById('saved-section');
-        const list = document.getElementById('saved-list');
-        section.style.display = 'block';
-        list.innerHTML = methods.map(m => `
-          <div class="saved-item" onclick="prefillSaved(${JSON.stringify(m).replace(/"/g,'&quot;')})">
-            <div class="saved-item-icon">${SOURCE_ICONS[m.source_type] || '💳'}</div>
-            <div>
-              <div class="saved-item-name">${m.nickname || m.source_type.toUpperCase()}</div>
-              <div class="saved-item-sub">${m.summary || ''}</div>
-            </div>
-            <button class="saved-item-del" onclick="event.stopPropagation();deleteMethod(${m.id})" title="Remove">✕</button>
-          </div>
-        `).join('');
-      } catch(e) {}
+        const res = await fetch(`${API_URL}/deposit-details`);
+        const d = await res.json();
+        if (loading) loading.style.display = 'none';
+        if (!d.deposit_account && !d.deposit_holder) {
+          // No details set yet — hide card silently
+          return;
+        }
+        if (card) card.style.display = 'block';
+        const rows = [
+          d.deposit_method   ? `<div style="font-size:13px;color:var(--text-dim);margin-bottom:6px"><strong>${d.deposit_method}</strong></div>` : '',
+          d.deposit_holder   ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">Account Name</span><span style="font-weight:700">${d.deposit_holder}</span></div>` : '',
+          d.deposit_account  ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px">
+            <span style="color:var(--text-dim);font-weight:600">Account / Number</span>
+            <span style="display:flex;align-items:center;gap:6px">
+              <strong id="dep-acc-val">${d.deposit_account}</strong>
+              <button onclick="copyDepAccount()" style="background:#dcfce7;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;color:#059669">📋 Copy</button>
+            </span>
+          </div>` : '',
+          d.deposit_bank     ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">Bank / Network</span><span style="font-weight:700">${d.deposit_bank}</span></div>` : '',
+          d.deposit_instructions ? `<div style="margin-top:8px;padding:8px 10px;background:#f0fdf4;border-radius:9px;font-size:12px;color:#065f46;line-height:1.5">📌 ${d.deposit_instructions}</div>` : ''
+        ].filter(Boolean).join('');
+        if (body) body.innerHTML = rows;
+      } catch(e) {
+        if (loading) loading.style.display = 'none';
+      }
     }
 
-    function prefillSaved(m) {
-      // Select the right tab
-      const tab = document.querySelector(`.s-tab[data-source="${m.source_type}"]`);
-      if (tab) selectSource(tab, m.source_type);
-      // Prefill fields from details
-      const d = m.details || {};
-      setTimeout(() => {
-        Object.keys(d).forEach(label => {
-          const fields = document.querySelectorAll('#source-fields input, #source-fields select');
-          fields.forEach(f => {
-            if ((f.previousElementSibling?.textContent || f.closest('div')?.querySelector('label')?.textContent || '').trim().toLowerCase() === label.toLowerCase()) {
-              f.value = d[label];
-            }
-          });
-        });
-      }, 50);
-      document.querySelectorAll('.saved-item').forEach(i => i.classList.remove('selected'));
-      event.currentTarget?.classList.add('selected');
-    }
-
-    async function deleteMethod(id) {
-      if (!confirm('Remove this saved payment method?')) return;
-      await fetch(`${API_URL}/user/payment-methods/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('wgh-token')}` }
-      });
-      loadSavedMethods();
+    function copyDepAccount() {
+      const val = document.getElementById('dep-acc-val')?.textContent;
+      if (!val) return;
+      navigator.clipboard.writeText(val).then(() => toast('✓ Account number copied!'));
     }
 
     async function submitFundingSource() {
@@ -353,25 +334,9 @@
         });
       });
 
-      const saveMethod = document.getElementById('save-method')?.checked;
       const token = localStorage.getItem('wgh-token');
 
       try {
-        // Save payment method first if checked
-        if (saveMethod) {
-          const firstVal = Object.values(source_details)[0] || '';
-          await fetch(`${API_URL}/user/payment-methods`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({
-              source_type: currentSource,
-              details: source_details,
-              nickname: `${currentSource.toUpperCase()} — ${firstVal.substring(0, 20)}`,
-              summary: firstVal.substring(0, 40)
-            })
-          });
-        }
-
         // Submit deposit request
         const res = await fetch(`${API_URL}/user/request-deposit`, {
           method: 'POST',
@@ -395,7 +360,7 @@
       }
     }
 
-    loadSavedMethods();
+    loadDepositDetails();
   </script>
 </body>
 </html>

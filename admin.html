@@ -1285,34 +1285,6 @@
           </div>
         </div>
 
-        <!-- Stage 2 Minimum Balance Card -->
-        <div class="admin-card card-pad" style="margin-bottom:20px">
-          <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:20px">
-            <div style="width:44px;height:44px;border-radius:12px;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔓</div>
-            <div>
-              <div style="font-weight:700;font-size:16px;margin-bottom:4px">Stage 2 Minimum Balance</div>
-              <div style="font-size:13px;color:var(--text-dim)">Users must have at least this balance before they can request Stage 2 unlock. If their balance is below this amount, they will receive an announcement and be blocked from proceeding.</div>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
-            <div class="field">
-              <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:8px;display:block">Minimum Balance (USD)</label>
-              <input type="number" id="setting-stage2-min-balance" class="input" step="1" min="0" placeholder="e.g. 100" style="background:#fafbfc;border:1px solid var(--border);color:var(--text)">
-            </div>
-            <div class="field">
-              <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:8px;display:block">Announcement Message</label>
-              <input type="text" id="setting-stage2-message" class="input" placeholder="e.g. Fund your account to unlock Stage 2" style="background:#fafbfc;border:1px solid var(--border);color:var(--text)">
-            </div>
-          </div>
-          <div id="stage2-bal-preview" style="font-size:13px;color:var(--text-dim);margin-bottom:20px;padding:10px 14px;background:#faf8ff;border-radius:10px;border:1px solid var(--border)">
-            Loading…
-          </div>
-          <div style="display:flex;gap:12px;align-items:center">
-            <button onclick="saveStage2BalSettings()" class="btn btn-primary" style="padding:12px 28px">Save Balance Requirement</button>
-            <button onclick="loadSettings()" style="padding:12px 18px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--text-dim)">↻ Reset</button>
-          </div>
-        </div>
-
 
         <!-- Future Settings Placeholder -->
         <div class="admin-card card-pad" style="opacity:.55">

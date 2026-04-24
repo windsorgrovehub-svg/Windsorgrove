@@ -1141,8 +1141,19 @@
             <button id="bulk-toggle-btn" onclick="enterBulkMode()" title="Select messages to delete"
               style="width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);background:#fff;color:var(--text-dim);cursor:pointer;display:grid;place-items:center;flex-shrink:0;transition:all .15s;font-size:16px"
               onmouseover="this.style.borderColor='var(--accent1)';this.style.color='var(--accent1)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-dim)'">
-      <div style="max-width:1060px;margin:0 auto">
+              ☑
+            </button>
+            <button id="reply-btn" class="sthread-send" onclick="sendAdminReply()" title="Send">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /#support-section -->
 
+    <!-- Payment Methods Section -->
+    <div id="paymethods-section" class="hidden">
+      <div style="max-width:1060px;margin:0 auto">
         <!-- Header -->
         <div style="margin-bottom:28px">
           <h2 style="font-size:1.9rem;margin-bottom:6px">💳 Payment <span class="grad-text">Methods</span></h2>

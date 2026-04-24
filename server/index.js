@@ -427,6 +427,20 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
       [req.user.id, 'pending_commission', commission, txNote]
     );
 
+    // --- $0.01 per-task deduction for paid daily missions (Stage 2+) ---
+    // Trial tasks (Stage 1 Day 1) are exempt
+    if (isTrialDone) {
+      const taskFee = 0.01;
+      await db.query(
+        'UPDATE users SET balance = GREATEST(0, balance - $1) WHERE id = $2',
+        [taskFee, req.user.id]
+      );
+      await db.query(
+        'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
+        [req.user.id, 'task_fee', -taskFee, `Task Processing Fee — ${hotel.name}`]
+      );
+    }
+
     // Check paid sets count (how many full daily sets completed total)
     const paidSetsQuery = await db.query(
       "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Daily Task Commission%'",

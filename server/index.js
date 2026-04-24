@@ -1525,25 +1525,18 @@ app.get('/api/admin/settings', authenticateToken, isAdmin, async (req, res) => {
 });
 
 app.put('/api/admin/settings', authenticateToken, isAdmin, async (req, res) => {
-  const { withdrawal_fee_type, withdrawal_fee_value, stage2_min_balance, stage2_min_message,
-          deposit_method, deposit_holder, deposit_account, deposit_bank, deposit_instructions } = req.body;
   try {
     const upsert = async (key, value) => {
       await db.query(
         `INSERT INTO platform_settings (key, value, updated_at) VALUES ($1, $2, NOW())
          ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
-        [key, String(value)]
+        [key, String(value ?? '')]
       );
     };
-    if (withdrawal_fee_type !== undefined) await upsert('withdrawal_fee_type', withdrawal_fee_type);
-    if (withdrawal_fee_value !== undefined) await upsert('withdrawal_fee_value', withdrawal_fee_value);
-    if (stage2_min_balance !== undefined) await upsert('stage2_min_balance', stage2_min_balance);
-    if (stage2_min_message !== undefined) await upsert('stage2_min_message', stage2_min_message);
-    if (deposit_method !== undefined) await upsert('deposit_method', deposit_method);
-    if (deposit_holder !== undefined) await upsert('deposit_holder', deposit_holder);
-    if (deposit_account !== undefined) await upsert('deposit_account', deposit_account);
-    if (deposit_bank !== undefined) await upsert('deposit_bank', deposit_bank);
-    if (deposit_instructions !== undefined) await upsert('deposit_instructions', deposit_instructions);
+    // Upsert any key sent in body
+    for (const [key, value] of Object.entries(req.body)) {
+      await upsert(key, value);
+    }
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -1551,11 +1544,11 @@ app.put('/api/admin/settings', authenticateToken, isAdmin, async (req, res) => {
   }
 });
 
-// PUBLIC: Deposit payment details (no auth — shown on client deposit page)
+// PUBLIC: Deposit payment details per method (no auth)
 app.get('/api/deposit-details', async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT key, value FROM platform_settings WHERE key IN ('deposit_method','deposit_holder','deposit_account','deposit_bank','deposit_instructions')`
+      `SELECT key, value FROM platform_settings WHERE key LIKE 'pm_%'`
     );
     const details = {};
     result.rows.forEach(r => { details[r.key] = r.value; });

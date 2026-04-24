@@ -272,45 +272,59 @@
       el.classList.add('active');
       currentSource = type;
       document.getElementById('source-fields').innerHTML = sourceFieldTemplates[type];
+      showMethodDetails(type);
     }
 
-    // Load admin-configured deposit payment details
+    // Load admin-configured deposit payment details per method
+    let allDepositDetails = {};
+
     async function loadDepositDetails() {
-      const card = document.getElementById('payment-details-card');
-      const body = document.getElementById('payment-details-body');
-      const loading = document.getElementById('payment-details-loading');
       try {
         const res = await fetch(`${API_URL}/deposit-details`);
-        const d = await res.json();
+        allDepositDetails = await res.json();
+        const loading = document.getElementById('payment-details-loading');
         if (loading) loading.style.display = 'none';
-        if (!d.deposit_account && !d.deposit_holder) {
-          // No details set yet — hide card silently
-          return;
-        }
-        if (card) card.style.display = 'block';
-        const rows = [
-          d.deposit_method   ? `<div style="font-size:13px;color:var(--text-dim);margin-bottom:6px"><strong>${d.deposit_method}</strong></div>` : '',
-          d.deposit_holder   ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">Account Name</span><span style="font-weight:700">${d.deposit_holder}</span></div>` : '',
-          d.deposit_account  ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px">
-            <span style="color:var(--text-dim);font-weight:600">Account / Number</span>
-            <span style="display:flex;align-items:center;gap:6px">
-              <strong id="dep-acc-val">${d.deposit_account}</strong>
-              <button onclick="copyDepAccount()" style="background:#dcfce7;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;color:#059669">📋 Copy</button>
-            </span>
-          </div>` : '',
-          d.deposit_bank     ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">Bank / Network</span><span style="font-weight:700">${d.deposit_bank}</span></div>` : '',
-          d.deposit_instructions ? `<div style="margin-top:8px;padding:8px 10px;background:#f0fdf4;border-radius:9px;font-size:12px;color:#065f46;line-height:1.5">📌 ${d.deposit_instructions}</div>` : ''
-        ].filter(Boolean).join('');
-        if (body) body.innerHTML = rows;
+        showMethodDetails(currentSource);
       } catch(e) {
+        const loading = document.getElementById('payment-details-loading');
         if (loading) loading.style.display = 'none';
       }
+    }
+
+    function showMethodDetails(method) {
+      const card = document.getElementById('payment-details-card');
+      const body = document.getElementById('payment-details-body');
+      if (!card || !body) return;
+      const d = allDepositDetails;
+      const acc   = d[`pm_${method}_account`] || '';
+      const holder= d[`pm_${method}_holder`] || '';
+      const bank  = d[`pm_${method}_bank`] || '';
+      const net   = d[`pm_${method}_network`] || '';
+      const swift = d[`pm_${method}_swift`] || '';
+      const instr = d[`pm_${method}_instructions`] || '';
+      if (!acc && !holder) { card.style.display = 'none'; return; }
+      card.style.display = 'block';
+      const rows = [
+        holder  ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">Account Name</span><span style="font-weight:700">${holder}</span></div>` : '',
+        acc     ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px">
+          <span style="color:var(--text-dim);font-weight:600">Account / Number</span>
+          <span style="display:flex;align-items:center;gap:6px">
+            <strong id="dep-acc-val">${acc}</strong>
+            <button onclick="copyDepAccount()" style="background:#dcfce7;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;color:#059669">📋 Copy</button>
+          </span>
+        </div>` : '',
+        bank    ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">Bank / Network</span><span style="font-weight:700">${bank}</span></div>` : '',
+        net     ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">Network</span><span style="font-weight:700">${net}</span></div>` : '',
+        swift   ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">${method==='wise'?'Currency':'SWIFT / BIC'}</span><span style="font-weight:700">${swift}</span></div>` : '',
+        instr   ? `<div style="margin-top:8px;padding:8px 10px;background:#f0fdf4;border-radius:9px;font-size:12px;color:#065f46;line-height:1.5">📌 ${instr}</div>` : ''
+      ].filter(Boolean).join('');
+      body.innerHTML = rows;
     }
 
     function copyDepAccount() {
       const val = document.getElementById('dep-acc-val')?.textContent;
       if (!val) return;
-      navigator.clipboard.writeText(val).then(() => toast('✓ Account number copied!'));
+      navigator.clipboard.writeText(val).then(() => toast('✓ Copied!'));
     }
 
     async function submitFundingSource() {

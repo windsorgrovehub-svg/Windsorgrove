@@ -774,6 +774,14 @@
                 </tbody>
               </table>
             </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:14px 20px;border-top:1px solid var(--border);background:#fafafa">
+              <div id="prop-page-info" style="font-size:13px;color:var(--text-dim);font-weight:600"></div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button id="prop-prev-btn" onclick="propChangePage(-1)" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--text)">← Prev</button>
+                <span id="prop-page-num" style="font-size:13px;font-weight:700;color:var(--text);min-width:80px;text-align:center">Page 1 / 1</span>
+                <button id="prop-next-btn" onclick="propChangePage(1)" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--text)">Next →</button>
+              </div>
+            </div>
           </div>
        </div>
 
@@ -863,6 +871,14 @@
                 <tr><td colspan="6" style="padding:40px;text-align:center;color:var(--text-dim)">Loading codes…</td></tr>
               </tbody>
             </table>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:14px 20px;border-top:1px solid var(--border);background:#fafafa">
+            <div id="invite-page-info" style="font-size:13px;color:var(--text-dim);font-weight:600"></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="invite-prev-btn" onclick="inviteChangePage(-1)" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--text)">← Prev</button>
+              <span id="invite-page-num" style="font-size:13px;font-weight:700;color:var(--text);min-width:80px;text-align:center">Page 1 / 1</span>
+              <button id="invite-next-btn" onclick="inviteChangePage(1)" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--text)">Next →</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1086,6 +1102,14 @@
               </tbody>
             </table>
           </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:14px 20px;border-top:1px solid var(--border);background:#fafafa">
+            <div id="s2-page-info" style="font-size:13px;color:var(--text-dim);font-weight:600"></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="s2-prev-btn" onclick="s2ChangePage(-1)" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--text)">← Prev</button>
+              <span id="s2-page-num" style="font-size:13px;font-weight:700;color:var(--text);min-width:80px;text-align:center">Page 1 / 1</span>
+              <button id="s2-next-btn" onclick="s2ChangePage(1)" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--text)">Next →</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1157,6 +1181,14 @@
                   <tr><td colspan="7" style="padding:40px;text-align:center;color:var(--text-dim)">Loading requests…</td></tr>
                 </tbody>
               </table>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:14px 20px;border-top:1px solid var(--border);background:#fafafa">
+              <div id="ledger-page-info" style="font-size:13px;color:var(--text-dim);font-weight:600"></div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button id="ledger-prev-btn" onclick="ledgerChangePage(-1)" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--text)">← Prev</button>
+                <span id="ledger-page-num" style="font-size:13px;font-weight:700;color:var(--text);min-width:80px;text-align:center">Page 1 / 1</span>
+                <button id="ledger-next-btn" onclick="ledgerChangePage(1)" style="padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:var(--text)">Next →</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1917,16 +1949,26 @@
        const container = document.getElementById('prop-table-body');
        try {
           const res = await fetch(`${API_URL}/hotels`);
-          const hotels = await res.json();
-          
-          if (hotels.length === 0) {
-             container.innerHTML = `<tr><td colspan="5" style="padding:40px;text-align:center;color:var(--text-dim)">No properties in portfolio.</td></tr>`;
-             return;
-          }
-
-          container.innerHTML = hotels.map(h => {
-            const hJson = JSON.stringify(h).replace(/'/g, "&#39;");
-            return `
+          allPropsData = await res.json();
+          propCurrentPage = 1;
+          renderPropTable(allPropsData);
+       } catch (e) {
+          container.innerHTML = `<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--text-dim)">Failed to load properties.</td></tr>`;
+          updatePropPagination(0);
+       }
+    }
+    function renderPropTable(hotels) {
+      const container = document.getElementById('prop-table-body');
+      updatePropPagination(hotels.length);
+      if (hotels.length === 0) {
+        container.innerHTML = `<tr><td colspan="5" style="padding:40px;text-align:center;color:var(--text-dim)">No properties in portfolio.</td></tr>`;
+        return;
+      }
+      const start = (propCurrentPage - 1) * TABLE_PAGE_SIZE;
+      const page = hotels.slice(start, start + TABLE_PAGE_SIZE);
+      container.innerHTML = page.map(h => {
+        const hJson = JSON.stringify(h).replace(/'/g, "&#39;");
+        return `
             <tr style="border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='#fafaf8'" onmouseout="this.style.background=''">
               <td class="admin-td" data-label="Property">
                 <div style="display:flex;align-items:center;gap:12px">
@@ -1947,11 +1989,7 @@
                 </div>
               </td>
             </tr>`;
-          }).join('');
-
-       } catch (e) {
-          container.innerHTML = `<tr><td colspan="5" style="padding:30px;text-align:center;color:var(--text-dim)">Failed to load properties.</td></tr>`;
-       }
+      }).join('');
     }
 
     // Open Edit Modal
@@ -2024,18 +2062,28 @@
       const table = $("#invite-table-body");
       try {
         const res = await adminFetch(`${API_URL}/admin/invite-codes`);
-        const codes = await res.json();
-
-        if (codes.length === 0) {
-          table.innerHTML = `<tr><td colspan="6" style="padding:40px;text-align:center;color:var(--text-dim)">No invite codes yet. Generate one above.</td></tr>`;
-          return;
-        }
-
-        table.innerHTML = codes.map(c => {
-          const statusColor = c.used ? '#ef4444' : '#10b981';
-          const statusBg = c.used ? 'rgba(239,68,68,.1)' : 'rgba(16,185,129,.1)';
-          const createdDate = new Date(c.created_at).toLocaleDateString('en-US', {day:'numeric',month:'short',year:'numeric'});
-          return `
+        allInviteData = await res.json();
+        inviteCurrentPage = 1;
+        renderInviteTable(allInviteData);
+      } catch(e) {
+        table.innerHTML = `<tr><td colspan="6" style="padding:30px;text-align:center;color:var(--text-dim)">Failed to load codes.</td></tr>`;
+        updateInvitePagination(0);
+      }
+    }
+    function renderInviteTable(codes) {
+      const table = $("#invite-table-body");
+      updateInvitePagination(codes.length);
+      if (codes.length === 0) {
+        table.innerHTML = `<tr><td colspan="6" style="padding:40px;text-align:center;color:var(--text-dim)">No invite codes yet. Generate one above.</td></tr>`;
+        return;
+      }
+      const start = (inviteCurrentPage - 1) * TABLE_PAGE_SIZE;
+      const page = codes.slice(start, start + TABLE_PAGE_SIZE);
+      table.innerHTML = page.map(c => {
+        const statusColor = c.used ? '#ef4444' : '#10b981';
+        const statusBg = c.used ? 'rgba(239,68,68,.1)' : 'rgba(16,185,129,.1)';
+        const createdDate = new Date(c.created_at).toLocaleDateString('en-US', {day:'numeric',month:'short',year:'numeric'});
+        return `
           <tr style="border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='#fafaf8'" onmouseout="this.style.background=''">
             <td class="admin-td" data-label="Code">
               <code style="background:linear-gradient(135deg,#1e293b,#334155);color:#e2e8f0;padding:4px 12px;border-radius:6px;font-size:12px;font-weight:800;letter-spacing:.1em">${c.code}</code>
@@ -2050,10 +2098,7 @@
               ${!c.used ? `<button onclick="deleteInviteCode(${c.id})" style="padding:6px 14px;border-radius:8px;border:1px solid #fecaca;background:#fff;font-size:11px;font-weight:700;cursor:pointer;color:#dc2626;transition:all .15s" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='#fff'">🗑 Delete</button>` : '<span style="font-size:11px;color:var(--text-dim);opacity:.5">—</span>'}
             </td>
           </tr>`;
-        }).join('');
-      } catch(e) {
-        table.innerHTML = `<tr><td colspan="6" style="padding:30px;text-align:center;color:var(--text-dim)">Failed to load codes.</td></tr>`;
-      }
+      }).join('');
     }
 
     async function createInviteCode() {
@@ -2461,6 +2506,7 @@
         const approved = allRequests.filter(r => r.status === 'approved').length;
         const s = id => { const el = $(`#lstat-${id}`); if(el) el.textContent = id === 'pending' ? pending : id === 'deposits' ? deposits : id === 'withdrawals' ? withdrawals : approved; };
         ['pending','deposits','withdrawals','approved'].forEach(s);
+        ledgerCurrentPage = 1;
         renderRequests(allRequests, currentLedgerTab);
       } catch(e) {
         container.innerHTML = `<tr><td colspan="7" style="padding:40px;text-align:center;color:var(--text-dim)">Failed to load requests.</td></tr>`;
@@ -2471,7 +2517,9 @@
       const container = $('#requests-table-body');
       const countEl = $('#req-count');
       const filtered = tab === 'pending' ? requests.filter(r => r.status === 'pending') : requests;
+      allLedgerFiltered = filtered;
       if (countEl) countEl.textContent = `${filtered.length} request${filtered.length !== 1 ? 's' : ''}`;
+      updateLedgerPagination(filtered.length);
 
       if (filtered.length === 0) {
         const isP = tab === 'pending';
@@ -2483,7 +2531,10 @@
       const fmtDate = d => new Date(d).toLocaleString(undefined, {dateStyle:'medium',timeStyle:'short'});
       const methodIcon = m => ({ bank:'🏦', crypto:'₿', paypal:'💳', wise:'🌐', 'Bank Transfer':'🏦', 'Crypto Wallet':'₿' })[m] || '💼';
 
-      container.innerHTML = filtered.map(r => {
+      const start = (ledgerCurrentPage - 1) * TABLE_PAGE_SIZE;
+      const page = filtered.slice(start, start + TABLE_PAGE_SIZE);
+
+      container.innerHTML = page.map(r => {
         const isDeposit = r.type === 'deposit';
         const isPending = r.status === 'pending';
         const icon = methodIcon(r.method);
@@ -2673,6 +2724,8 @@
           $('#s2stat-rejected').textContent = all.filter(r => r.status === 'rejected').length;
         }
         renderStage2Requests(data);
+        allS2Data = data;
+        s2CurrentPage = 1;
       } catch(e) {
         container.innerHTML = `<tr><td colspan="5" style="padding:40px;text-align:center;color:var(--text-dim)">Failed to load requests.</td></tr>`;
       }
@@ -2680,13 +2733,17 @@
 
     function renderStage2Requests(requests) {
       const container = $('#s2-requests-body');
+      allS2Data = requests;
+      updateS2Pagination(requests.length);
       if (!requests.length) {
         container.innerHTML = `<tr><td colspan="5" style="padding:60px;text-align:center;color:var(--text-dim)">No requests found.</td></tr>`;
         return;
       }
+      const start = (s2CurrentPage - 1) * TABLE_PAGE_SIZE;
+      const page = requests.slice(start, start + TABLE_PAGE_SIZE);
       const statusColors = { pending: '#d97706', approved: '#059669', rejected: '#dc2626' };
       const statusBg = { pending: '#fef3c7', approved: '#d1fae5', rejected: '#fee2e2' };
-      container.innerHTML = requests.map(r => {
+      container.innerHTML = page.map(r => {
         const initials = r.user_name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
         const dt = new Date(r.created_at).toLocaleString(undefined, {dateStyle:'medium',timeStyle:'short'});
         const isPending = r.status === 'pending';
@@ -3024,6 +3081,84 @@
         if (dx < -60) closeSidebar();
       }, { passive: true });
     })();
+    // ═══════════════ PAGINATION FOR ALL TABLE SECTIONS ═══════════════
+    const TABLE_PAGE_SIZE = 10;
+
+    // --- Property Pagination ---
+    let allPropsData = [];
+    let propCurrentPage = 1;
+    function propChangePage(dir) {
+      const totalPages = Math.max(1, Math.ceil(allPropsData.length / TABLE_PAGE_SIZE));
+      propCurrentPage = Math.min(Math.max(1, propCurrentPage + dir), totalPages);
+      renderPropTable(allPropsData);
+    }
+    function updatePropPagination(total) {
+      const totalPages = Math.max(1, Math.ceil(total / TABLE_PAGE_SIZE));
+      propCurrentPage = Math.min(propCurrentPage, totalPages);
+      const start = (propCurrentPage - 1) * TABLE_PAGE_SIZE;
+      const el = id => document.getElementById(id);
+      if (el('prop-page-info')) el('prop-page-info').textContent = `Showing ${total === 0 ? 0 : start + 1}–${Math.min(start + TABLE_PAGE_SIZE, total)} of ${total}`;
+      if (el('prop-page-num')) el('prop-page-num').textContent = `Page ${propCurrentPage} / ${totalPages}`;
+      if (el('prop-prev-btn')) el('prop-prev-btn').disabled = propCurrentPage === 1;
+      if (el('prop-next-btn')) el('prop-next-btn').disabled = propCurrentPage === totalPages;
+    }
+
+    // --- Invite Pagination ---
+    let allInviteData = [];
+    let inviteCurrentPage = 1;
+    function inviteChangePage(dir) {
+      const totalPages = Math.max(1, Math.ceil(allInviteData.length / TABLE_PAGE_SIZE));
+      inviteCurrentPage = Math.min(Math.max(1, inviteCurrentPage + dir), totalPages);
+      renderInviteTable(allInviteData);
+    }
+    function updateInvitePagination(total) {
+      const totalPages = Math.max(1, Math.ceil(total / TABLE_PAGE_SIZE));
+      inviteCurrentPage = Math.min(inviteCurrentPage, totalPages);
+      const start = (inviteCurrentPage - 1) * TABLE_PAGE_SIZE;
+      const el = id => document.getElementById(id);
+      if (el('invite-page-info')) el('invite-page-info').textContent = `Showing ${total === 0 ? 0 : start + 1}–${Math.min(start + TABLE_PAGE_SIZE, total)} of ${total}`;
+      if (el('invite-page-num')) el('invite-page-num').textContent = `Page ${inviteCurrentPage} / ${totalPages}`;
+      if (el('invite-prev-btn')) el('invite-prev-btn').disabled = inviteCurrentPage === 1;
+      if (el('invite-next-btn')) el('invite-next-btn').disabled = inviteCurrentPage === totalPages;
+    }
+
+    // --- Stage 2 Pagination ---
+    let allS2Data = [];
+    let s2CurrentPage = 1;
+    function s2ChangePage(dir) {
+      const totalPages = Math.max(1, Math.ceil(allS2Data.length / TABLE_PAGE_SIZE));
+      s2CurrentPage = Math.min(Math.max(1, s2CurrentPage + dir), totalPages);
+      renderStage2Requests(allS2Data);
+    }
+    function updateS2Pagination(total) {
+      const totalPages = Math.max(1, Math.ceil(total / TABLE_PAGE_SIZE));
+      s2CurrentPage = Math.min(s2CurrentPage, totalPages);
+      const start = (s2CurrentPage - 1) * TABLE_PAGE_SIZE;
+      const el = id => document.getElementById(id);
+      if (el('s2-page-info')) el('s2-page-info').textContent = `Showing ${total === 0 ? 0 : start + 1}–${Math.min(start + TABLE_PAGE_SIZE, total)} of ${total}`;
+      if (el('s2-page-num')) el('s2-page-num').textContent = `Page ${s2CurrentPage} / ${totalPages}`;
+      if (el('s2-prev-btn')) el('s2-prev-btn').disabled = s2CurrentPage === 1;
+      if (el('s2-next-btn')) el('s2-next-btn').disabled = s2CurrentPage === totalPages;
+    }
+
+    // --- Ledger Pagination ---
+    let allLedgerFiltered = [];
+    let ledgerCurrentPage = 1;
+    function ledgerChangePage(dir) {
+      const totalPages = Math.max(1, Math.ceil(allLedgerFiltered.length / TABLE_PAGE_SIZE));
+      ledgerCurrentPage = Math.min(Math.max(1, ledgerCurrentPage + dir), totalPages);
+      renderRequests(allRequests, currentLedgerTab);
+    }
+    function updateLedgerPagination(total) {
+      const totalPages = Math.max(1, Math.ceil(total / TABLE_PAGE_SIZE));
+      ledgerCurrentPage = Math.min(ledgerCurrentPage, totalPages);
+      const start = (ledgerCurrentPage - 1) * TABLE_PAGE_SIZE;
+      const el = id => document.getElementById(id);
+      if (el('ledger-page-info')) el('ledger-page-info').textContent = `Showing ${total === 0 ? 0 : start + 1}–${Math.min(start + TABLE_PAGE_SIZE, total)} of ${total}`;
+      if (el('ledger-page-num')) el('ledger-page-num').textContent = `Page ${ledgerCurrentPage} / ${totalPages}`;
+      if (el('ledger-prev-btn')) el('ledger-prev-btn').disabled = ledgerCurrentPage === 1;
+      if (el('ledger-next-btn')) el('ledger-next-btn').disabled = ledgerCurrentPage === totalPages;
+    }
 
     // ═══════════════ USER MANAGEMENT ═══════════════
     let allUsersData = [];

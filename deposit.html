@@ -296,33 +296,61 @@
       const body = document.getElementById('payment-details-body');
       if (!card || !body) return;
       const d = allDepositDetails;
-      const acc   = d[`pm_${method}_account`] || '';
-      const holder= d[`pm_${method}_holder`] || '';
-      const bank  = d[`pm_${method}_bank`] || '';
-      const net   = d[`pm_${method}_network`] || '';
-      const swift = d[`pm_${method}_swift`] || '';
       const instr = d[`pm_${method}_instructions`] || '';
-      if (!acc && !holder) { card.style.display = 'none'; return; }
-      card.style.display = 'block';
-      const rows = [
-        holder  ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">Account Name</span><span style="font-weight:700">${holder}</span></div>` : '',
-        acc     ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px">
-          <span style="color:var(--text-dim);font-weight:600">Account / Number</span>
-          <span style="display:flex;align-items:center;gap:6px">
-            <strong id="dep-acc-val">${acc}</strong>
-            <button onclick="copyDepAccount()" style="background:#dcfce7;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;color:#059669">📋 Copy</button>
-          </span>
-        </div>` : '',
-        bank    ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">Bank / Network</span><span style="font-weight:700">${bank}</span></div>` : '',
-        net     ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">Network</span><span style="font-weight:700">${net}</span></div>` : '',
-        swift   ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">${method==='wise'?'Currency':'SWIFT / BIC'}</span><span style="font-weight:700">${swift}</span></div>` : '',
-        instr   ? `<div style="margin-top:8px;padding:8px 10px;background:#f0fdf4;border-radius:9px;font-size:12px;color:#065f46;line-height:1.5">📌 ${instr}</div>` : ''
-      ].filter(Boolean).join('');
-      body.innerHTML = rows;
+
+      if (method === 'crypto') {
+        const fields = ['btc', 'eth', 'ltc', 'usdt_trc20', 'usdt_erc20', 'usdc_erc20'];
+        const rows = [];
+        let configured = false;
+        
+        fields.forEach(f => {
+          const val = d[`pm_crypto_${f}`];
+          if (val) {
+            configured = true;
+            const labelName = f.toUpperCase().replace('_', ' ');
+            rows.push(`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px">
+              <span style="color:var(--text-dim);font-weight:600">${labelName}</span>
+              <span style="display:flex;align-items:center;gap:6px">
+                <strong id="dep-acc-val-${f}">${val}</strong>
+                <button onclick="copyDepAccount('dep-acc-val-${f}')" style="background:#dcfce7;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;color:#059669">📋 Copy</button>
+              </span>
+            </div>`);
+          }
+        });
+        
+        if (!configured) { card.style.display = 'none'; return; }
+        card.style.display = 'block';
+        if (instr) rows.push(`<div style="margin-top:8px;padding:8px 10px;background:#f0fdf4;border-radius:9px;font-size:12px;color:#065f46;line-height:1.5">📌 ${instr}</div>`);
+        body.innerHTML = rows.join('');
+      } else {
+        const acc   = d[`pm_${method}_account`] || '';
+        const holder= d[`pm_${method}_holder`] || '';
+        const bank  = d[`pm_${method}_bank`] || '';
+        const net   = d[`pm_${method}_network`] || '';
+        const swift = d[`pm_${method}_swift`] || '';
+        
+        if (!acc && !holder) { card.style.display = 'none'; return; }
+        card.style.display = 'block';
+        const rows = [
+          holder  ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">Account Name</span><span style="font-weight:700">${holder}</span></div>` : '',
+          acc     ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px">
+            <span style="color:var(--text-dim);font-weight:600">Account / Number</span>
+            <span style="display:flex;align-items:center;gap:6px">
+              <strong id="dep-acc-val">${acc}</strong>
+              <button onclick="copyDepAccount('dep-acc-val')" style="background:#dcfce7;border:none;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;color:#059669">📋 Copy</button>
+            </span>
+          </div>` : '',
+          bank    ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">Bank / Network</span><span style="font-weight:700">${bank}</span></div>` : '',
+          net     ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">Network</span><span style="font-weight:700">${net}</span></div>` : '',
+          swift   ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #d1fae5;font-size:13px"><span style="color:var(--text-dim);font-weight:600">${method==='wise'?'Currency':'SWIFT / BIC'}</span><span style="font-weight:700">${swift}</span></div>` : '',
+          instr   ? `<div style="margin-top:8px;padding:8px 10px;background:#f0fdf4;border-radius:9px;font-size:12px;color:#065f46;line-height:1.5">📌 ${instr}</div>` : ''
+        ].filter(Boolean).join('');
+        body.innerHTML = rows;
+      }
     }
 
-    function copyDepAccount() {
-      const val = document.getElementById('dep-acc-val')?.textContent;
+    function copyDepAccount(id = 'dep-acc-val') {
+      const val = document.getElementById(id)?.textContent;
       if (!val) return;
       navigator.clipboard.writeText(val).then(() => toast('✓ Copied!'));
     }

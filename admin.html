@@ -1182,9 +1182,9 @@
                   <label class="pm-label">SWIFT / BIC Code</label>
                   <input type="text" id="pm-bank-swift" class="input pm-input" placeholder="e.g. BARCGB22XXX">
                 </div>
-                <div style="grid-column:span 2">
-                  <label class="pm-label">Instructions for Client</label>
-                  <textarea id="pm-bank-instructions" class="input pm-input" rows="2" placeholder="e.g. Send exact amount with your name as reference." style="resize:vertical;font-family:inherit"></textarea>
+                <div style="grid-column:span 2;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:14px;padding:14px 16px;margin-top:6px">
+                  <label class="pm-label" style="display:flex;align-items:center;gap:6px;color:#475569;margin-bottom:8px;font-size:11px"><span style="font-size:14px">📌</span> INSTRUCTIONS FOR CLIENT</label>
+                  <textarea id="pm-bank-instructions" class="input" rows="2" placeholder="e.g. Send exact amount with your name as reference." style="background:transparent;border:none;border-bottom:1.5px solid #e2e8f0;border-radius:0;padding:8px 4px;box-shadow:none;color:#334155;resize:vertical;font-family:inherit;font-size:13px;transition:border-color 0.2s" onfocus="this.style.borderBottomColor='var(--accent1)'" onblur="this.style.borderBottomColor='#e2e8f0'"></textarea>
                 </div>
               </div>
               <div id="pm-bank-preview" class="pm-preview">Not configured yet.</div>
@@ -1207,27 +1207,33 @@
             </div>
             <div style="padding:20px 22px">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-                <div style="grid-column:span 2">
-                  <label class="pm-label">Wallet Address</label>
-                  <input type="text" id="pm-crypto-account" class="input pm-input" placeholder="0x... or Solana/Polygon address" oninput="updateMethodBadge('crypto')">
+                <div>
+                  <label class="pm-label">Bitcoin (BTC)</label>
+                  <input type="text" id="pm-crypto-btc" class="input pm-input" placeholder="BTC Wallet Address" oninput="updateMethodBadge('crypto')">
                 </div>
                 <div>
-                  <label class="pm-label">Network</label>
-                  <select id="pm-crypto-network" class="input pm-input">
-                    <option value="Ethereum (ERC-20)">Ethereum (ERC-20)</option>
-                    <option value="Polygon">Polygon</option>
-                    <option value="Solana">Solana</option>
-                    <option value="BSC (BEP-20)">BSC (BEP-20)</option>
-                    <option value="Tron (TRC-20)">Tron (TRC-20)</option>
-                  </select>
+                  <label class="pm-label">Ethereum (ETH)</label>
+                  <input type="text" id="pm-crypto-eth" class="input pm-input" placeholder="ETH Wallet Address" oninput="updateMethodBadge('crypto')">
                 </div>
                 <div>
-                  <label class="pm-label">Wallet Label</label>
-                  <input type="text" id="pm-crypto-holder" class="input pm-input" placeholder="e.g. Windsor Grove USDC">
+                  <label class="pm-label">Litecoin (LTC)</label>
+                  <input type="text" id="pm-crypto-ltc" class="input pm-input" placeholder="LTC Wallet Address" oninput="updateMethodBadge('crypto')">
                 </div>
-                <div style="grid-column:span 2">
-                  <label class="pm-label">Instructions for Client</label>
-                  <textarea id="pm-crypto-instructions" class="input pm-input" rows="2" placeholder="e.g. Send USDC only. Screenshot required." style="resize:vertical;font-family:inherit"></textarea>
+                <div>
+                  <label class="pm-label">USDT (TRC-20)</label>
+                  <input type="text" id="pm-crypto-usdt_trc20" class="input pm-input" placeholder="TRC-20 Wallet Address" oninput="updateMethodBadge('crypto')">
+                </div>
+                <div>
+                  <label class="pm-label">USDT (ERC-20)</label>
+                  <input type="text" id="pm-crypto-usdt_erc20" class="input pm-input" placeholder="ERC-20 Wallet Address" oninput="updateMethodBadge('crypto')">
+                </div>
+                <div>
+                  <label class="pm-label">USDC (ERC-20)</label>
+                  <input type="text" id="pm-crypto-usdc_erc20" class="input pm-input" placeholder="USDC Wallet Address" oninput="updateMethodBadge('crypto')">
+                </div>
+                <div style="grid-column:span 2;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:14px;padding:14px 16px;margin-top:6px">
+                  <label class="pm-label" style="display:flex;align-items:center;gap:6px;color:#475569;margin-bottom:8px;font-size:11px"><span style="font-size:14px">📌</span> INSTRUCTIONS FOR CLIENT</label>
+                  <textarea id="pm-crypto-instructions" class="input" rows="2" placeholder="e.g. Send only matching assets to the respective networks. Screenshot required." style="background:transparent;border:none;border-bottom:1.5px solid #e2e8f0;border-radius:0;padding:8px 4px;box-shadow:none;color:#334155;resize:vertical;font-family:inherit;font-size:13px;transition:border-color 0.2s" onfocus="this.style.borderBottomColor='var(--accent1)'" onblur="this.style.borderBottomColor='#e2e8f0'"></textarea>
                 </div>
               </div>
               <div id="pm-crypto-preview" class="pm-preview">Not configured yet.</div>
@@ -1258,9 +1264,9 @@
                   <label class="pm-label">Account Name</label>
                   <input type="text" id="pm-paypal-holder" class="input pm-input" placeholder="e.g. Windsor Grove Hub">
                 </div>
-                <div style="grid-column:span 2">
-                  <label class="pm-label">Instructions for Client</label>
-                  <textarea id="pm-paypal-instructions" class="input pm-input" rows="2" placeholder="e.g. Send as Friends & Family. Include your name in note." style="resize:vertical;font-family:inherit"></textarea>
+                <div style="grid-column:span 2;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:14px;padding:14px 16px;margin-top:6px">
+                  <label class="pm-label" style="display:flex;align-items:center;gap:6px;color:#475569;margin-bottom:8px;font-size:11px"><span style="font-size:14px">📌</span> INSTRUCTIONS FOR CLIENT</label>
+                  <textarea id="pm-paypal-instructions" class="input" rows="2" placeholder="e.g. Send as Friends & Family. Include your name in note." style="background:transparent;border:none;border-bottom:1.5px solid #e2e8f0;border-radius:0;padding:8px 4px;box-shadow:none;color:#334155;resize:vertical;font-family:inherit;font-size:13px;transition:border-color 0.2s" onfocus="this.style.borderBottomColor='var(--accent1)'" onblur="this.style.borderBottomColor='#e2e8f0'"></textarea>
                 </div>
               </div>
               <div id="pm-paypal-preview" class="pm-preview">Not configured yet.</div>
@@ -1299,9 +1305,9 @@
                   <label class="pm-label">Currency</label>
                   <input type="text" id="pm-wise-swift" class="input pm-input" placeholder="e.g. USD, GHS, GBP">
                 </div>
-                <div style="grid-column:span 2">
-                  <label class="pm-label">Instructions for Client</label>
-                  <textarea id="pm-wise-instructions" class="input pm-input" rows="2" placeholder="e.g. Send in USD. Include your name as reference." style="resize:vertical;font-family:inherit"></textarea>
+                <div style="grid-column:span 2;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:14px;padding:14px 16px;margin-top:6px">
+                  <label class="pm-label" style="display:flex;align-items:center;gap:6px;color:#475569;margin-bottom:8px;font-size:11px"><span style="font-size:14px">📌</span> INSTRUCTIONS FOR CLIENT</label>
+                  <textarea id="pm-wise-instructions" class="input" rows="2" placeholder="e.g. Send in USD. Include your name as reference." style="background:transparent;border:none;border-bottom:1.5px solid #e2e8f0;border-radius:0;padding:8px 4px;box-shadow:none;color:#334155;resize:vertical;font-family:inherit;font-size:13px;transition:border-color 0.2s" onfocus="this.style.borderBottomColor='var(--accent1)'" onblur="this.style.borderBottomColor='#e2e8f0'"></textarea>
                 </div>
               </div>
               <div id="pm-wise-preview" class="pm-preview">Not configured yet.</div>
@@ -2797,18 +2803,26 @@
     // ── PAYMENT METHOD SETTINGS (per method tab) ──────────────────────
     const PM_METHOD_FIELDS = {
       bank:   ['holder','bank','account','swift','instructions'],
-      crypto: ['account','network','holder','instructions'],
+      crypto: ['btc','eth','ltc','usdt_trc20','usdt_erc20','usdc_erc20','instructions'],
       paypal: ['account','holder','instructions'],
       wise:   ['account','holder','bank','swift','instructions']
     };
 
     // updateMethodBadge — updates the status badge on each card header live
     function updateMethodBadge(method) {
-      const acc = document.getElementById(`pm-${method}-account`)?.value?.trim() || '';
-      const holder = document.getElementById(`pm-${method}-holder`)?.value?.trim() || '';
+      let configured = false;
+      if (method === 'crypto') {
+        const fields = ['btc','eth','ltc','usdt_trc20','usdt_erc20','usdc_erc20'];
+        configured = fields.some(f => document.getElementById(`pm-crypto-${f}`)?.value?.trim() !== '');
+      } else {
+        const acc = document.getElementById(`pm-${method}-account`)?.value?.trim() || '';
+        const holder = document.getElementById(`pm-${method}-holder`)?.value?.trim() || '';
+        configured = !!(acc || holder);
+      }
+      
       const badge = document.getElementById(`pm-${method}-badge`);
       if (!badge) return;
-      if (acc || holder) {
+      if (configured) {
         badge.textContent = 'CONFIGURED ✓';
         badge.style.background = 'rgba(16,185,129,0.25)';
         badge.style.color = '#fff';
@@ -2831,15 +2845,28 @@
           });
           // Build preview
           const preview = document.getElementById(`pm-${m}-preview`);
-          const acc = data[`pm_${m}_account`] || '';
-          const holder = data[`pm_${m}_holder`] || '';
-          const bank = data[`pm_${m}_bank`] || '';
-          const instr = data[`pm_${m}_instructions`] || '';
-          if (preview) {
-            if (acc || holder) {
-              preview.innerHTML = `<strong>${holder || m.toUpperCase()}</strong>${acc ? ` &nbsp;|&nbsp; <strong>${acc}</strong>` : ''}${bank ? ` &nbsp;(${bank})` : ''}${instr ? `<br><em style="opacity:.75">${instr}</em>` : ''}`;
-            } else {
-              preview.textContent = 'Not configured yet.';
+          if (m === 'crypto') {
+            const fields = ['btc','eth','ltc','usdt_trc20','usdt_erc20','usdc_erc20'];
+            const activeWallets = fields.map(f => data[`pm_crypto_${f}`] ? f.replace('_',' ').toUpperCase() : null).filter(Boolean);
+            const instr = data[`pm_crypto_instructions`] || '';
+            if (preview) {
+              if (activeWallets.length > 0) {
+                preview.innerHTML = `<strong>Wallets Configured:</strong> ${activeWallets.join(', ')}${instr ? `<br><em style="opacity:.75">${instr}</em>` : ''}`;
+              } else {
+                preview.textContent = 'Not configured yet.';
+              }
+            }
+          } else {
+            const acc = data[`pm_${m}_account`] || '';
+            const holder = data[`pm_${m}_holder`] || '';
+            const bank = data[`pm_${m}_bank`] || '';
+            const instr = data[`pm_${m}_instructions`] || '';
+            if (preview) {
+              if (acc || holder) {
+                preview.innerHTML = `<strong>${holder || m.toUpperCase()}</strong>${acc ? ` &nbsp;|&nbsp; <strong>${acc}</strong>` : ''}${bank ? ` &nbsp;(${bank})` : ''}${instr ? `<br><em style="opacity:.75">${instr}</em>` : ''}`;
+              } else {
+                preview.textContent = 'Not configured yet.';
+              }
             }
           }
           updateMethodBadge(m);
@@ -2853,9 +2880,19 @@
         const el = document.getElementById(`pm-${method}-${field}`);
         if (el) payload[`pm_${method}_${field}`] = el.value.trim();
       });
-      const acc = payload[`pm_${method}_account`] || '';
-      const holder = payload[`pm_${method}_holder`] || '';
-      if (!acc && !holder) { toast('Please enter at least an account or name.'); return; }
+      
+      let configured = false;
+      if (method === 'crypto') {
+        const fields = ['btc','eth','ltc','usdt_trc20','usdt_erc20','usdc_erc20'];
+        configured = fields.some(f => payload[`pm_crypto_${f}`] !== '');
+      } else {
+        const acc = payload[`pm_${method}_account`] || '';
+        const holder = payload[`pm_${method}_holder`] || '';
+        configured = !!(acc || holder);
+      }
+      
+      if (!configured) { toast('Please enter at least one address or name.'); return; }
+      
       try {
         const res = await adminFetch(`${API_URL}/admin/settings`, {
           method: 'PUT',

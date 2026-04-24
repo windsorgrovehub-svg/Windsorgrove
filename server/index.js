@@ -864,6 +864,26 @@ app.delete('/api/admin/hotels/:id', authenticateToken, isAdmin, async (req, res)
 app.post('/api/user/request-stage2', authenticateToken, async (req, res) => {
   const { message } = req.body;
   try {
+    // Check minimum balance requirement
+    const minBalRow = await db.query("SELECT value FROM platform_settings WHERE key = 'stage2_min_balance'");
+    const minBal = parseFloat(minBalRow.rows[0]?.value ?? 0);
+    if (minBal > 0) {
+      const userRow = await db.query('SELECT balance FROM users WHERE id = $1', [req.user.id]);
+      const userBalance = parseFloat(userRow.rows[0]?.balance ?? 0);
+      if (userBalance < minBal) {
+        // Get custom announcement message
+        const msgRow = await db.query("SELECT value FROM platform_settings WHERE key = 'stage2_min_message'");
+        const customMsg = msgRow.rows[0]?.value || '';
+        const announcement = customMsg || `You need a minimum balance of $${minBal.toFixed(2)} to unlock Stage 2. Please fund your account to continue.`;
+        return res.status(403).json({
+          error: 'insufficient_balance',
+          announcement,
+          required: minBal,
+          current: userBalance
+        });
+      }
+    }
+
     // Check if user already has a pending request today
     const existing = await db.query(
       "SELECT id FROM stage2_requests WHERE user_id = $1 AND status = 'pending' AND created_at::date = CURRENT_DATE",
@@ -1393,22 +1413,19 @@ app.get('/api/admin/settings', authenticateToken, isAdmin, async (req, res) => {
 });
 
 app.put('/api/admin/settings', authenticateToken, isAdmin, async (req, res) => {
-  const { withdrawal_fee_type, withdrawal_fee_value } = req.body;
+  const { withdrawal_fee_type, withdrawal_fee_value, stage2_min_balance, stage2_min_message } = req.body;
   try {
-    if (withdrawal_fee_type !== undefined) {
+    const upsert = async (key, value) => {
       await db.query(
-        `INSERT INTO platform_settings (key, value, updated_at) VALUES ('withdrawal_fee_type', $1, NOW())
+        `INSERT INTO platform_settings (key, value, updated_at) VALUES ($1, $2, NOW())
          ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
-        [withdrawal_fee_type]
+        [key, String(value)]
       );
-    }
-    if (withdrawal_fee_value !== undefined) {
-      await db.query(
-        `INSERT INTO platform_settings (key, value, updated_at) VALUES ('withdrawal_fee_value', $1, NOW())
-         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
-        [String(withdrawal_fee_value)]
-      );
-    }
+    };
+    if (withdrawal_fee_type !== undefined) await upsert('withdrawal_fee_type', withdrawal_fee_type);
+    if (withdrawal_fee_value !== undefined) await upsert('withdrawal_fee_value', withdrawal_fee_value);
+    if (stage2_min_balance !== undefined) await upsert('stage2_min_balance', stage2_min_balance);
+    if (stage2_min_message !== undefined) await upsert('stage2_min_message', stage2_min_message);
     res.json({ success: true });
   } catch (err) {
     console.error(err);

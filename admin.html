@@ -1168,6 +1168,34 @@
           </div>
         </div>
 
+        <!-- Stage 2 Minimum Balance Card -->
+        <div class="admin-card card-pad" style="margin-bottom:20px">
+          <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:20px">
+            <div style="width:44px;height:44px;border-radius:12px;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🔓</div>
+            <div>
+              <div style="font-weight:700;font-size:16px;margin-bottom:4px">Stage 2 Minimum Balance</div>
+              <div style="font-size:13px;color:var(--text-dim)">Users must have at least this balance before they can request Stage 2 unlock. If their balance is below this amount, they will receive an announcement and be blocked from proceeding.</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+            <div class="field">
+              <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:8px;display:block">Minimum Balance (USD)</label>
+              <input type="number" id="setting-stage2-min-balance" class="input" step="1" min="0" placeholder="e.g. 100" style="background:#fafbfc;border:1px solid var(--border);color:var(--text)">
+            </div>
+            <div class="field">
+              <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-bottom:8px;display:block">Announcement Message</label>
+              <input type="text" id="setting-stage2-message" class="input" placeholder="e.g. Fund your account to unlock Stage 2" style="background:#fafbfc;border:1px solid var(--border);color:var(--text)">
+            </div>
+          </div>
+          <div id="stage2-bal-preview" style="font-size:13px;color:var(--text-dim);margin-bottom:20px;padding:10px 14px;background:#faf8ff;border-radius:10px;border:1px solid var(--border)">
+            Loading…
+          </div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <button onclick="saveStage2BalSettings()" class="btn btn-primary" style="padding:12px 28px">Save Balance Requirement</button>
+            <button onclick="loadSettings()" style="padding:12px 18px;border:1px solid var(--border);border-radius:10px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--text-dim)">↻ Reset</button>
+          </div>
+        </div>
+
         <!-- Future Settings Placeholder -->
         <div class="admin-card card-pad" style="opacity:.55">
           <div style="display:flex;align-items:center;gap:14px">
@@ -2525,10 +2553,14 @@
     async function loadSettings() {
       const preview = $('#fee-preview');
       if (preview) preview.textContent = 'Loading…';
+      const s2preview = document.getElementById('stage2-bal-preview');
+      if (s2preview) s2preview.textContent = 'Loading…';
       try {
         const res = await adminFetch(`${API_URL}/admin/settings`);
         if (!res.ok) { if (preview) preview.textContent = 'Could not load settings.'; return; }
         const data = await res.json();
+
+        // Withdrawal fee
         const feeType = data.withdrawal_fee_type || 'fixed';
         const feeVal = parseFloat(data.withdrawal_fee_value ?? 0);
         const typeEl = $('#setting-fee-type');
@@ -2538,6 +2570,21 @@
         if (preview) {
           const label = feeType === 'percent' ? `${feeVal}%` : `$${feeVal.toFixed(2)} USD`;
           preview.innerHTML = `<strong>Current fee:</strong> ${label} ${feeType === 'percent' ? 'of withdrawal amount' : 'flat fee per withdrawal'}`;
+        }
+
+        // Stage 2 minimum balance
+        const s2min = parseFloat(data.stage2_min_balance ?? 0);
+        const s2msg = data.stage2_min_message || '';
+        const s2minEl = document.getElementById('setting-stage2-min-balance');
+        const s2msgEl = document.getElementById('setting-stage2-message');
+        if (s2minEl) s2minEl.value = s2min;
+        if (s2msgEl) s2msgEl.value = s2msg;
+        if (s2preview) {
+          if (s2min > 0) {
+            s2preview.innerHTML = `<strong>Current requirement:</strong> Users need at least <strong>$${s2min.toFixed(2)}</strong> balance to request Stage 2.${s2msg ? ` Message: "${s2msg}"` : ''}`;
+          } else {
+            s2preview.innerHTML = `<strong>No minimum set.</strong> Users can request Stage 2 regardless of balance.`;
+          }
         }
       } catch(e) { if (preview) preview.textContent = 'Error loading settings.'; }
     }
@@ -2554,6 +2601,21 @@
         });
         if (!res.ok) { toast('Failed to save settings.'); return; }
         toast('✓ Fee settings saved successfully.');
+        loadSettings();
+      } catch(e) { toast('Network error.'); }
+    }
+
+    async function saveStage2BalSettings() {
+      const minBal = parseFloat(document.getElementById('setting-stage2-min-balance')?.value ?? 0);
+      const msg = document.getElementById('setting-stage2-message')?.value || '';
+      if (isNaN(minBal) || minBal < 0) { toast('Enter a valid minimum balance.'); return; }
+      try {
+        const res = await adminFetch(`${API_URL}/admin/settings`, {
+          method: 'PUT',
+          body: JSON.stringify({ stage2_min_balance: minBal, stage2_min_message: msg })
+        });
+        if (!res.ok) { toast('Failed to save Stage 2 settings.'); return; }
+        toast('✓ Stage 2 balance requirement saved.');
         loadSettings();
       } catch(e) { toast('Network error.'); }
     }

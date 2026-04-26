@@ -105,12 +105,28 @@
         </div>
       </div>
 
+      <!-- Deposit History -->
       <div class="mt-6">
-        <h3 style="margin-bottom:24px">Completed <span class="grad-text">Tasks</span></h3>
-        <div style="display:flex;flex-direction:column;gap:12px" id="ledger-body">
-          <!-- Rendered via JS -->
+        <h3 style="margin-bottom:16px">Deposit <span class="grad-text">History</span></h3>
+        <div id="deposit-history" style="display:flex;flex-direction:column;gap:10px">
+          <div class="card card-pad" style="text-align:center;padding:40px 20px;border:1px dashed var(--border);border-radius:20px">
+            <div style="font-size:24px;opacity:0.4;margin-bottom:8px">💳</div>
+            <div style="font-size:13px;color:var(--text-dim)">Loading deposit history…</div>
+          </div>
         </div>
       </div>
+
+      <!-- Withdrawal History -->
+      <div class="mt-6">
+        <h3 style="margin-bottom:16px">Withdrawal <span class="grad-text">History</span></h3>
+        <div id="withdrawal-history" style="display:flex;flex-direction:column;gap:10px">
+          <div class="card card-pad" style="text-align:center;padding:40px 20px;border:1px dashed var(--border);border-radius:20px">
+            <div style="font-size:24px;opacity:0.4;margin-bottom:8px">📤</div>
+            <div style="font-size:13px;color:var(--text-dim)">Loading withdrawal history…</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </main>
 
@@ -268,17 +284,67 @@
         toast("Settlement dispatch initiated.");
     }
 
+    // ── Deposit & Withdrawal History ──
+    async function loadRequestHistory() {
+      if (!state.token) return;
+      try {
+        const res = await fetch(`${API_URL}/user/my-requests`, {
+          headers: { 'Authorization': `Bearer ${state.token}` }
+        });
+        if (!res.ok) return;
+        const requests = await res.json();
+
+        const deposits = requests.filter(r => r.type === 'deposit');
+        const withdrawals = requests.filter(r => r.type === 'withdrawal');
+
+        const methodIcon = m => ({ bank:'🏦', crypto:'₿', paypal:'💳', wise:'🌐', 'Bank Transfer':'🏦', 'Crypto Wallet':'₿' })[m] || '💼';
+        const statusStyle = s => s === 'approved'
+          ? 'background:#d1fae5;color:#059669'
+          : s === 'rejected'
+          ? 'background:#fee2e2;color:#dc2626'
+          : 'background:#fef3c7;color:#d97706';
+        const fmtDate = d => new Date(d).toLocaleDateString(undefined, { dateStyle: 'medium' });
+
+        function renderRows(items, emptyIcon, emptyMsg) {
+          if (items.length === 0) {
+            return `<div class="card card-pad" style="text-align:center;padding:40px 20px;border:1px dashed var(--border);border-radius:20px">
+              <div style="font-size:24px;opacity:0.4;margin-bottom:8px">${emptyIcon}</div>
+              <div style="font-size:13px;color:var(--text-dim)">${emptyMsg}</div>
+            </div>`;
+          }
+          return items.map(r => {
+            const isDeposit = r.type === 'deposit';
+            return `
+            <div class="card" style="background:#fff;border-radius:16px;border:1px solid var(--border);padding:14px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+              <div style="width:36px;height:36px;border-radius:10px;background:${isDeposit ? '#f0fdf4' : '#fef2f2'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${methodIcon(r.method)}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:700;font-size:13px;color:var(--text)">${r.method || 'Transfer'}</div>
+                <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${fmtDate(r.created_at)}${r.transaction_id ? ' · <span style="font-family:monospace;font-size:10px">TX:'+r.transaction_id.slice(0,12)+'…</span>' : ''}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-weight:800;font-size:14px;color:${isDeposit ? '#059669' : '#dc2626'}">${isDeposit ? '+' : '−'}${fmt(Math.abs(parseFloat(r.amount)))}</div>
+                <span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;${statusStyle(r.status)}">${r.status}</span>
+              </div>
+            </div>`;
+          }).join('');
+        }
+
+        document.getElementById('deposit-history').innerHTML = renderRows(deposits, '💳', 'No deposits yet. Your deposit requests will appear here.');
+        document.getElementById('withdrawal-history').innerHTML = renderRows(withdrawals, '📤', 'No withdrawals yet. Your withdrawal requests will appear here.');
+      } catch(e) { console.warn('Failed to load request history', e); }
+    }
+
     let _initRetries = 0;
     function initAccount() {
         _initRetries++;
         if (!state.user) {
-            // Check localStorage directly — state.token may not be set yet since loadState() is async
             if (localStorage.getItem('wgh-token') && _initRetries < 100) {
                 setTimeout(initAccount, 50);
             }
             return;
         }
         renderAccount();
+        loadRequestHistory();
     }
     
     initAccount();

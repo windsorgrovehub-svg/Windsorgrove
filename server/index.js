@@ -779,6 +779,20 @@ app.post('/api/user/request-deposit', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Deposit request failed. Please try again.' });
   }
 });
+// --- USER: My deposit/withdrawal request history ---
+app.get('/api/user/my-requests', authenticateToken, async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT id, type, amount, method, status, transaction_id, admin_note, created_at, resolved_at
+       FROM pending_requests WHERE user_id = $1 ORDER BY created_at DESC`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch requests.' });
+  }
+});
 
 // Legacy funding source link (kept for compatibility)
 app.post('/api/user/funding-source', authenticateToken, async (req, res) => {

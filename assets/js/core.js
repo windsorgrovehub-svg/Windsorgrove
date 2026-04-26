@@ -575,33 +575,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   const isSecurePage = securePages.includes(currentPage);
 
-  // ── Immediately hide login/signup buttons if token exists ──
-  // This prevents the flash where buttons appear briefly before JS auth runs
-  const savedToken = localStorage.getItem("wgh-token");
-  if (savedToken) {
-    const loginBtn = $("#btn-login");
-    const createBtn = $("#btn-create");
-    if (loginBtn) loginBtn.style.visibility = 'hidden';
-    if (createBtn) createBtn.style.visibility = 'hidden';
-  }
-
   if (!isSecurePage) {
-    // On public pages, clear token so state is always guest
-    if (savedToken) localStorage.removeItem("wgh-token");
+    // Public page — clear token and show auth buttons for guests
+    if (localStorage.getItem("wgh-token")) localStorage.removeItem("wgh-token");
     state.user = null;
     state.token = null;
+    // Remove data-auth so buttons are visible for guests on public pages
+    document.documentElement.removeAttribute('data-auth');
   }
 
   renderFooter();
   initLoader();
   try { await loadState(); } catch(e) { console.warn('API offline, guest mode only.'); }
 
-  // Only show guest chat widget for non-logged-in users
-  // Logged-in users use the dedicated Support page instead
+  // If user is NOT logged in — reveal auth buttons for guests and show chat widget
   if (!state.user) {
+    document.documentElement.removeAttribute('data-auth');
     initChatWidget();
   } else {
-    // Ensure widget wrapper is fully hidden if it somehow exists
+    // Logged-in: keep buttons hidden, hide chat widget if it somehow exists
     const w = document.getElementById('chat-widget-wrapper') || document.getElementById('chat-widget');
     if (w) w.style.display = 'none';
   }

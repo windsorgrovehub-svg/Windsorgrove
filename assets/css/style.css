@@ -137,6 +137,15 @@ h4 {
   color: var(--text-dim);
 }
 
+/* ===== AUTH BUTTON FLASH PREVENTION ===== */
+/* When html[data-auth="true"] is set synchronously by inline script,
+   login/signup buttons are hidden before first paint — zero flash on all devices */
+html[data-auth="true"] #btn-login,
+html[data-auth="true"] #btn-create {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 /* ===== NAVIGATION ===== */
 header {
   position: sticky;

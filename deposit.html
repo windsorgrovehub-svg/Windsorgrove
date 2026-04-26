@@ -130,13 +130,9 @@
         </div>
       </div>
 
-      <!-- Admin-configured payment details -->
-      <div id="payment-details-card" style="display:none;background:#fff;border:1.5px solid #d1fae5;border-radius:18px;padding:16px 18px;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#059669;margin-bottom:10px">🏦 Send Payment To</div>
-        <div id="payment-details-body"></div>
-      </div>
+      <!-- Admin-configured payment details — loading state -->
+      <div id="payment-details-loading" style="display:none"></div>
 
-      <div id="payment-details-loading" style="background:#f0fdf4;border:1px solid #d1fae5;border-radius:14px;padding:14px 16px;margin-bottom:14px;font-size:13px;color:var(--text-dim);display:block">Loading payment details…</div>
       <!-- Step 1: Source type tabs -->
       <div class="dp-card">
         <div class="dp-card-title"><span>1</span> Choose Payment Type</div>
@@ -160,7 +156,23 @@
         </div>
       </div>
 
+      <!-- 🏦 Send Payment To — shown below Step 1 -->
+      <div id="payment-details-card" style="display:none;background:#fff;border:1.5px solid #d1fae5;border-radius:18px;padding:16px 18px;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#059669;margin-bottom:10px">🏦 Send Payment To</div>
+        <div id="payment-details-body"></div>
+      </div>
 
+      <!-- Step 2: Deposit Amount + agree -->
+      <div class="dp-card">
+        <div class="dp-card-title"><span>2</span> Deposit Amount</div>
+        <div class="form-fields">
+          <div><label>Amount (USD)</label><input type="number" class="input" id="deposit-amount" placeholder="e.g. 250.00" min="1" step="0.01"></div>
+        </div>
+        <div class="agree-box" style="margin-top:10px">
+          <input type="checkbox" id="agree-terms">
+          <label for="agree-terms">I confirm I have sent the payment above and agree to the <a href="privacy.html">Payment Terms</a> and Windsor Grove's settlement policies.</label>
+        </div>
+      </div>
 
       <!-- Submit -->
       <button class="submit-btn" id="submit-btn" onclick="submitFundingSource()">
@@ -171,6 +183,9 @@
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         Bank-grade 256-bit AES encryption. Never shared with third parties.
       </div>
+
+
+
 
     </div>
   </main>
@@ -332,12 +347,15 @@
     }
 
     async function submitFundingSource() {
+      if (!document.getElementById('agree-terms').checked) return toast('Please agree to the payment terms.');
+      const amount = parseFloat(document.getElementById('deposit-amount')?.value) || 0;
+      if (amount <= 0) return toast('Please enter the deposit amount you sent.');
+
       const btn = document.getElementById('submit-btn');
       btn.disabled = true;
       btn.textContent = 'Submitting…';
 
       const token = localStorage.getItem('wgh-token');
-      const amount = 0; // Amount entered by admin after review
 
       try {
         // Submit deposit request

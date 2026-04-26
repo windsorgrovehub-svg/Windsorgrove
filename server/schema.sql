@@ -27,7 +27,7 @@ CREATE TABLE users (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    balance DECIMAL(15,2) DEFAULT 25.00,
+    balance DECIMAL(15,2) DEFAULT 0.00,
     commission_total DECIMAL(15,2) DEFAULT 0.00,
     funded BOOLEAN DEFAULT TRUE,
     bank_linked BOOLEAN DEFAULT TRUE,

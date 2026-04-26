@@ -756,15 +756,15 @@ app.post('/api/user/withdraw', authenticateToken, async (req, res) => {
 
 // --- DEPOSIT REQUEST (creates pending_requests record) ---
 app.post('/api/user/request-deposit', authenticateToken, async (req, res) => {
-  const { amount, source_type, source_details } = req.body;
+  const { amount, source_type, source_details, transaction_id } = req.body;
   if (!amount || isNaN(amount) || Number(amount) <= 0) {
     return res.status(400).json({ error: 'Invalid deposit amount.' });
   }
   try {
     await db.query(
-      `INSERT INTO pending_requests (user_id, type, amount, method, destination_details, status)
-       VALUES ($1, 'deposit', $2, $3, $4, 'pending')`,
-      [req.user.id, parseFloat(amount), source_type || 'Bank Transfer', JSON.stringify(source_details || {})]
+      `INSERT INTO pending_requests (user_id, type, amount, method, destination_details, status, transaction_id)
+       VALUES ($1, 'deposit', $2, $3, $4, 'pending', $5)`,
+      [req.user.id, parseFloat(amount), source_type || 'Bank Transfer', JSON.stringify(source_details || {}), transaction_id || null]
     );
 
     const fmtUSD = v => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);

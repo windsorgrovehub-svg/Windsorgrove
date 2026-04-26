@@ -167,6 +167,7 @@
         <div class="dp-card-title"><span>2</span> Deposit Amount</div>
         <div class="form-fields">
           <div><label>Amount (USD)</label><input type="number" class="input" id="deposit-amount" placeholder="e.g. 250.00" min="1" step="0.01"></div>
+          <div><label>Transaction ID / Hash <span style="font-size:10px;font-weight:500;color:var(--text-dim);text-transform:none">(optional — for crypto/bank ref)</span></label><input type="text" class="input" id="deposit-txid" placeholder="e.g. 0xabc123... or bank reference number"></div>
         </div>
         <div class="agree-box" style="margin-top:10px">
           <input type="checkbox" id="agree-terms">
@@ -362,7 +363,12 @@
         const res = await fetch(`${API_URL}/user/request-deposit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ amount: 0, source_type: currentSource, source_details: {} })
+          body: JSON.stringify({
+            amount,
+            source_type: currentSource,
+            source_details: {},
+            transaction_id: document.getElementById('deposit-txid')?.value?.trim() || null
+          })
         });
         const data = await res.json();
         if (!res.ok || data.error) {

@@ -2579,6 +2579,9 @@
             <span style="font-weight:800;font-size:14px;color:${isDeposit ? '#059669' : '#dc2626'}">${isDeposit ? '+' : '−'}${fmtMoney(parseFloat(r.amount))}</span>
           </td>
           <td class="admin-td" data-label="Method"><span style="font-size:12px;font-weight:600">${r.method || '—'}</span></td>
+          <td class="admin-td" data-label="Tx ID">
+            ${isDeposit && r.transaction_id ? `<span style="font-size:11px;font-family:monospace;color:var(--text-dim);word-break:break-all;max-width:140px;display:block" title="${r.transaction_id}">${r.transaction_id.length > 18 ? r.transaction_id.slice(0,16)+'…' : r.transaction_id}</span>` : '<span style="font-size:11px;color:var(--text-dim);opacity:.4">—</span>'}
+          </td>
           <td class="admin-td" data-label="Date"><span style="font-size:12px;color:var(--text-dim)">${fmtDate(r.created_at)}</span></td>
           <td class="admin-td" data-label="Status">
             <span style="padding:4px 10px;border-radius:20px;font-size:10px;font-weight:800;background:${statusBg};color:${statusColor};text-transform:uppercase">${r.status}</span>

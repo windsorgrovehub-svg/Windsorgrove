@@ -263,7 +263,6 @@
       document.querySelectorAll('.s-tab').forEach(c => c.classList.remove('active'));
       el.classList.add('active');
       currentSource = type;
-      document.getElementById('source-fields').innerHTML = sourceFieldTemplates[type];
       showMethodDetails(type);
     }
 

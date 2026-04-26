@@ -94,7 +94,7 @@ app.post('/api/auth/signup', async (req, res) => {
     // Add Welcome Bonus Transaction + credit to balance
     await db.query(
       'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
-      [user.id, 'bonus', 100.00, 'Circle Recruitment Bonus']
+      [user.id, 'signup_bonus', 100.00, 'Circle Recruitment Bonus']
     );
     await db.query(
       'UPDATE users SET balance = balance + 100 WHERE id = $1',

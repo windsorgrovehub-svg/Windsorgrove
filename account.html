@@ -179,7 +179,7 @@
 
         // Total Settlements = sum of actual user withdrawals
         const computedSettlements = (state.transactions || []).reduce((acc, tx) =>
-            acc + (tx.type === 'withdrawal' ? Math.abs(Number(tx.amount)) : 0), 0);
+            acc + (tx.type === 'admin_debit' ? Math.abs(Number(tx.amount)) : 0), 0);
 
         // Trial Bonus = net of signup_bonus and trial_fee (shows $0 once they cancel out)
         const trialBonus = (state.transactions || []).reduce((acc, tx) => {

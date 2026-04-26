@@ -697,21 +697,57 @@ app.post('/api/user/withdraw', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Insufficient balance. You cannot withdraw more than your available funds.' });
     }
 
+    // Read platform withdrawal fee settings
+    const feeRes = await db.query(
+      "SELECT key, value FROM platform_settings WHERE key IN ('withdrawal_fee_type', 'withdrawal_fee_value')"
+    );
+    const feeSettings = {};
+    feeRes.rows.forEach(r => { feeSettings[r.key] = r.value; });
+    const feeType  = feeSettings['withdrawal_fee_type']  || 'fixed';
+    const feeValue = parseFloat(feeSettings['withdrawal_fee_value'] || '0');
+
+    let fee = 0;
+    if (feeType === 'percent') {
+      fee = parseFloat((withdrawAmount * feeValue / 100).toFixed(2));
+    } else {
+      fee = parseFloat(feeValue.toFixed(2));
+    }
+    const netAmount = parseFloat((withdrawAmount - fee).toFixed(2));
+
+    if (netAmount <= 0) {
+      return res.status(400).json({ error: 'Amount is too small after processing fee is applied.' });
+    }
+
+    const fmtUSD = v => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
+
     // Store as PENDING — admin must approve before balance changes
+    // Store gross amount; fee is recorded separately for transparency
     await db.query(
       `INSERT INTO pending_requests (user_id, type, amount, method, destination_details, status)
        VALUES ($1, 'withdrawal', $2, $3, $4, 'pending')`,
-      [req.user.id, withdrawAmount, method || 'Bank Transfer', JSON.stringify(destination_details || {})]
+      [req.user.id, netAmount, method || 'Bank Transfer', JSON.stringify(destination_details || {})]
     );
+
+    // Record fee as a deduction transaction immediately if fee > 0
+    if (fee > 0) {
+      await db.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [fee, req.user.id]);
+      await db.query(
+        'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
+        [req.user.id, 'task_fee', -fee, `Withdrawal Processing Fee (${feeType === 'percent' ? feeValue + '%' : fmtUSD(feeValue)})`]
+      );
+    }
 
     // Notify user request is under review
-    const fmtUSD = v => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
     await db.query(
       'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-      [req.user.id, 'withdrawal_pending', `Withdrawal request of ${fmtUSD(withdrawAmount)} via ${method || 'Bank Transfer'} is under review.`, false]
+      [req.user.id, 'withdrawal_pending',
+       fee > 0
+         ? `Withdrawal of ${fmtUSD(withdrawAmount)} submitted. Processing fee of ${fmtUSD(fee)} applied. You will receive ${fmtUSD(netAmount)} upon approval.`
+         : `Withdrawal request of ${fmtUSD(withdrawAmount)} via ${method || 'Bank Transfer'} is under review.`,
+       false]
     );
 
-    res.json({ success: true, message: 'Withdrawal request submitted. Pending admin approval.', current_balance: currentBalance });
+    res.json({ success: true, message: 'Withdrawal request submitted. Pending admin approval.', current_balance: currentBalance, fee, net_amount: netAmount });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Withdrawal request failed. Please try again.' });

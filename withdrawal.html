@@ -202,7 +202,8 @@
         <div class="sum-divider"></div>
         <div class="sum-item">
           <div class="sum-label">Processing Fee</div>
-          <div class="fee-tag">$0.00 — Waived</div>
+          <div class="sum-val" id="sum-fee" style="color:#dc2626;font-size:13px">$0.00</div>
+          <div class="fee-tag" id="fee-tag">Loading…</div>
         </div>
         <div class="sum-divider"></div>
         <div class="sum-item">
@@ -293,15 +294,37 @@
       updateSummary();
     }
 
+    let feeType = 'fixed';   // 'fixed' or 'percent'
+    let feeValue = 0;         // dollar amount or percent
+
+    function calcFee(amt) {
+      if (feeType === 'percent') return parseFloat((amt * feeValue / 100).toFixed(2));
+      return parseFloat(feeValue);
+    }
+
     function updateSummary() {
       const amt = parseFloat(document.getElementById('withdraw-amount').value) || 0;
+      const fee = calcFee(amt);
+      const net = Math.max(0, amt - fee);
       document.getElementById('sum-amount').textContent = fmt(amt);
-      document.getElementById('sum-total').textContent = fmt(amt);
+      document.getElementById('sum-fee').textContent = fmt(fee);
+      document.getElementById('sum-total').textContent = fmt(net);
+      // Update fee tag label
+      const tag = document.getElementById('fee-tag');
+      if (feeValue === 0) {
+        tag.textContent = 'Waived';
+        tag.style.background = '#ecfdf5';
+        tag.style.color = '#059669';
+      } else {
+        tag.textContent = feeType === 'percent' ? `${feeValue}%` : `Fixed`;
+        tag.style.background = '#fff3e0';
+        tag.style.color = '#d97706';
+      }
     }
 
     // Auth guard + init
     let _retries = 0;
-    function initPage() {
+    async function initPage() {
       _retries++;
       if (!localStorage.getItem('wgh-token')) { window.location.href = 'login.html'; return; }
       if (!state.user) {
@@ -310,13 +333,25 @@
       }
       availableBalance = Math.max(0, state.user.balance || 0);
       document.getElementById('hero-balance').textContent = fmt(availableBalance);
+
+      // Load fee settings from platform
+      try {
+        const settingsRes = await fetch(`${API_URL}/settings`);
+        const settings = await settingsRes.json();
+        feeType  = settings.withdrawal_fee_type  || 'fixed';
+        feeValue = parseFloat(settings.withdrawal_fee_value) || 0;
+        updateSummary(); // re-render with real fee
+      } catch(e) { /* use defaults */ }
     }
     initPage();
 
     async function submitWithdrawal() {
       const amt = parseFloat(document.getElementById('withdraw-amount').value) || 0;
+      const fee = calcFee(amt);
+      const net = parseFloat((amt - fee).toFixed(2));
       if (amt <= 0) return toast('Please enter a withdrawal amount.');
       if (amt > availableBalance) return toast('Amount exceeds your available balance of ' + fmt(availableBalance));
+      if (net <= 0) return toast('Amount is too small after the processing fee is applied.');
 
       const btn = document.getElementById('submit-btn');
       btn.disabled = true;
@@ -338,7 +373,7 @@
         const res = await fetch(`${API_URL}/user/withdraw`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
-          body: JSON.stringify({ amount: amt, method: selectedMethod, destination_details })
+          body: JSON.stringify({ amount: amt, fee, net_amount: net, method: selectedMethod, destination_details })
         });
         const data = await res.json();
         if (!res.ok || data.error) {

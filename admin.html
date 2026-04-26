@@ -1091,6 +1091,7 @@
               <thead>
                 <tr style="background:var(--bg);border-bottom:1px solid var(--border)">
                   <th class="admin-th">User</th>
+                  <th class="admin-th">Balance</th>
                   <th class="admin-th">Date</th>
                   <th class="admin-th">Message</th>
                   <th class="admin-th">Status</th>
@@ -1098,7 +1099,7 @@
                 </tr>
               </thead>
               <tbody id="s2-requests-body">
-                <tr><td colspan="5" style="padding:40px;text-align:center;color:var(--text-dim)">Loading requests…</td></tr>
+                <tr><td colspan="6" style="padding:40px;text-align:center;color:var(--text-dim)">Loading requests…</td></tr>
               </tbody>
             </table>
           </div>
@@ -2736,17 +2737,24 @@
       allS2Data = requests;
       updateS2Pagination(requests.length);
       if (!requests.length) {
-        container.innerHTML = `<tr><td colspan="5" style="padding:60px;text-align:center;color:var(--text-dim)">No requests found.</td></tr>`;
+        container.innerHTML = `<tr><td colspan="6" style="padding:60px;text-align:center;color:var(--text-dim)">No requests found.</td></tr>`;
         return;
       }
       const start = (s2CurrentPage - 1) * TABLE_PAGE_SIZE;
       const page = requests.slice(start, start + TABLE_PAGE_SIZE);
       const statusColors = { pending: '#d97706', approved: '#059669', rejected: '#dc2626' };
       const statusBg = { pending: '#fef3c7', approved: '#d1fae5', rejected: '#fee2e2' };
+      const fmtUSD = v => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(v);
+      const MIN_BAL = 10; // minimum balance threshold for stage 2 eligibility
       container.innerHTML = page.map(r => {
         const initials = r.user_name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
         const dt = new Date(r.created_at).toLocaleString(undefined, {dateStyle:'medium',timeStyle:'short'});
         const isPending = r.status === 'pending';
+        const bal = parseFloat(r.user_balance || 0);
+        const hasEnough = bal >= MIN_BAL;
+        const balColor = bal <= 0 ? '#dc2626' : bal < MIN_BAL ? '#d97706' : '#059669';
+        const balBg   = bal <= 0 ? '#fee2e2' : bal < MIN_BAL ? '#fef3c7' : '#d1fae5';
+        const balIcon  = bal <= 0 ? '✕' : bal < MIN_BAL ? '⚠' : '✓';
         return `
         <tr style="border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='#fafaf8'" onmouseout="this.style.background=''">
           <td class="admin-td" data-label="User">
@@ -2758,6 +2766,11 @@
               </div>
             </div>
           </td>
+          <td class="admin-td" data-label="Balance">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;background:${balBg};color:${balColor};border:1px solid ${balColor}30">${balIcon} ${fmtUSD(bal)}</span>
+            </div>
+          </td>
           <td class="admin-td" data-label="Date"><span style="font-size:12px;color:var(--text-dim)">${dt}</span></td>
           <td class="admin-td" data-label="Message"><span style="font-size:12px;color:var(--text-dim);font-style:italic">${r.message ? '"' + r.message + '"' : '—'}</span></td>
           <td class="admin-td" data-label="Status">
@@ -2766,20 +2779,25 @@
           <td class="admin-td" data-label="Actions" style="text-align:center">
             ${isPending ? `
             <div style="display:flex;gap:6px;justify-content:center;align-items:center">
-              <button onclick='handleStage2Request(${r.id}, "approve", "${r.user_name}")' style="padding:6px 12px;border-radius:8px;border:1px solid #bbf7d0;background:#f0fdf4;font-size:11px;font-weight:700;cursor:pointer;color:#059669;transition:all .15s" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">✓</button>
-              <button onclick='handleStage2Request(${r.id}, "reject", "${r.user_name}")' style="padding:6px 12px;border-radius:8px;border:1px solid #fecaca;background:#fff;font-size:11px;font-weight:700;cursor:pointer;color:#dc2626;transition:all .15s" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='#fff'">✕</button>
+              <button onclick='handleStage2Request(${r.id}, "approve", "${r.user_name}", ${hasEnough})' style="padding:6px 12px;border-radius:8px;border:1px solid #bbf7d0;background:#f0fdf4;font-size:11px;font-weight:700;cursor:pointer;color:#059669;transition:all .15s" onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">✓</button>
+              <button onclick='handleStage2Request(${r.id}, "reject", "${r.user_name}", ${hasEnough})' style="padding:6px 12px;border-radius:8px;border:1px solid #fecaca;background:#fff;font-size:11px;font-weight:700;cursor:pointer;color:#dc2626;transition:all .15s" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='#fff'">✕</button>
             </div>` : `<span style="font-size:11px;color:var(--text-dim);opacity:.5">—</span>`}
           </td>
         </tr>`;
       }).join('');
     }
 
-    async function handleStage2Request(requestId, action, userName) {
+    async function handleStage2Request(requestId, action, userName, hasEnough) {
       const noteEl = $(`#s2note-${requestId}`);
       const note = noteEl ? noteEl.value.trim() : '';
       const label = action === 'approve' ? 'Approve' : 'Reject';
-      
-      const confirmed = await askConfirm(`<strong>${label} Stage 2 request for ${userName}?</strong><br><br>This will ${action === 'approve'? 'unlock their next 33 tasks' : 'reject the request'}.`);
+
+      let warningMsg = '';
+      if (action === 'approve' && hasEnough === false) {
+        warningMsg = `<br><br><span style="color:#d97706;font-weight:700">⚠️ Warning: This user's balance is below the recommended minimum. Consider requesting a deposit before unlocking Stage 2.</span>`;
+      }
+
+      const confirmed = await askConfirm(`<strong>${label} Stage 2 request for ${userName}?</strong><br><br>This will ${action === 'approve' ? 'unlock their next 33 tasks' : 'reject the request'}.${warningMsg}`);
       if (!confirmed) return;
 
       try {

@@ -1087,7 +1087,8 @@ app.get('/api/admin/stage2-requests', authenticateToken, isAdmin, async (req, re
     const { status } = req.query; // 'pending', 'approved', 'rejected', or blank for all
     let query = `
       SELECT r.id, r.status, r.message, r.admin_note, r.created_at, r.updated_at,
-             u.id as user_id, u.name as user_name, u.email as user_email
+             u.id as user_id, u.name as user_name, u.email as user_email,
+             u.balance as user_balance, u.commission_total as user_commission_total
       FROM stage2_requests r
       JOIN users u ON u.id = r.user_id
     `;

@@ -91,10 +91,14 @@ app.post('/api/auth/signup', async (req, res) => {
     // Mark invite code as used
     await db.query('UPDATE invite_codes SET used = true, used_by_user_id = $1 WHERE code = $2', [user.id, invite_code.toUpperCase()]);
 
-    // Add Welcome Bonus Transaction
+    // Add Welcome Bonus Transaction + credit to balance
     await db.query(
       'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
       [user.id, 'bonus', 100.00, 'Circle Recruitment Bonus']
+    );
+    await db.query(
+      'UPDATE users SET balance = balance + 100 WHERE id = $1',
+      [user.id]
     );
 
     const token = jwt.sign({ id: user.id, email: user.email, is_admin: user.is_admin }, JWT_SECRET);

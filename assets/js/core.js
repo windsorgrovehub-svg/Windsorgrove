@@ -573,12 +573,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const securePages = ['dashboard.html', 'profile.html', 'support.html', 'account.html', 'tasks.html', 'withdrawal.html', 'deposit.html'];
   const currentPage = location.pathname.split('/').pop() || 'index.html';
   
-  if (!securePages.includes(currentPage)) {
-    // Log out if on an unauthenticated page
-    const savedToken = localStorage.getItem("wgh-token");
-    if (savedToken) {
-      localStorage.removeItem("wgh-token");
-    }
+  const isSecurePage = securePages.includes(currentPage);
+
+  // ── Immediately hide login/signup buttons if token exists ──
+  // This prevents the flash where buttons appear briefly before JS auth runs
+  const savedToken = localStorage.getItem("wgh-token");
+  if (savedToken) {
+    const loginBtn = $("#btn-login");
+    const createBtn = $("#btn-create");
+    if (loginBtn) loginBtn.style.visibility = 'hidden';
+    if (createBtn) createBtn.style.visibility = 'hidden';
+  }
+
+  if (!isSecurePage) {
+    // On public pages, clear token so state is always guest
+    if (savedToken) localStorage.removeItem("wgh-token");
     state.user = null;
     state.token = null;
   }
@@ -586,7 +595,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderFooter();
   initLoader();
   try { await loadState(); } catch(e) { console.warn('API offline, guest mode only.'); }
-  initChatWidget();
+
+  // Only show guest chat widget for non-logged-in users
+  // Logged-in users use the dedicated Support page instead
+  if (!state.user) {
+    initChatWidget();
+  } else {
+    // Ensure widget wrapper is fully hidden if it somehow exists
+    const w = document.getElementById('chat-widget-wrapper') || document.getElementById('chat-widget');
+    if (w) w.style.display = 'none';
+  }
   
   // Brand click navigation
   const brand = $("#brand");

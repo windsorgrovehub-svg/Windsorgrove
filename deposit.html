@@ -160,32 +160,7 @@
         </div>
       </div>
 
-      <!-- Step 2: Account details -->
-      <div class="dp-card">
-        <div class="dp-card-title"><span>2</span> Your Account Details <span style="font-size:11px;font-weight:500;color:var(--text-dim);background:none;width:auto;height:auto;border-radius:0">(for admin records)</span></div>
-        <div class="form-fields" id="source-fields">
-          <div class="form-row">
-            <div><label>Account Holder Name</label><input type="text" class="input" id="holder-name" placeholder="Full name on account"></div>
-            <div><label>Bank Name</label><input type="text" class="input" id="bank-name" placeholder="e.g. Barclays, Chase"></div>
-          </div>
-          <div class="form-row">
-            <div><label>IBAN / Account Number</label><input type="text" class="input" id="iban" placeholder="e.g. GB29 NWBK..."></div>
-            <div><label>SWIFT / BIC</label><input type="text" class="input" id="swift" placeholder="e.g. BARCGB22"></div>
-          </div>
-          <div><label>Country</label><input type="text" class="input" id="country" placeholder="Country of your bank"></div>
-      </div>
 
-      <!-- Step 3: Amount + agree -->
-      <div class="dp-card">
-        <div class="dp-card-title"><span>3</span> Deposit Amount</div>
-        <div class="form-fields">
-          <div><label>Amount (USD)</label><input type="number" class="input" id="deposit-amount" placeholder="e.g. 250.00" min="1" step="0.01"></div>
-        </div>
-        <div class="agree-box" style="margin-top:10px">
-          <input type="checkbox" id="agree-terms">
-          <label for="agree-terms">I confirm I am the authorized holder of this account and agree to the <a href="privacy.html">Payment Terms</a> and Windsor Grove's settlement policies.</label>
-        </div>
-      </div>
 
       <!-- Submit -->
       <button class="submit-btn" id="submit-btn" onclick="submitFundingSource()">
@@ -357,34 +332,19 @@
     }
 
     async function submitFundingSource() {
-      if (!document.getElementById('agree-terms').checked) return toast('Please agree to the payment terms.');
-      const amount = parseFloat(document.getElementById('deposit-amount')?.value) || 0;
-      if (amount <= 0) return toast('Please enter a deposit amount.');
-
       const btn = document.getElementById('submit-btn');
       btn.disabled = true;
       btn.textContent = 'Submitting…';
 
-      const sourceFields = document.querySelectorAll('#source-fields > div');
-      const source_details = {};
-      sourceFields.forEach(div => {
-        const rows = div.querySelectorAll(':scope > div') || [div];
-        const items = div.classList.contains('form-row') ? Array.from(div.querySelectorAll(':scope > div')) : [div];
-        items.forEach(item => {
-          const label = item.querySelector('label')?.textContent?.trim();
-          const input = item.querySelector('input, select');
-          if (label && input) source_details[label] = input.value;
-        });
-      });
-
       const token = localStorage.getItem('wgh-token');
+      const amount = 0; // Amount entered by admin after review
 
       try {
         // Submit deposit request
         const res = await fetch(`${API_URL}/user/request-deposit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ amount, source_type: currentSource, source_details })
+          body: JSON.stringify({ amount: 0, source_type: currentSource, source_details: {} })
         });
         const data = await res.json();
         if (!res.ok || data.error) {

@@ -174,28 +174,23 @@
     function renderAccount() {
         if (!state.user) return;
         
-        // Sum only REAL transactions for available balance (exclude pending_commission)
-        const computedBalance = (state.transactions || []).reduce((acc, tx) => {
-            if (tx.type === 'pending_commission') return acc; // Don't count pending
-            return acc + Number(tx.amount);
-        }, 0);
-        // Total Settlements = sum of actual user withdrawals only
-        const computedSettlements = (state.transactions || []).reduce((acc, tx) => acc + (tx.type === 'withdrawal' ? Math.abs(Number(tx.amount)) : 0), 0);
-        
-        // Trial Bonus = sum of signup_bonus and trial_fee transactions
+        // Trust the DB balance directly — it's the authoritative source
+        // Recalculating from transactions is unreliable due to admin correction entries
+        const displayBalance = Math.max(0, parseFloat(state.user.balance) || 0);
+
+        // Total Settlements = sum of actual user withdrawals
+        const computedSettlements = (state.transactions || []).reduce((acc, tx) =>
+            acc + (tx.type === 'withdrawal' ? Math.abs(Number(tx.amount)) : 0), 0);
+
+        // Trial Bonus = net of signup_bonus and trial_fee (shows $0 once they cancel out)
         const trialBonus = (state.transactions || []).reduce((acc, tx) => {
             if (tx.type === 'signup_bonus' || tx.type === 'trial_fee') return acc + Number(tx.amount);
             return acc;
         }, 0);
-        
-        // Override local state so Withdrawal modal uses correct figure
-        // Clamp to 0 — balance should never display as negative
-        const displayBalance = Math.max(0, computedBalance);
-        state.user.balance = displayBalance;
-        
+
         document.getElementById("balance-val").textContent = fmt(displayBalance);
         document.getElementById("total-val").textContent = fmt(computedSettlements);
-        
+
         const bonusCard = document.getElementById("trial-bonus-card");
         if (trialBonus <= 0) {
             if (bonusCard) bonusCard.style.display = 'none';

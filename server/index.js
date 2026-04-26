@@ -393,7 +393,7 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     // If on paid cycle and user has hit Stage 1 limit (33), check for stage 2 unlock
     if (isTrialDone && completedCount >= STAGE_1_LIMIT) {
       const unlockCheck = await db.query(
-        "SELECT id FROM mission_stage_unlocks WHERE user_id = $1 AND unlocked_date = CURRENT_DATE",
+        "SELECT id FROM mission_stage_unlocks WHERE user_id = $1 AND unlocked_date::date <= CURRENT_DATE",
         [req.user.id]
       );
       if (unlockCheck.rows.length === 0) {
@@ -591,7 +591,7 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
 
     // Check stage 2 unlock for today
     const stage2Unlock = await db.query(
-      "SELECT id FROM mission_stage_unlocks WHERE user_id = $1 AND unlocked_date = CURRENT_DATE",
+      "SELECT id FROM mission_stage_unlocks WHERE user_id = $1 AND unlocked_date::date <= CURRENT_DATE",
       [req.user.id]
     );
     const stage2Unlocked = stage2Unlock.rows.length > 0;

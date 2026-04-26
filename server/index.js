@@ -632,13 +632,8 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
 });
 
 // --- ADMIN: UNLOCK STAGE 2 FOR A USER ---
-app.post('/api/admin/unlock-stage2', authenticateToken, async (req, res) => {
+app.post('/api/admin/unlock-stage2', authenticateToken, isAdmin, async (req, res) => {
   try {
-    // Only admins can call this
-    const adminCheck = await db.query('SELECT role FROM users WHERE id = $1', [req.user.id]);
-    if (!adminCheck.rows[0] || adminCheck.rows[0].role !== 'admin') {
-      return res.status(403).json({ error: 'Admin access required.' });
-    }
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: 'userId is required.' });
 

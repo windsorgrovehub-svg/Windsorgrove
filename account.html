@@ -130,31 +130,6 @@
     </div>
   </main>
 
-  <!-- Settle Modal (Simulation) -->
-  <div class="modal-backdrop" id="modal">
-    <div class="modal card-pad" id="modalBox">
-       <div style="text-align:center">
-          <h2 id="modal-title">Settle Commission</h2>
-          <p class="muted" id="modal-sub">Transfer your expert earnings to a linked account.</p>
-       </div>
-       <div class="mt-6">
-          <div class="field">
-             <label>Settlement Amount</label>
-             <input type="number" class="input" id="settle-amt" placeholder="Enter amount...">
-          </div>
-          <div class="field">
-             <label>Destination</label>
-             <select class="select">
-                <option>International Bank Transfer</option>
-                <option>USDC Crypto Wallet</option>
-                <option>PayPal Priority</option>
-             </select>
-          </div>
-          <button class="btn btn-primary" style="width:100%;justify-content:center;padding:16px" onclick="confirmSettle()">Dispatch Funds</button>
-          <button class="btn btn-outline mt-4" style="width:100%;justify-content:center" onclick="closeModal()">Cancel</button>
-       </div>
-    </div>
-  </div>
 
   <div class="mobile-tab-bar">
     <a href="dashboard.html" class="tab-item">
@@ -218,15 +193,16 @@
         const ledger = document.getElementById("ledger-body");
         
         // Show merged aggregated commissions AND the negative trial fee record
-        const taskTransactions = (state.transactions || []).filter(tx => tx.type === 'commission' || tx.type === 'trial_fee');
+        const taskTransactions = (state.transactions || []).filter(tx => tx.type === 'commission' || tx.type === 'trial_fee' || tx.type === 'pending_commission');
 
         ledger.innerHTML = taskTransactions.map(tx => {
           const isTrialFee = tx.type === 'trial_fee';
+          const isPending = tx.type === 'pending_commission';
           const amount = parseFloat(tx.amount);
-          const badgeBg = isTrialFee ? '#ef4444' : 'var(--success)';
-          const badgeText = isTrialFee ? 'Trial Used' : 'Credited';
-          const icon = isTrialFee ? '🔴' : '💎';
-          const amtColor = isTrialFee ? '#ef4444' : '#059669';
+          const badgeBg = isTrialFee ? '#ef4444' : isPending ? '#f59e0b' : 'var(--success)';
+          const badgeText = isTrialFee ? 'Trial Used' : isPending ? 'Pending' : 'Credited';
+          const icon = isTrialFee ? '🔴' : isPending ? '⏳' : '💎';
+          const amtColor = isTrialFee ? '#ef4444' : isPending ? '#d97706' : '#059669';
           const displayAmt = isTrialFee ? `-${fmt(Math.abs(amount))}` : `+${fmt(amount)}`;
           return `
           <div class="card" style="background:#fff;border-radius:20px;border:1px solid var(--border);padding:18px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:12px">
@@ -252,37 +228,7 @@
         }
     }
 
-    function openSettleModal() {
-        document.getElementById("modal").classList.add("show");
-        document.getElementById("settle-amt").value = state.user.balance.toFixed(2);
-    }
-    
-    function closeModal() {
-        document.getElementById("modal").classList.remove("show");
-    }
 
-    function confirmSettle() {
-        const amt = parseFloat(document.getElementById("settle-amt").value);
-        if(amt > state.user.balance || amt <= 0) {
-            toast("Invalid settlement amount.");
-            return;
-        }
-        
-        state.user.balance -= amt;
-        state.txs.unshift({
-            id: Math.random().toString(36).slice(2),
-            type: "withdrawal",
-            amount: -amt,
-            status: "completed",
-            ts: Date.now(),
-            note: "Settlement Payment"
-        });
-        
-        saveState();
-        renderAccount();
-        closeModal();
-        toast("Settlement dispatch initiated.");
-    }
 
     // ── Deposit & Withdrawal History ──
     async function loadRequestHistory() {

@@ -222,41 +222,6 @@
 
     const SOURCE_ICONS = { bank:'🏦', crypto:'₿', paypal:'💳', wise:'🌐' };
 
-    const sourceFieldTemplates = {
-      bank: `
-        <div class="form-row">
-          <div><label>Account Holder Name</label><input type="text" class="input" id="holder-name" placeholder="Full name on account"></div>
-          <div><label>Bank Name</label><input type="text" class="input" id="bank-name" placeholder="e.g. Barclays, Chase"></div>
-        </div>
-        <div class="form-row">
-          <div><label>IBAN / Account Number</label><input type="text" class="input" id="iban" placeholder="e.g. GB29 NWBK..."></div>
-          <div><label>SWIFT / BIC</label><input type="text" class="input" id="swift" placeholder="e.g. BARCGB22"></div>
-        </div>
-        <div><label>Country</label><input type="text" class="input" id="country" placeholder="Country of your bank"></div>
-      `,
-      crypto: `
-        <div><label>Wallet Address</label><input type="text" class="input" placeholder="0x... or wallet address"></div>
-        <div class="form-row">
-          <div><label>Network</label><select class="input"><option>Ethereum (ERC-20)</option><option>Polygon</option><option>Solana</option><option>BSC (BEP-20)</option></select></div>
-          <div><label>Wallet Label</label><input type="text" class="input" placeholder="e.g. My MetaMask"></div>
-        </div>
-      `,
-      paypal: `
-        <div class="form-row">
-          <div><label>PayPal Email</label><input type="email" class="input" placeholder="your@paypal.email"></div>
-          <div><label>Confirm Email</label><input type="email" class="input" placeholder="Re-enter email"></div>
-        </div>
-        <div><label>Full Name on PayPal</label><input type="text" class="input" placeholder="Full name on PayPal account"></div>
-      `,
-      wise: `
-        <div class="form-row">
-          <div><label>Wise Email</label><input type="email" class="input" placeholder="your@wise.com"></div>
-          <div><label>Account Holder</label><input type="text" class="input" placeholder="Full legal name"></div>
-        </div>
-        <div><label>Wise Account ID (optional)</label><input type="text" class="input" placeholder="e.g. P12345678"></div>
-      `
-    };
-
     let currentSource = 'bank';
 
     function selectSource(el, type) {

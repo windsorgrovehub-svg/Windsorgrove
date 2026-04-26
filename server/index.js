@@ -404,6 +404,16 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
       }
     }
 
+    // Check paid sets count BEFORE inserting any commission
+    const paidSetsQuery = await db.query(
+      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Daily Task Commission%'",
+      [req.user.id]
+    );
+    const paidSetsCount = parseInt(paidSetsQuery.rows[0].count);
+    if (isTrialDone && paidSetsCount >= 5) {
+      return res.status(400).json({ error: 'You have exhausted your maximum weekly task limits (5 sets).' });
+    }
+
     // Check if user already rated this hotel
     const alreadyRated = await db.query(
       "SELECT id FROM transactions WHERE user_id = $1 AND note = $2 AND type IN ('pending_commission', 'commission')",
@@ -445,16 +455,7 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
       );
     }
 
-    // Check paid sets count (how many full daily sets completed total)
-    const paidSetsQuery = await db.query(
-      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Daily Task Commission%'",
-      [req.user.id]
-    );
-    const paidSetsCount = parseInt(paidSetsQuery.rows[0].count);
-
-    if (isTrialDone && paidSetsCount >= 5) {
-      return res.status(400).json({ error: 'You have exhausted your maximum weekly task limits (5 sets).' });
-    }
+    // (paid sets limit check was moved above the insert — see line ~407)
 
     let allCompleted = false;
     let totalCredited = 0;
@@ -720,17 +721,24 @@ app.post('/api/user/withdraw', authenticateToken, async (req, res) => {
 
     const fmtUSD = v => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
 
-    // Store as PENDING — admin must approve before balance changes
-    // Store gross amount; fee is recorded separately for transparency
+    // Lock the FULL withdrawal amount (gross) from balance immediately to prevent double-spend
+    await db.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [withdrawAmount, req.user.id]);
+
+    // Record the hold as a transaction
+    await db.query(
+      'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
+      [req.user.id, 'withdrawal_hold', -withdrawAmount, `Withdrawal hold — ${fmtUSD(withdrawAmount)} via ${method || 'Bank Transfer'} (pending approval)`]
+    );
+
+    // Store as PENDING — net amount (after fee) is what user receives
     await db.query(
       `INSERT INTO pending_requests (user_id, type, amount, method, destination_details, status)
        VALUES ($1, 'withdrawal', $2, $3, $4, 'pending')`,
       [req.user.id, netAmount, method || 'Bank Transfer', JSON.stringify(destination_details || {})]
     );
 
-    // Record fee as a deduction transaction immediately if fee > 0
+    // Record fee as a separate transaction for transparency if fee > 0
     if (fee > 0) {
-      await db.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [fee, req.user.id]);
       await db.query(
         'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
         [req.user.id, 'task_fee', -fee, `Withdrawal Processing Fee (${feeType === 'percent' ? feeValue + '%' : fmtUSD(feeValue)})`]
@@ -1363,12 +1371,8 @@ app.post('/api/admin/approve-request', authenticateToken, isAdmin, async (req, r
     const amount = parseFloat(pr.amount);
 
     if (pr.type === 'withdrawal') {
-      // Deduct balance
-      const userRes = await db.query('SELECT balance FROM users WHERE id = $1', [pr.user_id]);
-      const currentBal = parseFloat(userRes.rows[0].balance);
-      if (amount > currentBal) return res.status(400).json({ error: `Insufficient balance (${fmtUSD(currentBal)} available).` });
-
-      await db.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [amount, pr.user_id]);
+      // Balance was already locked at submit time (withdrawal_hold), so do NOT deduct again.
+      // Just record the approval transaction for the ledger.
       await db.query(
         'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
         [pr.user_id, 'admin_debit', -amount, admin_note || `Withdrawal approved via ${pr.method}`]
@@ -1418,9 +1422,34 @@ app.post('/api/admin/reject-request', authenticateToken, isAdmin, async (req, re
     );
 
     const fmtUSD = v => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
+    const amount = parseFloat(pr.amount);
+
+    // Refund held funds on withdrawal rejection
+    if (pr.type === 'withdrawal') {
+      // Look up the original gross amount from the withdrawal_hold transaction
+      const holdTx = await db.query(
+        "SELECT amount FROM transactions WHERE user_id = $1 AND type = 'withdrawal_hold' ORDER BY created_at DESC LIMIT 1",
+        [pr.user_id]
+      );
+      // Also find and reverse the fee
+      const feeTx = await db.query(
+        "SELECT amount FROM transactions WHERE user_id = $1 AND type = 'task_fee' AND note LIKE 'Withdrawal Processing Fee%' ORDER BY created_at DESC LIMIT 1",
+        [pr.user_id]
+      );
+      const holdAmount = holdTx.rows.length > 0 ? Math.abs(parseFloat(holdTx.rows[0].amount)) : amount;
+      const feeAmount = feeTx.rows.length > 0 ? Math.abs(parseFloat(feeTx.rows[0].amount)) : 0;
+      const refundTotal = holdAmount + feeAmount;
+
+      await db.query('UPDATE users SET balance = balance + $1 WHERE id = $2', [refundTotal, pr.user_id]);
+      await db.query(
+        'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
+        [pr.user_id, 'admin_credit', refundTotal, `Refund — withdrawal of ${fmtUSD(amount)} was rejected. Held funds + fee returned.`]
+      );
+    }
+
     await db.query(
       'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-      [pr.user_id, `${pr.type}_rejected`, `Your ${pr.type} request of ${fmtUSD(parseFloat(pr.amount))} was not approved. ${admin_note || ''}`, true]
+      [pr.user_id, `${pr.type}_rejected`, `Your ${pr.type} request of ${fmtUSD(amount)} was not approved. ${admin_note || ''}`, true]
     );
 
     res.json({ success: true });
@@ -1554,7 +1583,10 @@ app.delete('/api/admin/messages', authenticateToken, isAdmin, async (req, res) =
 // Public read (for withdrawal page fee display)
 app.get('/api/settings', async (req, res) => {
   try {
-    const result = await db.query('SELECT key, value FROM platform_settings');
+    // Only expose non-sensitive settings publicly (fee config for withdrawal page)
+    const result = await db.query(
+      "SELECT key, value FROM platform_settings WHERE key IN ('withdrawal_fee_type', 'withdrawal_fee_value')"
+    );
     const settings = {};
     result.rows.forEach(r => { settings[r.key] = r.value; });
     res.json(settings);

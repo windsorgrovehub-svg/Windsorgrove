@@ -1757,12 +1757,34 @@
       document.getElementById('confirm-logout').focus();
     }
 
+    // --- Mobile Sidebar Toggle ---
+    function toggleSidebar() {
+      const sidebar = document.getElementById('admin-sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      const btn = document.getElementById('mob-menu-btn');
+      const isOpen = sidebar.classList.contains('mob-open');
+      sidebar.classList.toggle('mob-open', !isOpen);
+      overlay.classList.toggle('show', !isOpen);
+      if (btn) btn.classList.toggle('open', !isOpen);
+    }
+    function closeSidebar() {
+      const sidebar = document.getElementById('admin-sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      const btn = document.getElementById('mob-menu-btn');
+      sidebar.classList.remove('mob-open');
+      overlay.classList.remove('show');
+      if (btn) btn.classList.remove('open');
+    }
+
     // --- View Switching ---
+    // Nav button ID map: some views have different IDs from their section names
+    const VIEW_NAV_ID = { stage2: 'missions' };
     const ALL_VIEWS = ['mon', 'prop', 'invite', 'stage2', 'ledger', 'users', 'paymethods', 'support', 'settings'];
     function switchView(active) {
         closeSidebar(); // always close mobile sidebar when switching sections
         ALL_VIEWS.forEach(v => {
-            const btn = $(`#view-${v}`), sec = $(`#${v}-section`);
+            const navId = VIEW_NAV_ID[v] || v;
+            const btn = $(`#view-${navId}`), sec = $(`#${v}-section`);
             if (btn) { 
                 btn.style.background = v === active ? 'var(--bg)' : 'transparent'; 
                 btn.style.color = v === active ? 'var(--text)' : 'var(--text-dim)'; 

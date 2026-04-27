@@ -86,7 +86,6 @@
 
   <script src="assets/js/core.js"></script>
   <script>
-    const fmt = n => Number(n).toLocaleString(undefined,{style:"currency",currency:"USD",maximumFractionDigits:2});
     let allItems=[],pageSize=25,currentPage=1;
     window.changePageSize=s=>{pageSize=parseInt(s);currentPage=1;render();};
     window.changePage=d=>{currentPage+=d;render();};
@@ -115,8 +114,16 @@
       if(total>pageSize){const tp=Math.ceil(total/pageSize);ctrl.innerHTML=`<button class="pag-btn" onclick="changePage(-1)" ${currentPage===1?'disabled':''}>← Previous</button><span style="font-size:13px;color:var(--text-dim);font-weight:600">Page ${currentPage} of ${tp}</span><button class="pag-btn" onclick="changePage(1)" ${currentPage===tp?'disabled':''}>Next →</button>`;}
       else ctrl.innerHTML='';
     }
-    let _r=0;function init(){_r++;if(!state.user){if(localStorage.getItem('wgh-token')&&_r<100)setTimeout(init,50);return;}allItems=(state.transactions||[]).filter(t=>t.type==='commission'||t.type==='trial_fee'||t.type==='pending_commission');render();}
-    init();
+    // Wait for core.js DOMContentLoaded to finish loading state before reading transactions
+    document.addEventListener('DOMContentLoaded', () => {
+      const waitForUser = setInterval(() => {
+        if (state.user) {
+          clearInterval(waitForUser);
+          allItems = (state.transactions || []).filter(t => t.type==='commission' || t.type==='trial_fee' || t.type==='pending_commission');
+          render();
+        }
+      }, 80);
+    });
   </script>
 </body>
 </html>

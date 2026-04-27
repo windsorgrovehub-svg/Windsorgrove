@@ -86,7 +86,6 @@
 
   <script src="assets/js/core.js"></script>
   <script>
-    const fmt=n=>Number(n).toLocaleString(undefined,{style:"currency",currency:"USD",maximumFractionDigits:2});
     const methodIcon=m=>({bank:'🏦',crypto:'₿',paypal:'💳',wise:'🌐','Bank Transfer':'🏦','Crypto Wallet':'₿'})[m]||'💼';
     const statusStyle=s=>s==='approved'?'background:#d1fae5;color:#059669':s==='rejected'?'background:#fee2e2;color:#dc2626':'background:#fef3c7;color:#d97706';
     const fmtDate=d=>new Date(d).toLocaleDateString(undefined,{dateStyle:'medium'});
@@ -114,14 +113,18 @@
       if(total>pageSize){const tp=Math.ceil(total/pageSize);ctrl.innerHTML=`<button class="pag-btn" onclick="changePage(-1)" ${currentPage===1?'disabled':''}>← Previous</button><span style="font-size:13px;color:var(--text-dim);font-weight:600">Page ${currentPage} of ${tp}</span><button class="pag-btn" onclick="changePage(1)" ${currentPage===tp?'disabled':''}>Next →</button>`;}
       else ctrl.innerHTML='';
     }
-    let _r=0;async function init(){_r++;if(!state.user){if(localStorage.getItem('wgh-token')&&_r<100)setTimeout(init,50);return;}
-      try{
-        const res=await fetch(`${API_URL}/user/my-requests`,{headers:{'Authorization':`Bearer ${state.token}`}});
-        if(res.ok){const data=await res.json();allItems=data.filter(r=>r.type==='withdrawal');}
-      }catch(e){}
-      render();
-    }
-    init();
+    document.addEventListener('DOMContentLoaded', () => {
+      const waitForUser = setInterval(async () => {
+        if (state.user) {
+          clearInterval(waitForUser);
+          try {
+            const res = await fetch(`${API_URL}/user/my-requests`, {headers: {'Authorization': `Bearer ${state.token}`}});
+            if (res.ok) { const data = await res.json(); allItems = data.filter(r => r.type === 'withdrawal'); }
+          } catch(e) {}
+          render();
+        }
+      }, 80);
+    });
   </script>
 </body>
 </html>

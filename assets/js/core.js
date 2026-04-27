@@ -592,6 +592,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // If user is NOT logged in — reveal auth buttons for guests and show chat widget
   if (!state.user) {
+    if (isSecurePage) {
+      window.location.href = 'login.html';
+      return;
+    }
     document.documentElement.removeAttribute('data-auth');
     initChatWidget();
   } else {

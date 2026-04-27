@@ -346,6 +346,19 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     const hotel = hotelResult.rows[0];
     if (!hotel) return res.status(404).json({ error: 'Hotel not found' });
 
+    // --- MINIMUM BALANCE GUARD ---
+    const MIN_MISSION_BALANCE = 50.00;
+    const userBalRes = await db.query('SELECT balance FROM users WHERE id = $1', [req.user.id]);
+    const userBal = parseFloat(userBalRes.rows[0]?.balance || 0);
+    if (userBal < MIN_MISSION_BALANCE) {
+      return res.status(403).json({
+        error: 'insufficient_balance',
+        message: `A minimum balance of $${MIN_MISSION_BALANCE.toFixed(2)} is required to complete missions. Your current balance is $${userBal.toFixed(2)}.`,
+        current_balance: userBal,
+        required: MIN_MISSION_BALANCE
+      });
+    }
+
     // --- TWO-STAGE DAILY MISSION SYSTEM ---
     // Trial = 30 tasks (exhausts $100 bonus, no commission)
     // Paid day = 66 tasks split into Stage 1 (33) + Stage 2 (33)

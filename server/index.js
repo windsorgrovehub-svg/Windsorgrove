@@ -414,6 +414,18 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     // Determine mission target
     const missionTarget = !isTrialDone ? 30 : DAILY_TOTAL;
 
+    // Bug 2 fix: Also enforce $50 minimum at Stage 2 start (completedCount === STAGE_1_LIMIT)
+    // The earlier guard only fires at completedCount === 0 to avoid blocking mid-session.
+    // Stage 2 start is a separate session boundary and must also be checked.
+    if (isTrialDone && completedCount === STAGE_1_LIMIT && userBal < MIN_MISSION_BALANCE) {
+      return res.status(403).json({
+        error: 'insufficient_balance',
+        message: `A minimum balance of $${MIN_MISSION_BALANCE.toFixed(2)} is required to start Stage 2. Your current balance is $${userBal.toFixed(2)}.`,
+        current_balance: userBal,
+        required: MIN_MISSION_BALANCE
+      });
+    }
+
     // If on paid cycle and user has hit Stage 1 limit (33), check for stage 2 unlock
     if (isTrialDone && completedCount >= STAGE_1_LIMIT) {
       const unlockCheck = await db.query(
@@ -749,27 +761,29 @@ app.post('/api/user/withdraw', authenticateToken, async (req, res) => {
 
     const fmtUSD = v => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
 
+    // Insert pending_request FIRST so we can embed its ID in the hold note (Bug 1 fix)
+    const prInsert = await db.query(
+      `INSERT INTO pending_requests (user_id, type, amount, method, destination_details, status)
+       VALUES ($1, 'withdrawal', $2, $3, $4, 'pending') RETURNING id`,
+      [req.user.id, netAmount, method || 'Bank Transfer', JSON.stringify(destination_details || {})]
+    );
+    const pendingRequestId = prInsert.rows[0].id;
+
     // Lock the FULL withdrawal amount (gross) from balance immediately to prevent double-spend
     await db.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [withdrawAmount, req.user.id]);
 
-    // Record the hold as a transaction
+    // Record the hold — embed pending_request_id in note for reliable rejection refund lookup
     await db.query(
       'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
-      [req.user.id, 'withdrawal_hold', -withdrawAmount, `Withdrawal hold — ${fmtUSD(withdrawAmount)} via ${method || 'Bank Transfer'} (pending approval)`]
-    );
-
-    // Store as PENDING — net amount (after fee) is what user receives
-    await db.query(
-      `INSERT INTO pending_requests (user_id, type, amount, method, destination_details, status)
-       VALUES ($1, 'withdrawal', $2, $3, $4, 'pending')`,
-      [req.user.id, netAmount, method || 'Bank Transfer', JSON.stringify(destination_details || {})]
+      [req.user.id, 'withdrawal_hold', -withdrawAmount, `Withdrawal hold — ${fmtUSD(withdrawAmount)} via ${method || 'Bank Transfer'} (pending approval) [req:${pendingRequestId}]`]
     );
 
     // Record fee as a separate transaction for transparency if fee > 0
+    // Bug 4 fix: use 'withdrawal_fee' type, not 'task_fee', to avoid polluting task fee ledger
     if (fee > 0) {
       await db.query(
         'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
-        [req.user.id, 'task_fee', -fee, `Withdrawal Processing Fee (${feeType === 'percent' ? feeValue + '%' : fmtUSD(feeValue)})`]
+        [req.user.id, 'withdrawal_fee', -fee, `Withdrawal Processing Fee (${feeType === 'percent' ? feeValue + '%' : fmtUSD(feeValue)}) [req:${pendingRequestId}]`]
       );
     }
 
@@ -1454,15 +1468,15 @@ app.post('/api/admin/reject-request', authenticateToken, isAdmin, async (req, re
 
     // Refund held funds on withdrawal rejection
     if (pr.type === 'withdrawal') {
-      // Look up the original gross amount from the withdrawal_hold transaction
+      // Bug 1 fix: Look up the hold specifically linked to this pending_request_id via note tag
       const holdTx = await db.query(
-        "SELECT amount FROM transactions WHERE user_id = $1 AND type = 'withdrawal_hold' ORDER BY created_at DESC LIMIT 1",
-        [pr.user_id]
+        "SELECT amount FROM transactions WHERE user_id = $1 AND type = 'withdrawal_hold' AND note LIKE $2 ORDER BY created_at DESC LIMIT 1",
+        [pr.user_id, `%[req:${request_id}]%`]
       );
-      // Also find and reverse the fee
+      // Bug 4 fix: fee type is now 'withdrawal_fee', look up by req tag
       const feeTx = await db.query(
-        "SELECT amount FROM transactions WHERE user_id = $1 AND type = 'task_fee' AND note LIKE 'Withdrawal Processing Fee%' ORDER BY created_at DESC LIMIT 1",
-        [pr.user_id]
+        "SELECT amount FROM transactions WHERE user_id = $1 AND type = 'withdrawal_fee' AND note LIKE $2 ORDER BY created_at DESC LIMIT 1",
+        [pr.user_id, `%[req:${request_id}]%`]
       );
       const holdAmount = holdTx.rows.length > 0 ? Math.abs(parseFloat(holdTx.rows[0].amount)) : amount;
       const feeAmount = feeTx.rows.length > 0 ? Math.abs(parseFloat(feeTx.rows[0].amount)) : 0;

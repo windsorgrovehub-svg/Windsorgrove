@@ -551,15 +551,19 @@
 
       // --- MINIMUM BALANCE GUARD ($50) ---
       // Exempt: trial users (they start with $100, always fine)
-      // Only check at session START (completed===0) — not mid-session,
-      // because the $0.01 per-task fee would drop balance below $50 after task #1
+      // Fires at TWO boundaries:
+      //   1. completedCount === 0  → fresh paid session start (Stage 1)
+      //   2. completedCount === stage1Limit → Stage 2 start boundary
+      // Mid-session (other counts) are NOT checked to avoid the $0.01 fee causing false blocks.
       const MIN_BALANCE = 50.00;
       const currentBalance = parseFloat(state.user.balance) || 0;
       const isTrial_guard = missionProgress.is_trial;
-      const sessionStarted = (missionProgress.completed || 0) > 0;
+      const completedNow = missionProgress.completed || 0;
+      const stage1Lim = missionProgress.stage1_limit || 33;
+      const isSessionBoundary = (completedNow === 0) || (completedNow === stage1Lim);
       const insufficientOverlay = document.getElementById('insufficient-balance-overlay');
       const balDisplay = document.getElementById('insuf-balance-display');
-      if (!isTrial_guard && !sessionStarted && currentBalance < MIN_BALANCE) {
+      if (!isTrial_guard && isSessionBoundary && currentBalance < MIN_BALANCE) {
         if (balDisplay) balDisplay.textContent = fmt(currentBalance);
         if (insufficientOverlay) insufficientOverlay.style.display = 'flex';
         const launcher = document.getElementById('mission-launcher');
@@ -572,6 +576,7 @@
         if (insufficientOverlay) insufficientOverlay.style.display = 'none';
       }
       // --- END BALANCE GUARD ---
+
 
       banner.style.display = 'block';
 

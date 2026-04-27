@@ -53,13 +53,14 @@
       #star-row { gap: 6px !important; }
       #star-label { font-size: 22px !important; }
 
-      /* Stage 2 locked, Daily complete & Insufficient balance overlays */
-      #stage2-locked-overlay > div,
+      /* Stage 2 locked overlay — still needs mobile padding adjustment */
+      #stage2-locked-overlay > div { padding: 24px 16px !important; }
+      #stage2-locked-overlay h2 { font-size: 18px !important; }
+      /* daily-complete & insufficient-balance are already compact — just ensure no overflow */
       #daily-complete-overlay > div,
-      #insufficient-balance-overlay > div { padding: 32px 18px !important; }
-      #stage2-locked-overlay h2,
+      #insufficient-balance-overlay > div { padding: 22px 16px !important; }
       #daily-complete-overlay h2,
-      #insufficient-balance-overlay h2 { font-size: 20px !important; }
+      #insufficient-balance-overlay h2 { font-size: 18px !important; }
 
       /* Progress banner — ensure text doesn't overflow */
       #mission-progress { padding: 14px 16px !important; }

@@ -1155,6 +1155,8 @@
         <!-- Pill Tabs -->
         <div class="ltabs">
           <button id="ltab-pending" class="ltab-btn active" onclick="switchLedgerTab('pending')">⏳ Pending</button>
+          <button id="ltab-deposits" class="ltab-btn" onclick="switchLedgerTab('deposits')">💰 Deposits</button>
+          <button id="ltab-withdrawals" class="ltab-btn" onclick="switchLedgerTab('withdrawals')">📤 Withdrawals</button>
           <button id="ltab-all" class="ltab-btn" onclick="switchLedgerTab('all')">📋 All Requests</button>
           <button id="ltab-accounts" class="ltab-btn" onclick="switchLedgerTab('accounts')">👥 Expert Accounts</button>
         </div>
@@ -2506,14 +2508,14 @@
 
     function switchLedgerTab(tab) {
       currentLedgerTab = tab;
-      ['pending','all','accounts'].forEach(t => {
+      ['pending','deposits','withdrawals','all','accounts'].forEach(t => {
         const btn = $(`#ltab-${t}`);
         if (btn) btn.classList.toggle('active', t === tab);
       });
       $('#lpanel-requests').style.display = tab === 'accounts' ? 'none' : 'block';
       $('#lpanel-accounts').style.display = tab === 'accounts' ? 'block' : 'none';
       if (tab === 'accounts') loadLedgerUsers();
-      else renderRequests(allRequests, tab);
+      else { ledgerCurrentPage = 1; renderRequests(allRequests, tab); }
     }
 
     async function loadPendingRequests(tab) {
@@ -2539,14 +2541,21 @@
     function renderRequests(requests, tab) {
       const container = $('#requests-table-body');
       const countEl = $('#req-count');
-      const filtered = tab === 'pending' ? requests.filter(r => r.status === 'pending') : requests;
+      let filtered;
+      if (tab === 'pending') filtered = requests.filter(r => r.status === 'pending');
+      else if (tab === 'deposits') filtered = requests.filter(r => r.type === 'deposit');
+      else if (tab === 'withdrawals') filtered = requests.filter(r => r.type === 'withdrawal');
+      else filtered = requests;
       allLedgerFiltered = filtered;
-      if (countEl) countEl.textContent = `${filtered.length} request${filtered.length !== 1 ? 's' : ''}`;
-      updateLedgerPagination(filtered.length);
+      const total = filtered.length;
+      const start = (ledgerCurrentPage - 1) * TABLE_PAGE_SIZE;
+      const end = Math.min(start + TABLE_PAGE_SIZE, total);
+      if (countEl) countEl.textContent = total > 0 ? `Showing ${start + 1}–${end} of ${total}` : '0 results';
+      updateLedgerPagination(total);
 
-      if (filtered.length === 0) {
-        const isP = tab === 'pending';
-        container.innerHTML = `<tr><td colspan="7" style="padding:60px;text-align:center;color:var(--text-dim)">${isP ? '🎉 All clear — no pending requests' : '📭 No requests found'}</td></tr>`;
+      if (total === 0) {
+        const emptyMsgs = { pending: '🎉 All clear — no pending requests', deposits: '📭 No deposit requests found', withdrawals: '📭 No withdrawal requests found', all: '📭 No requests found' };
+        container.innerHTML = `<tr><td colspan="7" style="padding:60px;text-align:center;color:var(--text-dim)">${emptyMsgs[tab] || '📭 No requests found'}</td></tr>`;
         return;
       }
 
@@ -2554,7 +2563,6 @@
       const fmtDate = d => new Date(d).toLocaleString(undefined, {dateStyle:'medium',timeStyle:'short'});
       const methodIcon = m => ({ bank:'🏦', crypto:'₿', paypal:'💳', wise:'🌐', 'Bank Transfer':'🏦', 'Crypto Wallet':'₿' })[m] || '💼';
 
-      const start = (ledgerCurrentPage - 1) * TABLE_PAGE_SIZE;
       const page = filtered.slice(start, start + TABLE_PAGE_SIZE);
 
       container.innerHTML = page.map(r => {

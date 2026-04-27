@@ -346,18 +346,15 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     const hotel = hotelResult.rows[0];
     if (!hotel) return res.status(404).json({ error: 'Hotel not found' });
 
-    // --- MINIMUM BALANCE GUARD ---
+    // --- MINIMUM BALANCE GUARD ($50) ---
+    // Rules:
+    //  1. Trial tasks are EXEMPT — user starts with $100, no need to check
+    //  2. Paid missions: only check at the VERY START of a new session (completedCount=0)
+    //     — mid-session checks would block task #2+ due to the $0.01 per-task fee reducing balance
     const MIN_MISSION_BALANCE = 50.00;
     const userBalRes = await db.query('SELECT balance FROM users WHERE id = $1', [req.user.id]);
     const userBal = parseFloat(userBalRes.rows[0]?.balance || 0);
-    if (userBal < MIN_MISSION_BALANCE) {
-      return res.status(403).json({
-        error: 'insufficient_balance',
-        message: `A minimum balance of $${MIN_MISSION_BALANCE.toFixed(2)} is required to complete missions. Your current balance is $${userBal.toFixed(2)}.`,
-        current_balance: userBal,
-        required: MIN_MISSION_BALANCE
-      });
-    }
+    // We will enforce this check after we know isTrialDone and completedCount (see below)
 
     // --- TWO-STAGE DAILY MISSION SYSTEM ---
     // Trial = 30 tasks (exhausts $100 bonus, no commission)
@@ -400,6 +397,19 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
       [req.user.id]
     );
     const completedCount = parseInt(completedRes.rows[0].count);
+
+    // --- ENFORCE MINIMUM BALANCE GUARD (paid sessions only, first task only) ---
+    // Trial tasks are exempt (user has $100). For paid missions we only block at
+    // the very start of a fresh session — not mid-session — so the $0.01 task fee
+    // does not inadvertently block task #2 onward.
+    if (isTrialDone && completedCount === 0 && userBal < MIN_MISSION_BALANCE) {
+      return res.status(403).json({
+        error: 'insufficient_balance',
+        message: `A minimum balance of $${MIN_MISSION_BALANCE.toFixed(2)} is required to start missions. Your current balance is $${userBal.toFixed(2)}.`,
+        current_balance: userBal,
+        required: MIN_MISSION_BALANCE
+      });
+    }
 
     // Determine mission target
     const missionTarget = !isTrialDone ? 30 : DAILY_TOTAL;
@@ -502,7 +512,7 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
         let bonusAmount = parseFloat(bonusRes.rows[0].total);
         if (bonusAmount <= 0) bonusAmount = 100;
 
-        // Deduct all but $22 — user keeps $22.00 as their starting paid-cycle balance
+        // Deduct all but $33 — user keeps $33.00 as their starting paid-cycle balance
         const TRIAL_RETAIN = 33.00;
         const trialDeduction = parseFloat(Math.max(0, bonusAmount - TRIAL_RETAIN).toFixed(2));
 

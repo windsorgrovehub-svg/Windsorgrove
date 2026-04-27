@@ -671,6 +671,12 @@
           document.getElementById('old_password').value = '';
           document.getElementById('new_password').value = '';
           document.getElementById('confirm_password').value = '';
+          // Bug 14 fix: Server issues a new JWT on password change.
+          // Store it immediately so the user stays authenticated with the new token.
+          if (data.token) {
+            localStorage.setItem('wgh-token', data.token);
+            state.token = data.token;
+          }
           toast("Primary encryption key officially rotated.");
         } else {
           toast(data.error);

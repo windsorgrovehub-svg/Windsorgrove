@@ -304,19 +304,28 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
     if (email !== undefined) {
       await db.query('UPDATE users SET email = $1 WHERE id = $2', [email, req.user.id]);
     }
-    
+
+    let newToken = null;
     if (new_password) {
       if (!old_password) return res.status(400).json({ error: 'Current password is required.' });
-      const userRes = await db.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+      const userRes = await db.query('SELECT password_hash, is_admin FROM users WHERE id = $1', [req.user.id]);
       const match = await bcrypt.compare(old_password, userRes.rows[0].password_hash);
       if (!match) return res.status(400).json({ error: 'Incorrect current password.' });
 
       const hashedPassword = await bcrypt.hash(new_password, 10);
       await db.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hashedPassword, req.user.id]);
+
+      // Bug 14 fix: Issue a fresh JWT so old tokens are effectively invalidated.
+      // Client must store the returned token to stay authenticated.
+      newToken = jwt.sign(
+        { id: req.user.id, email: req.user.email, is_admin: userRes.rows[0].is_admin },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
     }
 
     const result = await db.query('SELECT id, name, email, phone_number, balance, commission_total FROM users WHERE id = $1', [req.user.id]);
-    res.json({ message: 'Profile updated successfully', user: result.rows[0] });
+    res.json({ message: 'Profile updated successfully', user: result.rows[0], ...(newToken ? { token: newToken } : {}) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update profile' });
@@ -734,9 +743,22 @@ app.get('/api/user/mission-hotels', authenticateToken, async (req, res) => {
   try {
     // Generate a fixed daily seed for this user
     const seed = `${req.user.id}-${new Date().toISOString().slice(0, 10)}`;
+
+    // Bug 13 fix: Exclude hotels this user has already rated (hotel_rated archive rows).
+    // Without this, after 15+ days (990+ ratings) the pool is effectively exhausted
+    // and the alreadyRated guard blocks almost every hotel served.
     const result = await db.query(
-      'SELECT id, name, city, country, image, price, commission_rate FROM hotels ORDER BY md5(id || $1) LIMIT 400',
-      [seed]
+      `SELECT h.id, h.name, h.city, h.country, h.image, h.price, h.commission_rate
+       FROM hotels h
+       WHERE h.id NOT IN (
+         SELECT CAST(REPLACE(note, 'Expert Intelligence Fee: ', '') AS TEXT)
+         FROM transactions
+         WHERE user_id = $2 AND type = 'hotel_rated'
+         AND note LIKE 'Expert Intelligence Fee:%'
+       )
+       ORDER BY md5(h.id::text || $1)
+       LIMIT 400`,
+      [seed, req.user.id]
     );
     res.json(result.rows);
   } catch (err) {
@@ -751,20 +773,42 @@ app.post('/api/user/withdraw', authenticateToken, async (req, res) => {
   if (!amount || isNaN(amount) || Number(amount) <= 0) {
     return res.status(400).json({ error: 'Invalid withdrawal amount.' });
   }
+
+  const client = await db.connect();
   try {
-    const userRes = await db.query('SELECT balance FROM users WHERE id = $1', [req.user.id]);
+    await client.query('BEGIN');
+
+    // Bug 12 fix: Lock the user row for the duration of this transaction
+    // to prevent concurrent withdrawal requests both passing the balance check.
+    const userRes = await client.query('SELECT balance FROM users WHERE id = $1 FOR UPDATE', [req.user.id]);
     const user = userRes.rows[0];
-    if (!user) return res.status(404).json({ error: 'User not found.' });
+    if (!user) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'User not found.' }); }
+
+    // Bug 10 fix: Block withdrawals before trial is complete.
+    // Users have $100 trial bonus in their balance — this must not be withdrawable
+    // until they complete the 30-task trial (trial_fee record is created on completion).
+    const trialCheck = await client.query(
+      "SELECT id FROM transactions WHERE user_id = $1 AND type = 'trial_fee'",
+      [req.user.id]
+    );
+    if (trialCheck.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({
+        error: 'trial_incomplete',
+        message: 'You must complete your 30-task trial before making a withdrawal. Your $33 starting balance will be available once the trial is done.'
+      });
+    }
 
     const currentBalance = parseFloat(user.balance);
     const withdrawAmount = parseFloat(amount);
 
     if (withdrawAmount > currentBalance) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Insufficient balance. You cannot withdraw more than your available funds.' });
     }
 
     // Read platform withdrawal fee settings
-    const feeRes = await db.query(
+    const feeRes = await client.query(
       "SELECT key, value FROM platform_settings WHERE key IN ('withdrawal_fee_type', 'withdrawal_fee_value')"
     );
     const feeSettings = {};
@@ -781,39 +825,39 @@ app.post('/api/user/withdraw', authenticateToken, async (req, res) => {
     const netAmount = parseFloat((withdrawAmount - fee).toFixed(2));
 
     if (netAmount <= 0) {
+      await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Amount is too small after processing fee is applied.' });
     }
 
     const fmtUSD = v => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
 
-    // Insert pending_request FIRST so we can embed its ID in the hold note (Bug 1 fix)
-    const prInsert = await db.query(
+    // Insert pending_request FIRST so we can embed its ID in the hold note
+    const prInsert = await client.query(
       `INSERT INTO pending_requests (user_id, type, amount, method, destination_details, status)
        VALUES ($1, 'withdrawal', $2, $3, $4, 'pending') RETURNING id`,
       [req.user.id, netAmount, method || 'Bank Transfer', JSON.stringify(destination_details || {})]
     );
     const pendingRequestId = prInsert.rows[0].id;
 
-    // Lock the FULL withdrawal amount (gross) from balance immediately to prevent double-spend
-    await db.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [withdrawAmount, req.user.id]);
+    // Lock the FULL withdrawal amount (gross) from balance — safe here since we hold the row lock
+    await client.query('UPDATE users SET balance = balance - $1 WHERE id = $2', [withdrawAmount, req.user.id]);
 
     // Record the hold — embed pending_request_id in note for reliable rejection refund lookup
-    await db.query(
+    await client.query(
       'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
       [req.user.id, 'withdrawal_hold', -withdrawAmount, `Withdrawal hold — ${fmtUSD(withdrawAmount)} via ${method || 'Bank Transfer'} (pending approval) [req:${pendingRequestId}]`]
     );
 
-    // Record fee as a separate transaction for transparency if fee > 0
-    // Bug 4 fix: use 'withdrawal_fee' type, not 'task_fee', to avoid polluting task fee ledger
+    // Record fee as a separate transaction for transparency
     if (fee > 0) {
-      await db.query(
+      await client.query(
         'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
         [req.user.id, 'withdrawal_fee', -fee, `Withdrawal Processing Fee (${feeType === 'percent' ? feeValue + '%' : fmtUSD(feeValue)}) [req:${pendingRequestId}]`]
       );
     }
 
     // Notify user request is under review
-    await db.query(
+    await client.query(
       'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
       [req.user.id, 'withdrawal_pending',
        fee > 0
@@ -822,10 +866,14 @@ app.post('/api/user/withdraw', authenticateToken, async (req, res) => {
        false]
     );
 
+    await client.query('COMMIT');
     res.json({ success: true, message: 'Withdrawal request submitted. Pending admin approval.', current_balance: currentBalance, fee, net_amount: netAmount });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Withdrawal request failed. Please try again.' });
+  } finally {
+    client.release();
   }
 });
 
@@ -932,9 +980,17 @@ app.post('/api/chats', async (req, res) => {
       );
     }
 
-    // Allow explicit sender override (e.g. 'agent' for Maya auto-replies),
-    // but only trust 'agent' — everything else defaults to 'you'.
-    const sender = requestedSender === 'agent' ? 'agent' : 'you';
+    // Bug 11 fix: Only allow sender='agent' if the request carries a valid ADMIN JWT.
+    // Previously any unauthenticated client could POST {sender:'agent'} to inject
+    // fake support messages into user chats.
+    let isAdminSender = false;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        isAdminSender = decoded.is_admin === true;
+      } catch (e) { /* invalid token */ }
+    }
+    const sender = (requestedSender === 'agent' && isAdminSender) ? 'agent' : 'you';
 
     const result = await db.query(
       'INSERT INTO chats (user_id, guest_id, sender, text) VALUES ($1, $2, $3, $4) RETURNING *',

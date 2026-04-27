@@ -332,8 +332,25 @@
         if (_retries < 100) setTimeout(initPage, 50);
         return;
       }
-      availableBalance = Math.max(0, parseFloat(state.user.balance) || 0);
+      // Bug 10 fix: Compute display balance — pre-trial users see $0 (signup bonus is locked),
+      // post-trial users see actual withdrawable balance.
+      const rawBal = parseFloat(state.user.balance) || 0;
+      const hasTrialFee = (state.transactions || []).some(tx => tx.type === 'trial_fee');
+      const signupBonus = (state.transactions || []).reduce((acc, tx) =>
+        tx.type === 'signup_bonus' ? acc + parseFloat(tx.amount) : acc, 0);
+      availableBalance = hasTrialFee ? Math.max(0, rawBal) : Math.max(0, rawBal - signupBonus);
       document.getElementById('hero-balance').textContent = fmt(availableBalance);
+
+      // If trial not complete, show a locked message instead of the withdrawal form
+      if (!hasTrialFee) {
+        const form = document.querySelector('.wd-form-section') || document.getElementById('withdrawal-form');
+        const hero = document.querySelector('.wd-hero-section') || document.querySelector('[style*="hero-balance"]')?.parentElement;
+        const lockBanner = document.createElement('div');
+        lockBanner.style.cssText = 'background:#fef3c7;border:1px solid #f59e0b;border-radius:16px;padding:20px 24px;margin:24px 0;text-align:center;';
+        lockBanner.innerHTML = '<div style="font-size:28px;margin-bottom:8px">🔒</div><div style="font-weight:700;font-size:15px;color:#92400e;margin-bottom:4px">Trial Not Yet Complete</div><div style="font-size:13px;color:#78350f">Complete your 30-task trial to unlock withdrawals. Your $33.00 will be available once the trial is done.</div>';
+        document.querySelector('main .container')?.prepend(lockBanner);
+        document.getElementById('submit-btn').disabled = true;
+      }
 
       // Load fee settings from platform
       try {
@@ -378,7 +395,12 @@
         });
         const data = await res.json();
         if (!res.ok || data.error) {
-          toast(data.error || 'Withdrawal failed.');
+          // Bug 10 fix: Show a friendly message for trial_incomplete instead of raw error text
+          if (data.error === 'trial_incomplete') {
+            toast('🔒 Complete your 30-task trial first to unlock withdrawals.');
+          } else {
+            toast(data.error || 'Withdrawal failed.');
+          }
           btn.disabled = false;
           btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Withdraw Funds';
           return;

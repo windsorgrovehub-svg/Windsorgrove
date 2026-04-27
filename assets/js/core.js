@@ -571,7 +571,7 @@ window.sendWidgetMsg = async () => {
 
 // Global initialization
 document.addEventListener('DOMContentLoaded', async () => {
-  const securePages = ['dashboard.html', 'profile.html', 'support.html', 'account.html', 'tasks.html', 'withdrawal.html', 'deposit.html'];
+  const securePages = ['dashboard.html', 'profile.html', 'support.html', 'account.html', 'tasks.html', 'withdrawal.html', 'deposit.html', 'completed-tasks.html', 'deposit-history.html', 'withdrawal-history.html'];
   const currentPage = location.pathname.split('/').pop() || 'index.html';
   
   const isSecurePage = securePages.includes(currentPage);

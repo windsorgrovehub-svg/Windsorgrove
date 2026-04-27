@@ -192,10 +192,8 @@
         document.getElementById("total-val").textContent = fmt(computedSettlements);
 
         const bonusCard = document.getElementById("trial-bonus-card");
-        if (trialBonus <= 0) {
-            if (bonusCard) bonusCard.style.display = 'none';
-        } else {
-            if (bonusCard) bonusCard.style.display = 'block';
+        if (bonusCard) {
+            bonusCard.style.display = 'block';
             document.getElementById("bonus-val").textContent = fmt(trialBonus);
         }
         

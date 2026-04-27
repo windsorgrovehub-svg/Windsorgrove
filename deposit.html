@@ -140,7 +140,7 @@
 
       <!-- 🏦 Send Payment To — shown below Step 1 -->
       <div id="payment-details-card" style="display:none;background:#fff;border:1.5px solid #d1fae5;border-radius:18px;padding:16px 18px;margin-bottom:14px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#059669;margin-bottom:10px">🏦 Send Payment To</div>
+        <div id="payment-details-header" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#059669;margin-bottom:10px">🏦 Send Payment To</div>
         <div id="payment-details-body"></div>
       </div>
 
@@ -218,7 +218,10 @@
 
     async function loadDepositDetails() {
       try {
-        const res = await fetch(`${API_URL}/deposit-details`);
+        const token = localStorage.getItem('wgh-token');
+        const res = await fetch(`${API_URL}/deposit-details`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
         allDepositDetails = await res.json();
         const loading = document.getElementById('payment-details-loading');
         if (loading) loading.style.display = 'none';
@@ -235,6 +238,9 @@
       if (!card || !body) return;
       const d = allDepositDetails;
       const instr = d[`pm_${method}_instructions`] || '';
+      const headerEl = document.getElementById('payment-details-header');
+      const METHOD_LABELS = { bank: '🏦 Send Bank Payment To', crypto: '₿ Send Crypto Payment To', paypal: '💳 Send PayPal Payment To', wise: '🌐 Send Wise Payment To' };
+      if (headerEl) headerEl.textContent = METHOD_LABELS[method] || '🏦 Send Payment To';
 
       if (method === 'crypto') {
         const fields = ['btc', 'eth', 'ltc', 'usdt_trc20', 'usdt_erc20', 'usdc_erc20'];
@@ -302,6 +308,7 @@
       btn.disabled = true;
       btn.textContent = 'Submitting…';
 
+      const METHOD_NAME_MAP = { bank: 'Bank Transfer', crypto: 'Cryptocurrency', paypal: 'PayPal', wise: 'Wise' };
       const token = localStorage.getItem('wgh-token');
 
       try {
@@ -311,7 +318,7 @@
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({
             amount,
-            source_type: currentSource,
+            source_type: METHOD_NAME_MAP[currentSource] || currentSource,
             source_details: {},
             transaction_id: document.getElementById('deposit-txid')?.value?.trim() || null
           })

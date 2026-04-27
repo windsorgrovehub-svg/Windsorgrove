@@ -101,7 +101,7 @@ app.post('/api/auth/signup', async (req, res) => {
       [user.id]
     );
 
-    const token = jwt.sign({ id: user.id, email: user.email, is_admin: user.is_admin }, JWT_SECRET);
+    const token = jwt.sign({ id: user.id, email: user.email, is_admin: user.is_admin }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user });
   } catch (err) {
     res.status(500).json({ error: 'User already exists or database error' });
@@ -176,7 +176,8 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
     await db.query('UPDATE users SET reset_token = $1, reset_expires = $2 WHERE id = $3', [resetToken, resetExpires, user.id]);
 
-    const resetLink = `http://localhost:8181/reset-password.html?token=${resetToken}`;
+    const appBase = process.env.APP_BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const resetLink = `${appBase}/reset-password.html?token=${resetToken}`;
 
     // Send email using Nodemailer
     const mailOptions = {
@@ -1627,7 +1628,7 @@ app.put('/api/admin/settings', authenticateToken, isAdmin, async (req, res) => {
 });
 
 // PUBLIC: Deposit payment details per method (no auth)
-app.get('/api/deposit-details', async (req, res) => {
+app.get('/api/deposit-details', authenticateToken, async (req, res) => {
   try {
     const result = await db.query(
       `SELECT key, value FROM platform_settings WHERE key LIKE 'pm_%'`

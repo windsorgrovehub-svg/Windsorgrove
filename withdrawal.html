@@ -374,7 +374,7 @@
         const res = await fetch(`${API_URL}/user/withdraw`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
-          body: JSON.stringify({ amount: amt, fee, net_amount: net, method: selectedMethod, destination_details })
+          body: JSON.stringify({ amount: amt, fee, net_amount: net, method: ({bank:'Bank Transfer',crypto:'Crypto Wallet',paypal:'PayPal'})[selectedMethod] || selectedMethod, destination_details })
         });
         const data = await res.json();
         if (!res.ok || data.error) {

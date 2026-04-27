@@ -18,7 +18,8 @@ const fmt = n => Number(n).toLocaleString(undefined, { style: "currency", curren
 
 const saveState = () => {
     if (state.token) {
-        if (state.user && state.user.email === 'admin@windorgrove.com') {
+        // Use is_admin flag (not a hardcoded email) to pick the right storage key
+        if (state.user && state.user.is_admin) {
             localStorage.setItem("wgh-admin-token", state.token);
         } else {
             localStorage.setItem("wgh-token", state.token);
@@ -576,12 +577,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const isSecurePage = securePages.includes(currentPage);
 
   if (!isSecurePage) {
-    // Public page — clear token and show auth buttons for guests
-    if (localStorage.getItem("wgh-token")) localStorage.removeItem("wgh-token");
-    state.user = null;
-    state.token = null;
-    // Remove data-auth so buttons are visible for guests on public pages
-    document.documentElement.removeAttribute('data-auth');
+    // Public page — do NOT delete the token; the user may be logged in and
+    // clicking the homepage or privacy page. Only remove data-auth attribute
+    // so the Login/Signup buttons remain visible on public pages for guests.
+    // The token persists — it will be validated on next loadState() call.
+    if (!localStorage.getItem("wgh-token")) {
+      document.documentElement.removeAttribute('data-auth');
+    }
   }
 
   renderFooter();

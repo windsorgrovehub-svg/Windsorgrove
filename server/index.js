@@ -52,13 +52,30 @@ setInterval(() => {
 }, 30 * 60 * 1000);
 
 // --- MIDDLEWARE ---
-const authenticateToken = (req, res, next) => {
+const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = (authHeader && authHeader.split(' ')[1]) || req.query.token;
   if (!token) return res.status(401).json({ error: 'Access denied' });
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
+  jwt.verify(token, JWT_SECRET, async (err, user) => {
     if (err) return res.status(403).json({ error: 'Invalid token' });
+
+    // Bug 17 fix: Verify account_status on EVERY authenticated request.
+    // Previously only checked at login, so suspended users kept access for 7 days via JWT.
+    try {
+      const statusRes = await db.query('SELECT account_status FROM users WHERE id = $1', [user.id]);
+      const acct = statusRes.rows[0];
+      if (!acct) return res.status(403).json({ error: 'Account not found.' });
+      if (acct.account_status === 'suspended') {
+        return res.status(403).json({ error: 'Your account has been suspended. Please contact support.' });
+      }
+      if (acct.account_status === 'deactivated') {
+        return res.status(403).json({ error: 'Your account has been deactivated. Please contact support for assistance.' });
+      }
+    } catch (dbErr) {
+      return res.status(500).json({ error: 'Authentication check failed.' });
+    }
+
     req.user = user;
     next();
   });
@@ -744,19 +761,21 @@ app.get('/api/user/mission-hotels', authenticateToken, async (req, res) => {
     // Generate a fixed daily seed for this user
     const seed = `${req.user.id}-${new Date().toISOString().slice(0, 10)}`;
 
-    // Bug 13 fix: Exclude hotels this user has already rated (hotel_rated archive rows).
-    // Without this, after 15+ days (990+ ratings) the pool is effectively exhausted
-    // and the alreadyRated guard blocks almost every hotel served.
+    // Bug 15 fix: Exclusion subquery joins hotels by NAME to get the correct VARCHAR id.
+    // Previously compared h.id to hotel name strings (type mismatch: id='h1' vs name='The Ritz-Carlton').
+    // hotel_rated notes store 'Expert Intelligence Fee: {hotel.name}' so we strip the prefix,
+    // look up matching hotel ids, then exclude them from the pool.
     const result = await db.query(
       `SELECT h.id, h.name, h.city, h.country, h.image, h.price, h.commission_rate
        FROM hotels h
        WHERE h.id NOT IN (
-         SELECT CAST(REPLACE(note, 'Expert Intelligence Fee: ', '') AS TEXT)
-         FROM transactions
-         WHERE user_id = $2 AND type = 'hotel_rated'
-         AND note LIKE 'Expert Intelligence Fee:%'
+         SELECT h2.id FROM hotels h2
+         INNER JOIN transactions t
+           ON t.note = 'Expert Intelligence Fee: ' || h2.name
+          AND t.user_id = $2
+          AND t.type = 'hotel_rated'
        )
-       ORDER BY md5(h.id::text || $1)
+       ORDER BY md5(h.id || $1)
        LIMIT 400`,
       [seed, req.user.id]
     );

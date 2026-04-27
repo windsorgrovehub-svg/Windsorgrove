@@ -619,7 +619,7 @@
       btn.textContent = "Saving Node...";
 
       try {
-        const res = await fetch("http://localhost:3000/api/user/profile", {
+        const res = await fetch(`${API_URL}/user/profile`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -657,7 +657,7 @@
       btn.textContent = "Overwriting String...";
 
       try {
-        const res = await fetch("http://localhost:3000/api/user/profile", {
+        const res = await fetch(`${API_URL}/user/profile`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",

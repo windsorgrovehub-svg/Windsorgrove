@@ -10,11 +10,30 @@
   <link rel="apple-touch-icon" href="logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Non-blocking font load: swap media trick avoids render-blocking -->
   <link
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap"
-    rel="stylesheet">
+    rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+  </noscript>
   <link rel="stylesheet" href="assets/css/style.css">
-
+  <style>
+    /* Skeleton shimmer cards */
+    .hotel-skeleton {
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .skel-img  { height: 200px; background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 400% 100%; animation: shimmer 1.4s infinite; }
+    .skel-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .skel-line { border-radius: 6px; background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 400% 100%; animation: shimmer 1.4s infinite; }
+    .skel-line.tall  { height: 18px; width: 70%; }
+    .skel-line.short { height: 13px; width: 45%; }
+    .skel-line.btn   { height: 36px; width: 100%; border-radius: 10px; margin-top: 6px; }
+    @keyframes shimmer { 0%{background-position:100% 0} 100%{background-position:-100% 0} }
+  </style>
 </head>
 
 <body>
@@ -33,7 +52,7 @@
     <div class="container head-inner">
       <div class="brand" id="brand" style="cursor:pointer">
         <div class="logo" style="width:40px; height:40px; border-radius:50%; overflow:hidden; background:var(--bg); border:1px solid var(--border)">
-          <img src="logo.png" alt="Windsor Grove" style="width:100%; height:100%; object-fit:cover">
+          <img src="logo.png" alt="Windsor Grove" style="width:100%; height:100%; object-fit:cover" loading="lazy">
         </div>
         <div>
           <div class="brand-title">WINDSOR GROVE</div>
@@ -99,7 +118,7 @@
       </div>
 
       <div class="hotel-grid" id="hotel-grid">
-        <!-- Rendered via JS -->
+        <!-- Skeleton shimmer placeholders shown immediately -->
       </div>
     </div>
   </main>
@@ -165,71 +184,99 @@
     const params = new URLSearchParams(window.location.search);
     let currentSearch = params.get('loc') || params.get('city') || "";
     let currentRegion = params.get('region') || "All";
-
     sInput.value = currentSearch;
 
+    // Show skeleton cards immediately so the page doesn't look empty
+    function showSkeletons(count = 8) {
+      grid.innerHTML = Array.from({length: count}, () => `
+        <div class="hotel-skeleton">
+          <div class="skel-img"></div>
+          <div class="skel-body">
+            <div class="skel-line tall"></div>
+            <div class="skel-line short"></div>
+            <div class="skel-line btn"></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ONE fetch — populate both the region dropdown and the hotel grid
     async function initDashboard() {
+      showSkeletons(8);
       try {
-        // Fetch all hotels to populate region filter dynamically
-        const allRes = await fetch(`${API_URL}/hotels`);
-        const allHotels = await allRes.json();
-        const regions = ["All", ...new Set(allHotels.map(h => h.country))];
+        const url = new URL(`${API_URL}/hotels`, window.location.origin);
+        if (currentSearch) url.searchParams.set('search', currentSearch);
+        if (currentRegion !== 'All') url.searchParams.set('country', currentRegion);
 
-        // Only update if not already populated to avoid resetting the dropdown while typing
-        if (cSelect.options.length <= 1) {
-          cSelect.innerHTML = regions.map(r => `<option value="${r}" ${currentRegion === r ? 'selected' : ''}>${r}</option>`).join("");
-        }
-      } catch (e) {
-        console.error(e);
-      }
-      await renderDashboard();
-    }
-
-    function rateHotel(hotelId) {
-      window.location.href = `tasks.html?id=${hotelId}`;
-    }
-
-    async function renderDashboard() {
-      const url = new URL(`${API_URL}/hotels`, window.location.origin);
-      if (currentSearch) url.searchParams.set('search', currentSearch);
-      if (currentRegion !== 'All') url.searchParams.set('country', currentRegion);
-
-      try {
         const res = await fetch(url);
         const hotels = await res.json();
 
-        stats.textContent = `Monitoring ${hotels.length} premium properties worldwide`;
-
-        grid.innerHTML = hotels.slice(0, 50).map(h => `
-              <div class="hotel">
-                <div class="hotel-img">
-                  <img src="${h.image.startsWith('http') ? h.image : 'assets/img/' + h.image}" alt="${h.name}" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#1a1a2e,#16213e)'">
-                  <div class="hotel-badge">${h.category}</div>
-                </div>
-                <div class="hotel-body">
-                  <div class="hotel-name">${h.name}</div>
-                  <div class="hotel-meta">${h.city}, ${h.country}</div>
-                  <div class="hotel-foot">
-                    <div>
-                      <div class="hotel-price">${fmt(h.price)} <span class="muted" style="font-size:12px;font-weight:400">/night</span></div>
-                      <div class="hotel-earn">Earn ${fmt(h.commission_rate)}</div>
-                    </div>
-                    <button class="btn btn-primary" onclick="toast('Go to Missions tab to start your tasks.')" style="padding: 10px 16px">Rate Expertly</button>
-                  </div>
-                </div>
-              </div>
-            `).join("");
-
-        if (hotels.length === 0) {
-          grid.innerHTML = `<div class="card card-pad muted" style="grid-column:1/-1;text-align:center;padding:100px">No properties found matching your intelligence parameters.</div>`;
+        // Populate region dropdown once (from full data)
+        if (cSelect.options.length <= 1) {
+          const regions = ["All", ...new Set(hotels.map(h => h.country))];
+          cSelect.innerHTML = regions.map(r =>
+            `<option value="${r}" ${currentRegion === r ? 'selected' : ''}>${r}</option>`
+          ).join("");
         }
+
+        renderGrid(hotels);
       } catch (e) {
+        toast("Failed to connect to Windsor Grove API.");
+        grid.innerHTML = `<div class="card card-pad muted" style="grid-column:1/-1;text-align:center;padding:60px">Unable to load properties. Please try again.</div>`;
+      }
+    }
+
+    function renderGrid(hotels) {
+      stats.textContent = `Monitoring ${hotels.length} premium properties worldwide`;
+
+      if (hotels.length === 0) {
+        grid.innerHTML = `<div class="card card-pad muted" style="grid-column:1/-1;text-align:center;padding:100px">No properties found matching your intelligence parameters.</div>`;
+        return;
+      }
+
+      grid.innerHTML = hotels.slice(0, 50).map(h => `
+        <div class="hotel">
+          <div class="hotel-img">
+            <img src="${h.image.startsWith('http') ? h.image : 'assets/img/' + h.image}"
+              alt="${h.name}" loading="lazy"
+              onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,#1a1a2e,#16213e)'">
+            <div class="hotel-badge">${h.category}</div>
+          </div>
+          <div class="hotel-body">
+            <div class="hotel-name">${h.name}</div>
+            <div class="hotel-meta">${h.city}, ${h.country}</div>
+            <div class="hotel-foot">
+              <div>
+                <div class="hotel-price">${fmt(h.price)} <span class="muted" style="font-size:12px;font-weight:400">/night</span></div>
+                <div class="hotel-earn">Earn ${fmt(h.commission_rate)}</div>
+              </div>
+              <button class="btn btn-primary" onclick="toast('Go to Missions tab to start your tasks.')" style="padding: 10px 16px">Rate Expertly</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    // Debounced search — avoids firing API on every keystroke
+    let _searchTimer = null;
+    async function renderDashboard() {
+      showSkeletons(8);
+      try {
+        const url = new URL(`${API_URL}/hotels`, window.location.origin);
+        if (currentSearch) url.searchParams.set('search', currentSearch);
+        if (currentRegion !== 'All') url.searchParams.set('country', currentRegion);
+        const res = await fetch(url);
+        renderGrid(await res.json());
+      } catch(e) {
         toast("Failed to connect to Windsor Grove API.");
       }
     }
 
-
-    sInput.oninput = (e) => { currentSearch = e.target.value; renderDashboard(); };
+    sInput.oninput = (e) => {
+      currentSearch = e.target.value;
+      clearTimeout(_searchTimer);
+      _searchTimer = setTimeout(renderDashboard, 280);
+    };
     cSelect.onchange = (e) => { currentRegion = e.target.value; renderDashboard(); };
 
     initDashboard();

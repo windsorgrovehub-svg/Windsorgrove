@@ -278,7 +278,17 @@ app.get('/api/hotels/:id', async (req, res) => {
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
   try {
     const result = await db.query('SELECT id, name, email, phone_number, balance, commission_total FROM users WHERE id = $1', [req.user.id]);
-    const txs = await db.query('SELECT * FROM transactions WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]);
+    // Bug 5 fix: Exclude high-volume transient rows (pending_commission deleted on completion,
+    // task_fee = 66/session, hotel_rated = archive rows). These blow up the payload for active users.
+    // KPI-critical rows (signup_bonus, trial_fee, commission, admin_*) are always included.
+    const txs = await db.query(
+      `SELECT * FROM transactions
+       WHERE user_id = $1
+         AND type NOT IN ('pending_commission', 'task_fee', 'hotel_rated')
+       ORDER BY created_at DESC
+       LIMIT 500`,
+      [req.user.id]
+    );
     res.json({ user: result.rows[0], transactions: txs.rows });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch profile' });
@@ -441,18 +451,23 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
     }
 
     // Check paid sets count BEFORE inserting any commission
+    // Bug 8 fix: Cap is WEEKLY (7 days), not all-time. Previously used all-time count
+    // which permanently blocked users after 5 total sets ever completed.
     const paidSetsQuery = await db.query(
-      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Daily Task Commission%'",
+      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Daily Task Commission%' AND created_at >= NOW() - INTERVAL '7 days'",
       [req.user.id]
     );
     const paidSetsCount = parseInt(paidSetsQuery.rows[0].count);
     if (isTrialDone && paidSetsCount >= 5) {
-      return res.status(400).json({ error: 'You have exhausted your maximum weekly task limits (5 sets).' });
+      return res.status(400).json({ error: 'You have exhausted your maximum weekly task limits (5 sets). Your limit resets in 7 days.' });
     }
 
     // Check if user already rated this hotel
+    // Bug 7 fix: also check 'hotel_rated' type — archived rows from past sessions.
+    // Previously only checked 'pending_commission' (deleted on completion) so cross-day
+    // duplicate detection was completely broken.
     const alreadyRated = await db.query(
-      "SELECT id FROM transactions WHERE user_id = $1 AND note = $2 AND type IN ('pending_commission', 'commission')",
+      "SELECT id FROM transactions WHERE user_id = $1 AND note = $2 AND type IN ('pending_commission', 'hotel_rated')",
       [req.user.id, `Expert Intelligence Fee: ${hotel.name}`]
     );
     if (alreadyRated.rows.length > 0) {
@@ -509,9 +524,11 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
       );
       const pendingTotalRaw = parseFloat(pendingSum.rows[0].total);
 
-      // Now it is safe to delete all individual pending_commission records
+      // Bug 7 fix: Archive pending_commission rows as 'hotel_rated' INSTEAD of deleting them.
+      // This preserves the per-hotel record across sessions so the duplicate check works day-to-day.
+      // These rows are excluded from the profile endpoint payload to keep response size small.
       await db.query(
-        "DELETE FROM transactions WHERE user_id = $1 AND type = 'pending_commission'",
+        "UPDATE transactions SET type = 'hotel_rated' WHERE user_id = $1 AND type = 'pending_commission'",
         [req.user.id]
       );
 
@@ -604,7 +621,7 @@ app.get('/api/user/mission-progress', authenticateToken, async (req, res) => {
     const isTrialDone = trialCheck.rows.length > 0;
 
     const paidSetsQuery = await db.query(
-      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Daily Task Commission%'",
+      "SELECT COUNT(*) FROM transactions WHERE user_id = $1 AND type = 'commission' AND note LIKE 'Daily Task Commission%' AND created_at >= NOW() - INTERVAL '7 days'",
       [req.user.id]
     );
     const paidSetsCount = parseInt(paidSetsQuery.rows[0].count);
@@ -683,6 +700,14 @@ app.post('/api/admin/unlock-stage2', authenticateToken, isAdmin, async (req, res
        VALUES ($1, CURRENT_DATE, $2)
        ON CONFLICT (user_id, unlocked_date) DO NOTHING`,
       [userId, req.user.id]
+    );
+
+    // Bug 9 fix: Mark any pending stage2_requests for this user as 'approved'
+    // Previously stage2_request_pending always stayed true after submission because
+    // no code ever updated stage2_requests.status on unlock.
+    await db.query(
+      "UPDATE stage2_requests SET status = 'approved' WHERE user_id = $1 AND status = 'pending'",
+      [userId]
     );
 
     // Notify the user via system alert

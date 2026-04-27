@@ -526,11 +526,11 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
           [req.user.id, 'trial_fee', -trialDeduction, `Trial Bonus Used — ${missionTarget} Assignments Verified (Trial)`]
         );
 
-        totalCredited = 0;
+        totalCredited = TRIAL_RETAIN;
 
         await db.query(
           'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-          [req.user.id, 'commission_earned', `🎉 Trial complete! You keep ${fmt(TRIAL_RETAIN)} as your starting balance. Start your first paid daily task to begin earning commissions.`, true]
+          [req.user.id, 'commission_earned', `🎉 Trial complete! ${fmt(TRIAL_RETAIN)} has been retained in your balance. Start your first paid daily task to begin earning commissions.`, true]
         );
       } else {
         // PAID SET: Pay the actual accumulated hotel commissions (rates calibrated to ~$60 for 66 tasks)

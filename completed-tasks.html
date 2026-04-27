@@ -116,8 +116,9 @@
       const body=document.getElementById('list-body');
       if(!items.length){body.innerHTML=`<div class="card card-pad" style="padding:60px 20px;text-align:center;border:1px dashed var(--border);border-radius:20px"><div style="font-size:30px;margin-bottom:10px;opacity:.5">📋</div><div style="font-weight:600;font-size:15px">No Completed Tasks</div><div style="font-size:13px;color:var(--text-dim);margin-top:6px">Your completed intelligence missions will appear here.</div></div>`;return;}
       body.innerHTML=items.map(tx=>{
-        const isFee=tx.type==='trial_fee',isPend=tx.type==='pending_commission',amt=parseFloat(tx.amount);
-        const bg=isFee?'#ef4444':isPend?'#f59e0b':'var(--success)',badge=isFee?'Trial Used':isPend?'Pending':'Credited',ico=isFee?'🔴':isPend?'⏳':'💎',clr=isFee?'#ef4444':isPend?'#d97706':'#059669';
+        const isFee=tx.type==='trial_fee', isPend=tx.type==='pending_commission', isRated=tx.type==='hotel_rated', amt=parseFloat(tx.amount);
+        const bg=isFee?'#ef4444':isPend?'#f59e0b':'var(--success)', badge=isFee?'Trial Used':isPend?'Pending':isRated?'Completed':'Credited', ico=isFee?'🔴':isPend?'⏳':isRated?'✅':'💎', clr=isFee?'#ef4444':isPend?'#d97706':'#059669';
+
         const disp=isFee?`-${fmt(Math.abs(amt))}`:`+${fmt(amt)}`;
         return `<div class="card" style="background:#fff;border-radius:20px;border:1px solid var(--border);padding:18px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:12px">
           <div style="width:40px;height:40px;border-radius:12px;background:${isFee?'#fee2e2':'var(--accent3)'};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${ico}</div>
@@ -140,7 +141,16 @@
       const waitForUser = setInterval(() => {
         if (state.user) {
           clearInterval(waitForUser);
-          allItems = (state.transactions || []).filter(t => t.type==='commission' || t.type==='trial_fee' || t.type==='pending_commission');
+          // Bug 20 fix: Include 'hotel_rated' type — these are pending_commission rows archived
+          // after session completion. Without this, all individual hotel task records vanish
+          // from history as soon as a session ends (only the bulk 'commission' line remains).
+          allItems = (state.transactions || []).filter(t =>
+            t.type === 'commission' ||
+            t.type === 'trial_fee' ||
+            t.type === 'pending_commission' ||
+            t.type === 'hotel_rated'
+          ).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
           render();
         }
       }, 80);

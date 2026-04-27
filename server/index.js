@@ -52,33 +52,39 @@ setInterval(() => {
 }, 30 * 60 * 1000);
 
 // --- MIDDLEWARE ---
+// Bug 19 fix: Use synchronous jwt.verify inside try/catch instead of async callback.
+// The async-callback pattern (jwt.verify(token, secret, async cb)) is unsafe in Express 4.x:
+// unhandled rejections inside the callback bypass Express error handlers and crash Node 15+.
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = (authHeader && authHeader.split(' ')[1]) || req.query.token;
   if (!token) return res.status(401).json({ error: 'Access denied' });
 
-  jwt.verify(token, JWT_SECRET, async (err, user) => {
-    if (err) return res.status(403).json({ error: 'Invalid token' });
+  try {
+    // Synchronous verify — throws JsonWebTokenError or TokenExpiredError if invalid
+    const user = jwt.verify(token, JWT_SECRET);
 
-    // Bug 17 fix: Verify account_status on EVERY authenticated request.
-    // Previously only checked at login, so suspended users kept access for 7 days via JWT.
-    try {
-      const statusRes = await db.query('SELECT account_status FROM users WHERE id = $1', [user.id]);
-      const acct = statusRes.rows[0];
-      if (!acct) return res.status(403).json({ error: 'Account not found.' });
-      if (acct.account_status === 'suspended') {
-        return res.status(403).json({ error: 'Your account has been suspended. Please contact support.' });
-      }
-      if (acct.account_status === 'deactivated') {
-        return res.status(403).json({ error: 'Your account has been deactivated. Please contact support for assistance.' });
-      }
-    } catch (dbErr) {
-      return res.status(500).json({ error: 'Authentication check failed.' });
+    // Bug 17: Verify account_status on every request so suspended users cannot
+    // use their existing JWT for the remaining 7-day validity window.
+    const statusRes = await db.query('SELECT account_status FROM users WHERE id = $1', [user.id]);
+    const acct = statusRes.rows[0];
+    if (!acct) return res.status(403).json({ error: 'Account not found.' });
+    if (acct.account_status === 'suspended') {
+      return res.status(403).json({ error: 'Your account has been suspended. Please contact support.' });
+    }
+    if (acct.account_status === 'deactivated') {
+      return res.status(403).json({ error: 'Your account has been deactivated. Please contact support for assistance.' });
     }
 
     req.user = user;
     next();
-  });
+  } catch (err) {
+    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError' || err.name === 'NotBeforeError') {
+      return res.status(403).json({ error: 'Invalid or expired token.' });
+    }
+    console.error('authenticateToken db error:', err.message);
+    return res.status(500).json({ error: 'Authentication check failed.' });
+  }
 };
 
 const isAdmin = (req, res, next) => {
@@ -295,13 +301,15 @@ app.get('/api/hotels/:id', async (req, res) => {
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
   try {
     const result = await db.query('SELECT id, name, email, phone_number, balance, commission_total FROM users WHERE id = $1', [req.user.id]);
-    // Bug 5 fix: Exclude high-volume transient rows (pending_commission deleted on completion,
-    // task_fee = 66/session, hotel_rated = archive rows). These blow up the payload for active users.
-    // KPI-critical rows (signup_bonus, trial_fee, commission, admin_*) are always included.
+    // Bug 5 fix: Exclude high-volume transient rows to keep payload manageable.
+    // - 'pending_commission': deleted/archived on session completion (current session only, fetched separately)
+    // - 'task_fee': 66 rows per session, never shown to users in any ledger view
+    // 'hotel_rated' rows ARE included — they power the completed-tasks history page
+    // and are needed to show individual hotel ratings after session end (Bug 20).
     const txs = await db.query(
       `SELECT * FROM transactions
        WHERE user_id = $1
-         AND type NOT IN ('pending_commission', 'task_fee', 'hotel_rated')
+         AND type NOT IN ('pending_commission', 'task_fee')
        ORDER BY created_at DESC
        LIMIT 500`,
       [req.user.id]
@@ -1899,9 +1907,26 @@ app.delete('/api/admin/invite-codes/:id', authenticateToken, isAdmin, async (req
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
-    console.log('\u2713 stage2_requests + IP columns ready');
-    console.log('\u2713 account_status + per-user stage2 columns ready');
-    console.log('\u2713 payment_methods table ready');
+
+    // Bug 21 fix: Add composite indexes on the transactions table.
+    // Every mission rate, progress check, and session query does:
+    //   WHERE user_id = $1 AND type = '...' — without indexes this is a full table scan.
+    // As hotel_rated rows accumulate (66/day), queries become progressively slower.
+    // CREATE INDEX IF NOT EXISTS is safe to run on every startup.
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_txn_user_type
+      ON transactions (user_id, type)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_txn_user_type_date
+      ON transactions (user_id, type, created_at DESC)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_txn_user_note
+      ON transactions (user_id, note) WHERE note IS NOT NULL`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_pending_requests_user
+      ON pending_requests (user_id, status)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_notifications_user
+      ON notifications (user_id, is_read, created_at DESC)`);
+    console.log('✓ stage2_requests + IP columns ready');
+    console.log('✓ account_status + per-user stage2 columns ready');
+    console.log('✓ payment_methods table ready');
+    console.log('✓ performance indexes ready');
   } catch (err) {
     console.error('DB init error:', err.message);
   }

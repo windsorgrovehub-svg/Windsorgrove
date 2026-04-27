@@ -481,7 +481,7 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
       );
 
       if (!isTrialDone) {
-        // TRIAL SET: No commission — exhaust the $100 signup bonus
+        // TRIAL SET: Deduct trial bonus but leave user with $22 starting balance
         const bonusRes = await db.query(
           "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = $1 AND type = 'signup_bonus'",
           [req.user.id]
@@ -489,21 +489,25 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
         let bonusAmount = parseFloat(bonusRes.rows[0].total);
         if (bonusAmount <= 0) bonusAmount = 100;
 
+        // Deduct all but $22 — user keeps $22.00 as their starting paid-cycle balance
+        const TRIAL_RETAIN = 22.00;
+        const trialDeduction = parseFloat(Math.max(0, bonusAmount - TRIAL_RETAIN).toFixed(2));
+
         // Use GREATEST(0,...) so balance can never go negative
         await db.query(
           'UPDATE users SET balance = GREATEST(0, balance - $1) WHERE id = $2',
-          [bonusAmount, req.user.id]
+          [trialDeduction, req.user.id]
         );
         await db.query(
           'INSERT INTO transactions (user_id, type, amount, note) VALUES ($1, $2, $3, $4)',
-          [req.user.id, 'trial_fee', -bonusAmount, `Trial Bonus Exhausted — ${missionTarget} Assignments Verified (Trial)`]
+          [req.user.id, 'trial_fee', -trialDeduction, `Trial Bonus Used — ${missionTarget} Assignments Verified (Trial)`]
         );
 
         totalCredited = 0;
 
         await db.query(
           'INSERT INTO notifications (user_id, type, preview, is_alert) VALUES ($1, $2, $3, $4)',
-          [req.user.id, 'commission_earned', `🎉 Trial complete! Your ${fmt(bonusAmount)} trial bonus has been used. Start your first paid daily task to begin earning commissions.`, true]
+          [req.user.id, 'commission_earned', `🎉 Trial complete! You keep ${fmt(TRIAL_RETAIN)} as your starting balance. Start your first paid daily task to begin earning commissions.`, true]
         );
       } else {
         // PAID SET: Pay the actual accumulated hotel commissions (rates calibrated to ~$60 for 66 tasks)

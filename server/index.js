@@ -490,7 +490,7 @@ app.post('/api/missions/rate', authenticateToken, async (req, res) => {
         if (bonusAmount <= 0) bonusAmount = 100;
 
         // Deduct all but $22 — user keeps $22.00 as their starting paid-cycle balance
-        const TRIAL_RETAIN = 22.00;
+        const TRIAL_RETAIN = 33.00;
         const trialDeduction = parseFloat(Math.max(0, bonusAmount - TRIAL_RETAIN).toFixed(2));
 
         // Use GREATEST(0,...) so balance can never go negative

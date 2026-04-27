@@ -197,17 +197,24 @@
         const displayBalance = Math.max(0, parseFloat(state.user.balance) || 0);
         const computedSettlements = (state.transactions || []).reduce((acc, tx) =>
             acc + (tx.type === 'admin_debit' ? Math.abs(Number(tx.amount)) : 0), 0);
+        const TRIAL_RETAIN = 33.00; // Must match server TRIAL_RETAIN constant
         const hasTrialFee = (state.transactions || []).some(tx => tx.type === 'trial_fee');
-        const trialBonus = hasTrialFee ? 0 : (state.transactions || []).reduce((acc, tx) => {
-            if (tx.type === 'signup_bonus') return acc + Number(tx.amount);
-            return acc;
-        }, 0);
+        // Before trial: show the $33 the user will keep (not the full $100)
+        // After trial: show $0 — the $33 has moved to Available Funds
+        const trialBonus = hasTrialFee ? 0 : TRIAL_RETAIN;
+
         document.getElementById("balance-val").textContent = fmt(displayBalance);
         document.getElementById("total-val").textContent = fmt(computedSettlements);
+
         const bonusCard = document.getElementById("trial-bonus-card");
         if (bonusCard) {
             bonusCard.style.display = 'block';
             document.getElementById("bonus-val").textContent = fmt(trialBonus);
+            // Update the label to show context
+            const label = bonusCard.querySelector('.muted');
+            if (label) {
+                label.textContent = hasTrialFee ? 'Trial Bonus' : 'Trial Bonus (kept after trial)';
+            }
         }
     }
 
